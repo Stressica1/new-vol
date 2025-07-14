@@ -1,0 +1,873 @@
+{
+  "timestamp": "2025-07-14T17:46:06.114451",
+  "next_analysis": "2025-07-14T20:46:06.114451",
+  "summary": {
+    "total_coins_analyzed": 50,
+    "high_priority_targets": 3,
+    "medium_priority_targets": 47,
+    "low_priority_targets": 0,
+    "total_portfolio_allocation": 1.1328911498840912,
+    "risk_distribution": {
+      "LOW": 0,
+      "MEDIUM": 49,
+      "HIGH": 1,
+      "VERY_HIGH": 0
+    }
+  },
+  "trading_targets": {
+    "high_priority": [
+      {
+        "symbol": "ONDO",
+        "score": 70.36499254518503,
+        "confidence": 0.9867169593560894,
+        "position_size": 0.02462774739081476,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 55.05997018074015,
+          "technical": 64.0,
+          "momentum": 71.5,
+          "volatility": 88.0,
+          "market_structure": 85.0,
+          "trend": 78.0
+        }
+      },
+      {
+        "symbol": "VIRTUAL",
+        "score": 70.30502000702144,
+        "confidence": 0.9881397086388131,
+        "position_size": 0.0246067570024575,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.02008002808576,
+          "technical": 76.5,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 80.0,
+          "trend": 74.5
+        }
+      },
+      {
+        "symbol": "POL",
+        "score": 70.15213776408545,
+        "confidence": 0.9846685853449633,
+        "position_size": 0.024553248217429907,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 55.008551056341766,
+          "technical": 64.0,
+          "momentum": 67.5,
+          "volatility": 88.0,
+          "market_structure": 85.0,
+          "trend": 84.0
+        }
+      }
+    ],
+    "medium_priority": [
+      {
+        "symbol": "AXS",
+        "score": 69.90078635025169,
+        "confidence": 0.9886295775087213,
+        "position_size": 0.024465275222588092,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 55.003145401006755,
+          "technical": 76.5,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 78.0
+        }
+      },
+      {
+        "symbol": "ZRX",
+        "score": 67.95374539190995,
+        "confidence": 0.989718029179559,
+        "position_size": 0.02378381088716848,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.01498156763977,
+          "technical": 64.0,
+          "momentum": 67.5,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 74.5
+        }
+      },
+      {
+        "symbol": "INJ",
+        "score": 67.60839470916225,
+        "confidence": 0.9856137679085798,
+        "position_size": 0.02366293814820679,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.03357883664903,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 85.0,
+          "trend": 67.5
+        }
+      },
+      {
+        "symbol": "DOGS",
+        "score": 67.50250604538758,
+        "confidence": 0.9863828441628363,
+        "position_size": 0.02362587711588565,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 55.01002418155028,
+          "technical": 56.0,
+          "momentum": 71.5,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 78.0
+        }
+      },
+      {
+        "symbol": "NIL",
+        "score": 67.50173189598885,
+        "confidence": 0.9900700143323643,
+        "position_size": 0.023625606163596095,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00692758395543,
+          "technical": 64.0,
+          "momentum": 67.5,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 70.0
+        }
+      },
+      {
+        "symbol": "HBAR",
+        "score": 66.70562207188242,
+        "confidence": 0.9810317333710665,
+        "position_size": 0.023346967725158846,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.02248828752969,
+          "technical": 58.75,
+          "momentum": 62.0,
+          "volatility": 79.0,
+          "market_structure": 95.0,
+          "trend": 74.5
+        }
+      },
+      {
+        "symbol": "KAVA",
+        "score": 66.70047176075526,
+        "confidence": 0.9863342453546695,
+        "position_size": 0.02334516511626434,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 55.00188704302104,
+          "technical": 56.0,
+          "momentum": 67.5,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 78.0
+        }
+      },
+      {
+        "symbol": "MKR",
+        "score": 66.3557486588525,
+        "confidence": 0.9895129902719425,
+        "position_size": 0.023224512030598377,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.022994635409994,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 67.5
+        }
+      },
+      {
+        "symbol": "XAI",
+        "score": 66.30015054604627,
+        "confidence": 0.9859419276081104,
+        "position_size": 0.023205052691116192,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "BULLISH_MACD"
+        ],
+        "category_scores": {
+          "volume": 55.000602184185055,
+          "technical": 74.5,
+          "momentum": 54.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 64.0
+        }
+      },
+      {
+        "symbol": "SOL",
+        "score": 65.65861478009478,
+        "confidence": 0.9714334030400569,
+        "position_size": 0.022980515173033175,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.03445912037915,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 90.0,
+          "trend": 43.0
+        }
+      },
+      {
+        "symbol": "AGLD",
+        "score": 65.60602465168378,
+        "confidence": 0.9787065714015397,
+        "position_size": 0.02296210862808932,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 55.02409860673513,
+          "technical": 58.75,
+          "momentum": 54.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 88.5
+        }
+      },
+      {
+        "symbol": "JUP",
+        "score": 65.60160987276907,
+        "confidence": 0.9878490851108019,
+        "position_size": 0.022960563455469173,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00643949107634,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 82.0,
+          "market_structure": 80.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "HOME",
+        "score": 65.55452311570082,
+        "confidence": 0.9866184029580546,
+        "position_size": 0.022944083090495282,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.018092462803246,
+          "technical": 64.0,
+          "momentum": 55.5,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 74.5
+        }
+      },
+      {
+        "symbol": "A",
+        "score": 65.50802383174131,
+        "confidence": 0.9852692498205798,
+        "position_size": 0.022927808341109458,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.032095326965226,
+          "technical": 58.75,
+          "momentum": 58.0,
+          "volatility": 88.0,
+          "market_structure": 77.5,
+          "trend": 74.5
+        }
+      },
+      {
+        "symbol": "SAGA",
+        "score": 65.45249345671353,
+        "confidence": 0.9849650438500754,
+        "position_size": 0.022908372709849734,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.009973826854115,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 77.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "ENS",
+        "score": 65.45103458592608,
+        "confidence": 0.9777543179234082,
+        "position_size": 0.022907862105074124,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00413834370432,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 88.0,
+          "market_structure": 80.0,
+          "trend": 43.0
+        }
+      },
+      {
+        "symbol": "ETHFI",
+        "score": 65.30471995477376,
+        "confidence": 0.985004127198697,
+        "position_size": 0.022856651984170813,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.01887981909506,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 82.0,
+          "market_structure": 85.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "WOO",
+        "score": 65.00226021601753,
+        "confidence": 0.9872496658314518,
+        "position_size": 0.022750791075606135,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00904086407018,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 88.0,
+          "market_structure": 65.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "LAYER",
+        "score": 64.95763421912545,
+        "confidence": 0.9864028505699837,
+        "position_size": 0.022735171976693908,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.03053687650183,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "SSV",
+        "score": 64.95379326361706,
+        "confidence": 0.9863972269224497,
+        "position_size": 0.022733827642265968,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.01517305446823,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "MINA",
+        "score": 64.95027314902015,
+        "confidence": 0.9863920672686495,
+        "position_size": 0.02273259560215705,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.001092596080625,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "COW",
+        "score": 64.55796651849067,
+        "confidence": 0.988705937534394,
+        "position_size": 0.022595288281471736,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.03186607396272,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 82.0,
+          "market_structure": 77.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "BB",
+        "score": 64.5566817156547,
+        "confidence": 0.9838396104858984,
+        "position_size": 0.022594838600479145,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 55.02672686261881,
+          "technical": 58.75,
+          "momentum": 54.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 78.0
+        }
+      },
+      {
+        "symbol": "ARKM",
+        "score": 64.55106962873548,
+        "confidence": 0.9886959892094833,
+        "position_size": 0.022592874370057418,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.004278514941944,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 82.0,
+          "market_structure": 77.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "JTO",
+        "score": 64.50067522763973,
+        "confidence": 0.9785456297427604,
+        "position_size": 0.022575236329673905,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "OVERBOUGHT_RSI",
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 55.002700910558914,
+          "technical": 48.0,
+          "momentum": 61.5,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 84.0
+        }
+      },
+      {
+        "symbol": "ARB",
+        "score": 64.49605400798428,
+        "confidence": 0.944389295810382,
+        "position_size": 0.0225736189027945,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "BULLISH_MACD",
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 24.984216031937144,
+          "technical": 87.0,
+          "momentum": 54.0,
+          "volatility": 88.0,
+          "market_structure": 80.0,
+          "trend": 88.5
+        }
+      },
+      {
+        "symbol": "GMT",
+        "score": 64.35111559096818,
+        "confidence": 0.980893228217457,
+        "position_size": 0.022522890456838862,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "BULLISH_MACD"
+        ],
+        "category_scores": {
+          "volume": 55.00446236387273,
+          "technical": 74.5,
+          "momentum": 49.5,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "AAVE",
+        "score": 64.30304221795988,
+        "confidence": 0.9890231084557225,
+        "position_size": 0.022506064776285962,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.01216887183956,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 70.0,
+          "market_structure": 85.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "LDO",
+        "score": 64.30246061440361,
+        "confidence": 0.9890222755351734,
+        "position_size": 0.022505861215041265,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00984245761448,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 70.0,
+          "market_structure": 85.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "CRV",
+        "score": 64.30103910553436,
+        "confidence": 0.989020239144657,
+        "position_size": 0.022505363686937025,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00415642213745,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 70.0,
+          "market_structure": 85.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "EIGEN",
+        "score": 64.21111187985383,
+        "confidence": 0.9848767909337918,
+        "position_size": 0.02247388915794884,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.04444751941533,
+          "technical": 58.75,
+          "momentum": 54.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 74.5
+        }
+      },
+      {
+        "symbol": "DOT",
+        "score": 64.20617434684513,
+        "confidence": 0.9758393696618256,
+        "position_size": 0.022472161021395792,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "UPTREND_CONFIRMED"
+        ],
+        "category_scores": {
+          "volume": 55.02469738738053,
+          "technical": 50.75,
+          "momentum": 54.0,
+          "volatility": 88.0,
+          "market_structure": 85.0,
+          "trend": 78.0
+        }
+      },
+      {
+        "symbol": "CHZ",
+        "score": 64.20219868518271,
+        "confidence": 0.9872382738831339,
+        "position_size": 0.022470769539813945,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00879474073087,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 88.0,
+          "market_structure": 65.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "KERNEL",
+        "score": 64.10057927734138,
+        "confidence": 0.9883202424853231,
+        "position_size": 0.02243520274706948,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00231710936552,
+          "technical": 56.0,
+          "momentum": 71.0,
+          "volatility": 79.0,
+          "market_structure": 77.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "ROSE",
+        "score": 64.05172253654929,
+        "confidence": 0.990293962722703,
+        "position_size": 0.02241810288779225,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00689014619717,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 82.0,
+          "market_structure": 72.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "NEAR",
+        "score": 63.80175234118417,
+        "confidence": 0.9918821774131881,
+        "position_size": 0.022330613319414456,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00700936473666,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 70.0,
+          "market_structure": 80.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "RAY",
+        "score": 63.80152871098632,
+        "confidence": 0.9918818818874248,
+        "position_size": 0.02233053504884521,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.006114843945255,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 70.0,
+          "market_structure": 80.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "ETC",
+        "score": 63.80027494700991,
+        "confidence": 0.9733552124154914,
+        "position_size": 0.022330096231453465,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "BULLISH_MACD"
+        ],
+        "category_scores": {
+          "volume": 55.001099788039674,
+          "technical": 74.5,
+          "momentum": 49.5,
+          "volatility": 88.0,
+          "market_structure": 77.5,
+          "trend": 43.0
+        }
+      },
+      {
+        "symbol": "VANRY",
+        "score": 63.750269322073926,
+        "confidence": 0.9852920257466464,
+        "position_size": 0.02231259426272587,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00107728829568,
+          "technical": 64.0,
+          "momentum": 57.0,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "SPK",
+        "score": 63.66011370003421,
+        "confidence": 0.9755250228118408,
+        "position_size": 0.022281039795011975,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "BULLISH_MACD"
+        ],
+        "category_scores": {
+          "volume": 55.04045480013685,
+          "technical": 74.5,
+          "momentum": 43.5,
+          "volatility": 88.0,
+          "market_structure": 77.5,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "WLD",
+        "score": 63.5097901937803,
+        "confidence": 0.9889763355165503,
+        "position_size": 0.0222284265678231,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.03916077512119,
+          "technical": 64.0,
+          "momentum": 63.0,
+          "volatility": 70.0,
+          "market_structure": 85.0,
+          "trend": 53.5
+        }
+      },
+      {
+        "symbol": "BNB",
+        "score": 63.503390683465234,
+        "confidence": 0.974092525411418,
+        "position_size": 0.022226186739212832,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.01356273386094,
+          "technical": 50.75,
+          "momentum": 54.0,
+          "volatility": 79.0,
+          "market_structure": 95.0,
+          "trend": 74.5
+        }
+      },
+      {
+        "symbol": "LTC",
+        "score": 63.402077747144915,
+        "confidence": 0.9774872122318768,
+        "position_size": 0.02219072721150072,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.00831098857964,
+          "technical": 50.75,
+          "momentum": 54.0,
+          "volatility": 88.0,
+          "market_structure": 85.0,
+          "trend": 70.0
+        }
+      },
+      {
+        "symbol": "API3",
+        "score": 63.30141521910613,
+        "confidence": 0.9751620673105471,
+        "position_size": 0.022155495326687147,
+        "risk_level": "MEDIUM",
+        "signals": [
+          "BULLISH_MACD"
+        ],
+        "category_scores": {
+          "volume": 55.00566087642455,
+          "technical": 74.5,
+          "momentum": 49.5,
+          "volatility": 88.0,
+          "market_structure": 72.5,
+          "trend": 43.0
+        }
+      },
+      {
+        "symbol": "SAND",
+        "score": 63.25115337078188,
+        "confidence": 0.9898208025633066,
+        "position_size": 0.012650230674156377,
+        "risk_level": "HIGH",
+        "signals": [
+          "HIGH_VOLATILITY"
+        ],
+        "category_scores": {
+          "volume": 55.0046134831275,
+          "technical": 64.0,
+          "momentum": 71.0,
+          "volatility": 64.0,
+          "market_structure": 80.0,
+          "trend": 49.0
+        }
+      },
+      {
+        "symbol": "AWE",
+        "score": 63.05802878779306,
+        "confidence": 0.9859193039916477,
+        "position_size": 0.022070310075727573,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.03211515117228,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 82.0,
+          "market_structure": 65.0,
+          "trend": 43.0
+        }
+      },
+      {
+        "symbol": "MEME",
+        "score": 63.0554947503814,
+        "confidence": 0.9948757872243781,
+        "position_size": 0.022069423162633488,
+        "risk_level": "MEDIUM",
+        "signals": [],
+        "category_scores": {
+          "volume": 55.02197900152558,
+          "technical": 64.0,
+          "momentum": 67.0,
+          "volatility": 70.0,
+          "market_structure": 72.5,
+          "trend": 53.5
+        }
+      }
+    ],
+    "low_priority": []
+  },
+  "strategy_notes": [
+    "High portfolio allocation - consider scaling down positions"
+  ],
+  "configuration": {
+    "min_volume_24h": 1000000,
+    "min_market_cap": 10000000,
+    "scoring_weights": {
+      "volume": 0.25,
+      "technical": 0.2,
+      "momentum": 0.2,
+      "volatility": 0.15,
+      "market_structure": 0.1,
+      "trend": 0.1
+    }
+  }
+}

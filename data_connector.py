@@ -214,13 +214,19 @@ class CryptoDataConnector:
         """Normalize Binance data to standard format"""
         try:
             symbol = coin_data['symbol'].replace('USDT', '')
+            price = float(coin_data['lastPrice'])
+            volume_24h = float(coin_data['quoteVolume'])
+            
+            # Estimate market cap based on volume (rough approximation)
+            # High volume coins typically have higher market caps
+            estimated_market_cap = max(volume_24h * 10, 50000000)  # Minimum 50M estimation
             
             return {
                 'symbol': symbol,
                 'name': symbol,
-                'price': float(coin_data['lastPrice']),
-                'market_cap': 0,  # Not available in Binance ticker
-                'volume_24h': float(coin_data['quoteVolume']),
+                'price': price,
+                'market_cap': estimated_market_cap,  # Estimated market cap
+                'volume_24h': volume_24h,
                 'price_change_24h': float(coin_data['priceChangePercent']),
                 'price_change_7d': 0,  # Not available in 24hr ticker
                 'high_24h': float(coin_data['highPrice']),
