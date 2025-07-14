@@ -1,0 +1,193 @@
+{
+  "timestamp": "2025-07-14T06:08:56.602889",
+  "total_coins_analyzed": 20,
+  "top_10_coins": [
+    {
+      "symbol": "DOT",
+      "score": 79.65,
+      "risk_level": "MEDIUM",
+      "position_size": 0.027877500000000003,
+      "category_scores": {
+        "volume": 80,
+        "technical": 76.5,
+        "momentum": 88.0,
+        "volatility": 90,
+        "market_structure": 92.5,
+        "trend": 40
+      },
+      "signals": [
+        "STRONG_VOLUME_ANOMALY"
+      ]
+    },
+    {
+      "symbol": "MATIC",
+      "score": 78.95,
+      "risk_level": "MEDIUM",
+      "position_size": 0.0276325,
+      "category_scores": {
+        "volume": 90,
+        "technical": 68.5,
+        "momentum": 80.0,
+        "volatility": 90,
+        "market_structure": 92.5,
+        "trend": 40
+      },
+      "signals": [
+        "STRONG_VOLUME_ANOMALY"
+      ]
+    },
+    {
+      "symbol": "SOL",
+      "score": 78.9,
+      "risk_level": "MEDIUM",
+      "position_size": 0.027615,
+      "category_scores": {
+        "volume": 80,
+        "technical": 76.5,
+        "momentum": 88.0,
+        "volatility": 75,
+        "market_structure": 77.5,
+        "trend": 70
+      },
+      "signals": [
+        "STRONG_VOLUME_ANOMALY"
+      ]
+    },
+    {
+      "symbol": "VET",
+      "score": 78.65,
+      "risk_level": "MEDIUM",
+      "position_size": 0.027527500000000003,
+      "category_scores": {
+        "volume": 80,
+        "technical": 66.5,
+        "momentum": 68.0,
+        "volatility": 90,
+        "market_structure": 92.5,
+        "trend": 90
+      },
+      "signals": [
+        "STRONG_VOLUME_ANOMALY",
+        "OVERBOUGHT_RSI",
+        "BULLISH_MACD",
+        "UPTREND_CONFIRMED"
+      ]
+    },
+    {
+      "symbol": "BTC",
+      "score": 71.1,
+      "risk_level": "MEDIUM",
+      "position_size": 0.024884999999999997,
+      "category_scores": {
+        "volume": 70,
+        "technical": 76.5,
+        "momentum": 44.0,
+        "volatility": 75,
+        "market_structure": 92.5,
+        "trend": 90
+      },
+      "signals": [
+        "UPTREND_CONFIRMED"
+      ]
+    },
+    {
+      "symbol": "XRP",
+      "score": 69.75,
+      "risk_level": "HIGH",
+      "position_size": 0.013950000000000002,
+      "category_scores": {
+        "volume": 80,
+        "technical": 76.5,
+        "momentum": 76.0,
+        "volatility": 40,
+        "market_structure": 92.5,
+        "trend": 40
+      },
+      "signals": [
+        "STRONG_VOLUME_ANOMALY"
+      ]
+    },
+    {
+      "symbol": "BNB",
+      "score": 68.85,
+      "risk_level": "HIGH",
+      "position_size": 0.01377,
+      "category_scores": {
+        "volume": 90,
+        "technical": 52.5,
+        "momentum": 68.0,
+        "volatility": 40,
+        "market_structure": 92.5,
+        "trend": 70
+      },
+      "signals": [
+        "STRONG_VOLUME_ANOMALY",
+        "OVERBOUGHT_RSI"
+      ]
+    },
+    {
+      "symbol": "LINK",
+      "score": 66.45,
+      "risk_level": "HIGH",
+      "position_size": 0.013290000000000003,
+      "category_scores": {
+        "volume": 90,
+        "technical": 66.5,
+        "momentum": 32.0,
+        "volatility": 40,
+        "market_structure": 92.5,
+        "trend": 90
+      },
+      "signals": [
+        "STRONG_VOLUME_ANOMALY",
+        "OVERBOUGHT_RSI",
+        "BULLISH_MACD",
+        "UPTREND_CONFIRMED"
+      ]
+    },
+    {
+      "symbol": "BCH",
+      "score": 65.85,
+      "risk_level": "HIGH",
+      "position_size": 0.01317,
+      "category_scores": {
+        "volume": 90,
+        "technical": 52.5,
+        "momentum": 68.0,
+        "volatility": 40,
+        "market_structure": 92.5,
+        "trend": 40
+      },
+      "signals": [
+        "STRONG_VOLUME_ANOMALY",
+        "OVERBOUGHT_RSI"
+      ]
+    },
+    {
+      "symbol": "ICP",
+      "score": 65.05,
+      "risk_level": "MEDIUM",
+      "position_size": 0.022767499999999996,
+      "category_scores": {
+        "volume": 50,
+        "technical": 68.5,
+        "momentum": 68.0,
+        "volatility": 90,
+        "market_structure": 77.5,
+        "trend": 40
+      },
+      "signals": []
+    }
+  ],
+  "risk_distribution": {
+    "LOW": 0,
+    "MEDIUM": 7,
+    "HIGH": 13
+  },
+  "total_allocation": 0.212485,
+  "strategy_notes": [
+    "Found 5 high-priority targets",
+    "Total portfolio allocation: 21.2%",
+    "Volume anomaly detection working properly"
+  ]
+}
