@@ -124,7 +124,6 @@ TRADING_PAIRS = [
     'VIRTUAL/USDT:USDT',   # Virtuals Protocol - Under $5, high volatility
     'ENA/USDT:USDT',       # Ethena - Under $2, high volatility
     'ACT/USDT:USDT',       # Act - AI token, extreme volatility
-    'MEME/USDT:USDT',      # Meme - Meta meme coin, high volatility
     'CHILLGUY/USDT:USDT'   # Chill Guy - Trending meme, extreme volatility
 ]
 
