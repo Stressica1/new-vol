@@ -32,14 +32,14 @@ class AlpineDisplayV2:
     """🏔️ Ultra-Modern Alpine Trading Interface - Revolutionary Design with Next-Generation Features"""
     
     def __init__(self):
-        # Ensure console dimensions are properly constrained
-        self.console = Console(width=140, height=50, force_terminal=True, legacy_windows=False)
+        # Ensure console dimensions are properly constrained - smaller for stability
+        self.console = Console(width=120, height=40, force_terminal=True, legacy_windows=False)
         self.config = TradingConfig()
         self.start_time = datetime.now()
         
-        # UI layout constraints to ensure content stays in boxes
-        self.max_table_width = 130  # Leave margin for borders
-        self.max_content_height = 45  # Leave space for headers/footers
+        # UI layout constraints to ensure content stays in boxes - more conservative
+        self.max_table_width = 110  # Smaller width to prevent overflow
+        self.max_content_height = 35  # Reduced height for stability
         
         # 📊 Enhanced Trading Statistics
         self.total_trades = 0
@@ -190,136 +190,54 @@ class AlpineDisplayV2:
         )
     
     def create_premium_account_panel(self, balance: float, equity: float, margin: float, free_margin: float) -> Panel:
-        """Create premium account panel with visual indicators 💎"""
+        """Create simplified account panel 💎"""
         
-        # Create modern account table with constrained width
-        account_table = Table(show_header=False, box=None, padding=(0, 1), width=self.max_table_width - 10)
-        account_table.add_column("Icon", style="bold", width=4, no_wrap=True)
-        account_table.add_column("Label", style="bold white", width=16, no_wrap=True)
-        account_table.add_column("Value", style="bold", width=18, no_wrap=True)
-        account_table.add_column("Trend", style="bold", width=4, no_wrap=True)
+        # Simplified account info
+        account_info = Text()
+        account_info.append("💎 BALANCE: ", style="bold cyan")
+        account_info.append(f"${balance:,.2f}\n", style="bold green")
         
-        # Balance with trend indicator
-        balance_style = f"bold {self.matrix_green}" if balance > 0 else f"bold {self.danger_gradient}"
-        account_table.add_row(
-            "💎", "BALANCE", 
-            f"[{balance_style}]${balance:,.2f}[/]",
-            self.trend_arrows["up"] if balance > 0 else self.trend_arrows["flat"]
-        )
+        account_info.append("⚡ EQUITY: ", style="bold cyan") 
+        account_info.append(f"${equity:,.2f}\n", style="bold blue")
         
-        # Equity with health indicator
-        equity_style = f"bold {self.neon_cyan}" if equity > balance * 0.8 else f"bold yellow"
-        account_table.add_row(
-            "⚡", "EQUITY", 
-            f"[{equity_style}]${equity:,.2f}[/]",
-            self.trend_arrows["up"] if equity > balance else self.trend_arrows["down"]
-        )
+        account_info.append("🔒 MARGIN: ", style="bold cyan")
+        account_info.append(f"${margin:,.2f}\n", style="bold yellow")
         
-        # Margin with risk indicator
-        margin_ratio = (margin / equity * 100) if equity > 0 else 0
-        margin_color = self.danger_gradient if margin_ratio > 80 else self.matrix_green if margin_ratio < 30 else self.gold_accent
-        account_table.add_row(
-            "🔒", "MARGIN USED", 
-            f"[bold {margin_color}]${margin:,.2f}[/]",
-            "⚠️" if margin_ratio > 80 else "✅"
-        )
+        account_info.append("💰 FREE: ", style="bold cyan")
+        account_info.append(f"${free_margin:,.2f}", style="bold green")
         
-        # Free margin with availability indicator
-        free_style = f"bold {self.matrix_green}" if free_margin > balance * 0.5 else f"bold {self.gold_accent}"
-        account_table.add_row(
-            "💰", "FREE MARGIN", 
-            f"[{free_style}]${free_margin:,.2f}[/]",
-            "🚀" if free_margin > balance * 0.5 else "📊"
-        )
-        
-        # Margin health bar
-        margin_health = max(0, min(100, 100 - margin_ratio))
-        health_bar = Bar(
-            size=30,
-            begin=0,
-            end=100,
-            width=int(margin_health),
-            color="green" if margin_health > 70 else "yellow" if margin_health > 30 else "red"
-        )
-        
-        account_table.add_row("📊", "MARGIN HEALTH", f"{health_bar} {margin_health:.1f}%", "")
-        
-        return self.create_glowing_border(
-            Padding(account_table, (1, 1)),
-            "ACCOUNT STATUS",
-            self.neon_cyan
+        return Panel(
+            account_info,
+            title="💎 ACCOUNT STATUS 💎",
+            border_style="cyan",
+            width=self.max_table_width
         )
     
     def create_performance_dashboard(self) -> Panel:
-        """Create sophisticated performance dashboard 📈"""
+        """Create simplified performance dashboard 📈"""
         
-        perf_table = Table(show_header=False, box=None, padding=(0, 1), width=self.max_table_width - 10)
-        perf_table.add_column("Metric", style="bold", width=4, no_wrap=True)
-        perf_table.add_column("Label", style="bold white", width=16, no_wrap=True)
-        perf_table.add_column("Value", style="bold", width=20, no_wrap=True)
-        perf_table.add_column("Status", style="bold", width=6, no_wrap=True)
+        # Simple performance info
+        perf_info = Text()
         
-        # Calculate advanced metrics
         win_rate = (self.winning_trades / self.total_trades * 100) if self.total_trades > 0 else 0
-        profit_factor = abs(self.total_pnl / (self.total_pnl - self.daily_pnl)) if self.total_pnl != self.daily_pnl else 1.0
         
-        # Total trades with sparkline effect
-        trades_emoji = "🎯" if self.total_trades > 10 else "🎪" if self.total_trades > 0 else "⭐"
-        perf_table.add_row(
-            trades_emoji, "TOTAL TRADES", 
-            f"[bold {self.neon_cyan}]{self.total_trades}[/]",
-            "🚀" if self.total_trades > 50 else "📈"
-        )
+        perf_info.append("🎯 TRADES: ", style="bold cyan")
+        perf_info.append(f"{self.total_trades}\n", style="bold white")
         
-        # Win rate with visual indicator
-        win_rate_color = self.matrix_green if win_rate >= 70 else self.gold_accent if win_rate >= 50 else self.danger_gradient
-        win_rate_emoji = "🏆" if win_rate >= 80 else "⭐" if win_rate >= 60 else "📊"
-        perf_table.add_row(
-            win_rate_emoji, "WIN RATE", 
-            f"[bold {win_rate_color}]{win_rate:.1f}%[/]",
-            "💎" if win_rate >= 80 else "✨"
-        )
+        perf_info.append("🏆 WIN RATE: ", style="bold cyan")
+        perf_info.append(f"{win_rate:.1f}%\n", style="bold green" if win_rate >= 60 else "bold yellow")
         
-        # P&L with dramatic styling
-        pnl_color = self.matrix_green if self.total_pnl >= 0 else self.danger_gradient
-        pnl_emoji = "💰" if self.total_pnl > 100 else "📈" if self.total_pnl >= 0 else "📉"
-        pnl_trend = self.trend_arrows["up"] if self.total_pnl >= 0 else self.trend_arrows["down"]
-        perf_table.add_row(
-            pnl_emoji, "TOTAL P&L", 
-            f"[bold {pnl_color}]${self.total_pnl:,.2f}[/]",
-            pnl_trend
-        )
+        perf_info.append("💰 TOTAL P&L: ", style="bold cyan")
+        perf_info.append(f"${self.total_pnl:,.2f}\n", style="bold green" if self.total_pnl >= 0 else "bold red")
         
-        # Daily P&L with time-based styling
-        daily_color = self.matrix_green if self.daily_pnl >= 0 else self.danger_gradient
-        daily_emoji = "☀️" if self.daily_pnl > 0 else "🌙" if self.daily_pnl < 0 else "⚡"
-        perf_table.add_row(
-            daily_emoji, "TODAY P&L", 
-            f"[bold {daily_color}]${self.daily_pnl:,.2f}[/]",
-            "🔥" if abs(self.daily_pnl) > 100 else "📊"
-        )
+        perf_info.append("📊 DAILY P&L: ", style="bold cyan")
+        perf_info.append(f"${self.daily_pnl:,.2f}", style="bold green" if self.daily_pnl >= 0 else "bold red")
         
-        # Drawdown with risk visualization
-        dd_color = self.danger_gradient if abs(self.max_drawdown) > 10 else self.gold_accent if abs(self.max_drawdown) > 5 else self.matrix_green
-        dd_emoji = "⚠️" if abs(self.max_drawdown) > 15 else "📊"
-        perf_table.add_row(
-            dd_emoji, "MAX DRAWDOWN", 
-            f"[bold {dd_color}]{self.max_drawdown:.1f}%[/]",
-            "🛡️" if abs(self.max_drawdown) < 5 else "⚡"
-        )
-        
-        # Profit factor
-        pf_color = self.matrix_green if profit_factor > 1.5 else self.gold_accent if profit_factor > 1.0 else self.danger_gradient
-        perf_table.add_row(
-            "⚡", "PROFIT FACTOR", 
-            f"[bold {pf_color}]{profit_factor:.2f}[/]",
-            "🏆" if profit_factor > 2.0 else "📈"
-        )
-        
-        return self.create_glowing_border(
-            Padding(perf_table, (1, 1)),
-            "PERFORMANCE METRICS",
-            self.matrix_green
+        return Panel(
+            perf_info,
+            title="📈 PERFORMANCE 📈",
+            border_style="green",
+            width=self.max_table_width
         )
     
     def create_elite_positions_panel(self, positions: List[Dict]) -> Panel:
@@ -483,30 +401,21 @@ class AlpineDisplayV2:
             )
         
         log_content = Text()
-        for i, log in enumerate(logs[-8:]):  # Show last 8 logs with cyber styling
-            # Add timestamp and styling
-            timestamp = datetime.now().strftime("%H:%M:%S")
-            
-            # Style based on log content
-            if "ERROR" in log.upper() or "❌" in log:
-                log_style = f"bold {self.danger_gradient}"
-                prefix = "🔥"
-            elif "SUCCESS" in log.upper() or "✅" in log:
-                log_style = f"bold {self.matrix_green}"
-                prefix = "✨"
-            elif "WARNING" in log.upper() or "⚠️" in log:
-                log_style = f"bold {self.gold_accent}"
-                prefix = "⚡"
+        for log in logs[-5:]:  # Show only last 5 logs to prevent overflow
+            if "❌" in log:
+                log_content.append(f"🔥 {log}\n", style="bold red")
+            elif "✅" in log:
+                log_content.append(f"✨ {log}\n", style="bold green")
+            elif "⚠️" in log:
+                log_content.append(f"⚡ {log}\n", style="bold yellow")
             else:
-                log_style = f"{self.neon_cyan}"
-                prefix = "💫"
-            
-            log_content.append(f"{prefix} [{timestamp}] {log}\n", style=log_style)
+                log_content.append(f"💫 {log}\n", style="cyan")
         
-        return self.create_glowing_border(
-            Padding(log_content, (1, 1)),
-            "SYSTEM LOG",
-            self.matrix_green
+        return Panel(
+            log_content,
+            title="📝 SYSTEM LOG 📝",
+            border_style="blue",
+            width=self.max_table_width
         )
     
     def create_quantum_status_bar(self, status: str, last_update: datetime) -> Panel:
@@ -570,34 +479,34 @@ class AlpineDisplayV2:
         # Quantum layout structure
         layout = Layout()
         
-        # Split into header and body
+        # Simplified layout structure - prevent overlapping
         layout.split_column(
-            Layout(self.create_ultra_modern_header(), size=8, name="header"),
-            Layout(name="main_matrix", ratio=1),
-            Layout(self.create_quantum_status_bar(status, datetime.now()), size=4, name="quantum_status")
+            Layout(self.create_ultra_modern_header(), size=6, name="header"),
+            Layout(name="main_content", ratio=1),
+            Layout(self.create_quantum_status_bar(status, datetime.now()), size=3, name="status")
         )
         
-        # Main matrix with perfect proportions
-        layout["main_matrix"].split_row(
-            Layout(name="left_neural_panel", ratio=3),
-            Layout(name="right_control_panel", ratio=4)
+        # Main content with controlled proportions
+        layout["main_content"].split_row(
+            Layout(name="left_panel", ratio=1),
+            Layout(name="right_panel", ratio=1)
         )
         
-        # Left neural panel - Account & Performance Intelligence
-        layout["left_neural_panel"].split_column(
+        # Left panel - Account & Performance (simplified)
+        layout["left_panel"].split_column(
             Layout(self.create_premium_account_panel(
                 account_data.get('balance', 0),
                 account_data.get('equity', 0),
                 account_data.get('margin', 0),
                 account_data.get('free_margin', 0)
-            ), size=12, name="premium_account"),
-            Layout(self.create_performance_dashboard(), size=14, name="performance_dashboard"),
-            Layout(self.create_cyber_log_panel(logs), name="cyber_logs")
+            ), size=8, name="account"),
+            Layout(self.create_performance_dashboard(), size=8, name="performance"),
+            Layout(self.create_cyber_log_panel(logs[:10]), name="logs")  # Limit logs to prevent overflow
         )
         
-        # Right control panel - Positions & Neural Signals
-        layout["right_control_panel"].split_column(
-            Layout(self.create_elite_positions_panel(positions), name="elite_positions"),
+        # Right panel - Positions & Signals (simplified)
+        layout["right_panel"].split_column(
+            Layout(self.create_elite_positions_panel(positions[:5]), name="positions"),  # Limit positions
             Layout(self.create_neural_signals_panel(signals), name="neural_signals")
         )
         
