@@ -98,6 +98,7 @@ class AlpineBot:
         self.active_positions = []
         self.current_signals = []
         self.activity_log = []
+        self.error_log = []  # Track system errors for display
         self.account_data = {}
         self.system_status = "INITIALIZING"
         
@@ -283,6 +284,12 @@ class AlpineBot:
         emoji = emoji_map.get(level, "📝")
         log_entry = f"{timestamp} {emoji} {message}"
         self.activity_log.append(log_entry)
+        
+        # Track errors separately for error panel
+        if level == "ERROR":
+            self.error_log.append(f"{timestamp}: {message}")
+            if len(self.error_log) > 50:  # Keep last 50 errors
+                self.error_log = self.error_log[-50:]
         
         # Log to Loguru as well
         if level == "ERROR":
@@ -498,7 +505,7 @@ class AlpineBot:
             return df
             
         except Exception as e:
-            error_msg = f"❌ Error fetching market data for {symbol}: {str(e)}"
+            error_msg = f"Market data error for {symbol}: {str(e)}"
             logger.exception(f"Error fetching market data for {symbol}")
             self.log_activity(error_msg, "ERROR")
             return None
@@ -597,7 +604,7 @@ class AlpineBot:
                     logger.debug(f"❌ {symbol}: No signals detected on any timeframe")
                 
             except Exception as e:
-                error_msg = f"❌ Error analyzing {symbol}: {str(e)}"
+                error_msg = f"Signal analysis error for {symbol}: {str(e)}"
                 logger.exception(f"Error analyzing {symbol}")
                 self.log_activity(error_msg, "ERROR")
         
@@ -1126,6 +1133,7 @@ class AlpineBot:
             'positions': self.active_positions,
             'signals': recent_signals,
             'logs': self.activity_log[-15:] if self.activity_log else [],
+            'errors': self.error_log[-10:] if hasattr(self, 'error_log') and self.error_log else [],
             'status': status
         }
     

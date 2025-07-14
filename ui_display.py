@@ -418,6 +418,30 @@ class AlpineDisplayV2:
             width=self.max_table_width
         )
     
+    def create_error_panel(self, errors: List[str]) -> Panel:
+        """Create error panel for system errors and exceptions 🚨"""
+        
+        if not errors:
+            error_content = Text("✅ No system errors detected", style="bold green")
+        else:
+            error_content = Text()
+            for error in errors[-3:]:  # Show last 3 errors only
+                if "ccxt" in error.lower() or "exchange" in error.lower():
+                    error_content.append(f"🔗 API: {error[:80]}...\n", style="bold yellow")
+                elif "market symbol" in error.lower():
+                    error_content.append(f"📊 Market: {error[:80]}...\n", style="bold orange")
+                elif "error" in error.lower():
+                    error_content.append(f"⚠️ System: {error[:80]}...\n", style="bold red")
+                else:
+                    error_content.append(f"🐛 Debug: {error[:80]}...\n", style="dim white")
+        
+        return Panel(
+            error_content,
+            title="🚨 ERROR MONITOR 🚨",
+            border_style="red",
+            width=self.max_table_width
+        )
+    
     def create_quantum_status_bar(self, status: str, last_update: datetime) -> Panel:
         """Create quantum-style status bar with advanced effects ⚡"""
         
@@ -466,7 +490,7 @@ class AlpineDisplayV2:
         )
     
     def create_revolutionary_layout(self, account_data: Dict, positions: List[Dict], 
-                                  signals: List[Dict], logs: List[str], status: str) -> Layout:
+                                  signals: List[Dict], logs: List[str], status: str, errors: Optional[List[str]] = None) -> Layout:
         """Create revolutionary layout with stable design principles 🌌"""
         
         # Stabilized animation states - minimal updates
@@ -504,10 +528,11 @@ class AlpineDisplayV2:
             Layout(self.create_cyber_log_panel(logs[:10]), name="logs")  # Limit logs to prevent overflow
         )
         
-        # Right panel - Positions & Signals (simplified)
+        # Right panel - Positions, Signals & Errors (simplified)
         layout["right_panel"].split_column(
-            Layout(self.create_elite_positions_panel(positions[:5]), name="positions"),  # Limit positions
-            Layout(self.create_neural_signals_panel(signals), name="neural_signals")
+            Layout(self.create_elite_positions_panel(positions[:5]), size=10, name="positions"),  # Limit positions
+            Layout(self.create_neural_signals_panel(signals), size=8, name="neural_signals"),
+            Layout(self.create_error_panel(errors or []), name="errors")  # New error panel
         )
         
         return layout
