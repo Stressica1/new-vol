@@ -1,11 +1,11 @@
 """
 🏔️ Alpine Trading Bot - Ultra-Modern Terminal UI
-Revolutionary design with gradients, animations, and stunning visuals
+Revolutionary design with gradients, animations, real-time analytics, and professional trading interface
 """
 
 import time
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from rich.console import Console
 from rich.table import Table
@@ -22,23 +22,32 @@ from rich.bar import Bar
 from rich.style import Style
 from rich.gradient import Gradient
 from rich.spinner import Spinner
+from rich.tree import Tree
+from rich.rule import Rule
+from rich.markdown import Markdown
+from rich.syntax import Syntax
 from config import TradingConfig, BOT_NAME, VERSION
+import numpy as np
 
-class AlpineDisplay:
-    """🏔️ Ultra-Modern Alpine Terminal Display System - Revolutionary Design"""
+class AlpineDisplayV2:
+    """🏔️ Ultra-Modern Alpine Trading Interface - Revolutionary Design with Next-Generation Features"""
     
     def __init__(self):
-        self.console = Console()
+        self.console = Console(width=120, height=40)
         self.config = TradingConfig()
         self.start_time = datetime.now()
         
-        # 📊 Trading Statistics
+        # 📊 Enhanced Trading Statistics
         self.total_trades = 0
         self.winning_trades = 0
         self.losing_trades = 0
         self.total_pnl = 0.0
         self.daily_pnl = 0.0
         self.max_drawdown = 0.0
+        self.best_trade = 0.0
+        self.worst_trade = 0.0
+        self.current_streak = 0
+        self.max_streak = 0
         
         # 🌈 Revolutionary color palette with gradients
         self.neon_cyan = "#00FFFF"
@@ -135,6 +144,26 @@ class AlpineDisplay:
             Text.assemble(title_text, "\n", subtitle, "\n", status_line)
         )
         
+        self.console.print(self._create_startup_banner(), style="bold cyan")
+    
+    def _create_startup_banner(self) -> Panel:
+        """🎆 Epic startup banner with ASCII art"""
+        banner_text = f"""
+[bold cyan]╔═══════════════════════════════════════════════════════════════════════════════════════════════╗[/]
+[bold cyan]║[/]                          [bold gradient(#00FFB3,#7C3AED)]🏔️  ALPINE TRADING BOT V2.0  🏔️[/]                            [bold cyan]║[/]
+[bold cyan]║[/]                      [italic]Next-Generation AI-Powered Trading Interface[/]                       [bold cyan]║[/]
+[bold cyan]╚═══════════════════════════════════════════════════════════════════════════════════════════════╝[/]
+
+[bold green]🚀 INITIALIZED FEATURES:[/]
+├─ [cyan]⚡ 1m/3m Confluence Signal Detection[/]
+├─ [cyan]🎯 Dynamic ATR-Based Stop Loss[/]
+├─ [cyan]📈 +15% Position Size Boost on Confluence[/]
+├─ [cyan]🔥 Real-time Volume Anomaly Analysis[/]
+├─ [cyan]💎 Enhanced Risk Management[/]
+└─ [cyan]🌈 Ultra-Modern UI Design[/]
+
+[bold yellow]⚡ SYSTEM STATUS: [bold green]OPERATIONAL[/][/]
+"""
         return Panel(
             Padding(header_content, (1, 2)),
             style=f"bold {self.midnight_blue}",
@@ -523,6 +552,8 @@ class AlpineDisplay:
         
         # Quantum layout structure
         layout = Layout()
+        
+        # Split into header and body
         layout.split_column(
             Layout(self.create_ultra_modern_header(), size=8, name="header"),
             Layout(name="main_matrix", ratio=1),

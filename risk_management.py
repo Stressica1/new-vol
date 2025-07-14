@@ -5,6 +5,9 @@ from loguru import logger
 from dataclasses import dataclass
 from enum import Enum
 import json
+import pandas as pd
+import numpy as np
+import ta
 
 from config import config
 from bitget_client import bitget_client
@@ -49,8 +52,16 @@ class RiskMetrics:
     max_drawdown: float
     risk_level: RiskLevel
     
+@dataclass
+class VolatilityMetrics:
+    """📊 Volatility metrics for dynamic risk management"""
+    atr: float
+    volatility_score: float
+    risk_adjustment: float
+    dynamic_stop_pct: float
+    
 class RiskManager:
-    """Comprehensive Risk Management System"""
+    """Comprehensive Risk Management System with Dynamic Volatility Analysis"""
     
     def __init__(self):
         self.config = config.risk_management
@@ -63,8 +74,170 @@ class RiskManager:
         self.risk_metrics: Optional[RiskMetrics] = None
         self.emergency_stop = False
         
-        logger.info("Risk Manager initialized")
+        # 📊 Volatility tracking for dynamic stops
+        self.volatility_cache: Dict[str, VolatilityMetrics] = {}
+        self.price_data_cache: Dict[str, pd.DataFrame] = {}
+        
+        logger.info("🛡️ Enhanced Risk Manager with Dynamic Volatility Analysis initialized")
     
+    def calculate_atr_volatility(self, df: pd.DataFrame, period: int = 14) -> float:
+        """📈 Calculate Average True Range for volatility measurement"""
+        try:
+            if len(df) < period:
+                logger.warning(f"⚠️ Insufficient data for ATR calculation: {len(df)} < {period}")
+                return 0.02  # Default 2% volatility
+            
+            # Calculate ATR using ta library
+            atr = ta.volatility.AverageTrueRange(
+                high=df['high'],
+                low=df['low'],
+                close=df['close'],
+                window=period
+            ).average_true_range()
+            
+            current_atr = atr.iloc[-1] if not pd.isna(atr.iloc[-1]) else 0.02
+            
+            # Convert ATR to percentage of current price
+            current_price = df['close'].iloc[-1]
+            atr_percentage = (current_atr / current_price) if current_price > 0 else 0.02
+            
+            logger.debug(f"📊 ATR calculated: {current_atr:.4f} ({atr_percentage:.2%})")
+            return atr_percentage
+            
+        except Exception as e:
+            logger.error(f"❌ Error calculating ATR: {e}")
+            return 0.02  # Default 2% volatility
+    
+    def calculate_dynamic_stop_loss(self, symbol: str, entry_price: float, side: str, 
+                                  market_data: pd.DataFrame = None) -> float:
+        """🎯 Calculate dynamic stop loss based on volatility (ATR)"""
+        try:
+            # Get current volatility metrics
+            volatility_metrics = self.get_volatility_metrics(symbol, market_data)
+            
+            # Use dynamic stop percentage based on volatility
+            stop_loss_pct = volatility_metrics.dynamic_stop_pct
+            
+            logger.info(f"🎯 Dynamic stop loss for {symbol}: {stop_loss_pct:.2%} (ATR-based)")
+            
+            if side.lower() in ['long', 'open_long', 'buy']:
+                stop_loss_price = entry_price * (1 - stop_loss_pct)
+            else:  # short position
+                stop_loss_price = entry_price * (1 + stop_loss_pct)
+            
+            logger.info(f"🛡️ Dynamic stop loss price: {stop_loss_price:.4f} for {symbol}")
+            return stop_loss_price
+            
+        except Exception as e:
+            logger.error(f"❌ Error calculating dynamic stop loss: {e}")
+            # Fallback to static stop loss
+            return self.calculate_stop_loss_price(symbol, entry_price, side)
+    
+    def get_volatility_metrics(self, symbol: str, market_data: pd.DataFrame = None) -> VolatilityMetrics:
+        """📊 Get or calculate volatility metrics for a symbol"""
+        try:
+            # Use provided data or get from cache
+            if market_data is not None and len(market_data) > 0:
+                df = market_data
+            elif symbol in self.price_data_cache:
+                df = self.price_data_cache[symbol]
+            else:
+                # Create default data if none available
+                logger.warning(f"⚠️ No market data available for {symbol}, using defaults")
+                return VolatilityMetrics(
+                    atr=0.02,
+                    volatility_score=1.0,
+                    risk_adjustment=1.0,
+                    dynamic_stop_pct=self.trading_config.stop_loss_pct / 100
+                )
+            
+            # Calculate ATR
+            atr = self.calculate_atr_volatility(df, self.trading_config.atr_period)
+            
+            # Calculate volatility score (normalized)
+            volatility_score = min(max(atr / 0.02, 0.5), 3.0)  # Normalize between 0.5-3.0
+            
+            # Calculate risk adjustment
+            risk_adjustment = 1.0 + (volatility_score - 1.0) * 0.5
+            
+            # Calculate dynamic stop loss percentage
+            base_stop = self.trading_config.min_stop_loss_pct / 100
+            max_stop = self.trading_config.max_stop_loss_pct / 100
+            
+            # ATR-based dynamic stop
+            atr_multiplier = self.trading_config.atr_multiplier
+            dynamic_stop_pct = min(max(atr * atr_multiplier, base_stop), max_stop)
+            
+            volatility_metrics = VolatilityMetrics(
+                atr=atr,
+                volatility_score=volatility_score,
+                risk_adjustment=risk_adjustment,
+                dynamic_stop_pct=dynamic_stop_pct
+            )
+            
+            # Cache the metrics
+            self.volatility_cache[symbol] = volatility_metrics
+            
+            logger.debug(f"📊 Volatility metrics for {symbol}: ATR={atr:.3%}, Stop={dynamic_stop_pct:.2%}")
+            return volatility_metrics
+            
+        except Exception as e:
+            logger.error(f"❌ Error calculating volatility metrics: {e}")
+            return VolatilityMetrics(
+                atr=0.02,
+                volatility_score=1.0,
+                risk_adjustment=1.0,
+                dynamic_stop_pct=0.015  # 1.5% default
+            )
+    
+    def calculate_confluence_position_size(self, symbol: str, entry_price: float, 
+                                         is_confluence_signal: bool = False,
+                                         stop_loss_price: float = None) -> float:
+        """💰 Enhanced position sizing with confluence boost"""
+        try:
+            # Get account metrics
+            risk_metrics = self.calculate_risk_metrics()
+            total_equity = max(risk_metrics.total_equity, 1000.0)  # Minimum for calculation
+            
+            # Base position size calculation
+            base_position_value = total_equity * (self.trading_config.position_size_pct / 100)
+            
+            # Apply confluence multiplier if this is a confluence signal
+            if is_confluence_signal:
+                position_value = base_position_value * self.trading_config.confluence_position_multiplier
+                logger.info(f"🚀 Confluence signal detected! Position size boosted by {self.trading_config.confluence_position_multiplier:.1%}")
+            else:
+                position_value = base_position_value
+            
+            # Get volatility adjustment
+            volatility_metrics = self.get_volatility_metrics(symbol)
+            
+            # Adjust position size based on volatility (higher volatility = smaller position)
+            volatility_adjustment = 1.0 / volatility_metrics.risk_adjustment
+            adjusted_position_value = position_value * volatility_adjustment
+            
+            # Calculate position size in contracts/units
+            position_size = adjusted_position_value / entry_price
+            
+            # Ensure minimum order size
+            min_size = self.trading_config.min_order_size / entry_price
+            if position_size < min_size:
+                position_size = min_size
+            
+            logger.info(f"💰 Position size calculated: {position_size:.4f} for {symbol}")
+            logger.info(f"   📊 Base value: ${base_position_value:.2f}")
+            if is_confluence_signal:
+                logger.info(f"   🚀 Confluence boost: +{(self.trading_config.confluence_position_multiplier-1)*100:.0f}%")
+            logger.info(f"   📈 Volatility adj: {volatility_adjustment:.2f}x")
+            logger.info(f"   💵 Final value: ${adjusted_position_value:.2f}")
+            
+            return position_size
+            
+        except Exception as e:
+            logger.error(f"❌ Error calculating confluence position size: {e}")
+            # Fallback to basic calculation
+            return self.calculate_position_size(symbol, entry_price, stop_loss_price)
+
     def update_daily_metrics(self, current_balance: float):
         """Update daily metrics"""
         current_date = datetime.now().date()
