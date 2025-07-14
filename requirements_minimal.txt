@@ -1,0 +1,8 @@
+ccxt
+pandas
+numpy
+ta
+scipy
+rich
+loguru
+watchdog
