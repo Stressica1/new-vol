@@ -28,6 +28,7 @@ class TradingConfig:
     trailing_stop: bool = True
     trailing_stop_pct: float = 0.8  # Tight trailing for scalping
     leverage: int = 1  # Leverage for futures trading (1x = no leverage)
+    min_order_size: float = 10.0  # Minimum order size in USDT
     
     # 🎯 Strategy Parameters (Volume Anomaly - TUNED FOR 3M SCALPING)
     volume_lookback: int = 10  # Faster signals for scalping

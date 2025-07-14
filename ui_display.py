@@ -32,7 +32,7 @@ class AlpineDisplayV2:
     """🏔️ Ultra-Modern Alpine Trading Interface - Revolutionary Design with Next-Generation Features"""
     
     def __init__(self):
-        self.console = Console(width=120, height=40, force_terminal=True)
+        self.console = Console(width=140, height=50, force_terminal=True)
         self.config = TradingConfig()
         self.start_time = datetime.now()
         

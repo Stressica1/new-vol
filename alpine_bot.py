@@ -328,7 +328,7 @@ class AlpineBot:
             
             logger.info("💰 Fetching futures account balance...")
             self.log_activity("💰 Fetching futures account balance...", "INFO")
-            balance = self.exchange.fetch_balance({'type': 'future'})
+            balance = self.exchange.fetch_balance({'type': 'swap'})
             logger.debug(f"Futures balance response: {balance}")
             
             self.connected = True
@@ -402,7 +402,7 @@ class AlpineBot:
             
             logger.debug("Fetching futures account balance...")
             # Fetch futures balance
-            balance = self.exchange.fetch_balance({'type': 'future'})
+            balance = self.exchange.fetch_balance({'type': 'swap'})
             
             # Get futures balance info from the raw response
             usdt_futures_info = None

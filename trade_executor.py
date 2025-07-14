@@ -98,7 +98,7 @@ class OptimizedTradeExecutor:
         """Calculate optimal position size based on risk and confidence"""
         try:
             # Get futures account balance
-            balance = self.exchange.fetch_balance({'type': 'future'})
+            balance = self.exchange.fetch_balance({'type': 'swap'})
             
             # Extract USDT futures balance
             free_usdt = 0

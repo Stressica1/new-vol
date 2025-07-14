@@ -24,7 +24,7 @@ from strategy import VolumeAnomalyStrategy
 
 class SimpleAlpineBot:
     def __init__(self):
-        self.console = Console(width=120, height=40, force_terminal=True)
+        self.console = Console(width=140, height=50, force_terminal=True)
         self.config = TradingConfig()
         self.exchange_config = get_exchange_config()
         self.strategy = VolumeAnomalyStrategy()
@@ -53,7 +53,7 @@ class SimpleAlpineBot:
             })
             
             # Test connection with futures balance
-            balance = self.exchange.fetch_balance({'type': 'future'})
+            balance = self.exchange.fetch_balance({'type': 'swap'})
             usdt_info = balance.get('USDT', {})
             total_balance = float(usdt_info.get('total', 0) or 0)
             
@@ -77,7 +77,7 @@ class SimpleAlpineBot:
         """Update account data from futures balance"""
         try:
             if self.exchange:
-                balance = self.exchange.fetch_balance({'type': 'future'})
+                balance = self.exchange.fetch_balance({'type': 'swap'})
                 usdt_info = balance.get('USDT', {})
                 
                 self.account_data = {
@@ -92,7 +92,7 @@ class SimpleAlpineBot:
         """Update positions from futures"""
         try:
             if self.exchange:
-                positions = self.exchange.fetch_positions(None, {'type': 'future'})
+                positions = self.exchange.fetch_positions(None, {'type': 'swap'})
                 self.positions = []
                 
                 for pos in positions:
@@ -239,7 +239,7 @@ class SimpleAlpineBot:
                 symbol=symbol,
                 side=side,
                 amount=quantity,
-                params={'type': 'future'}  # Futures trading
+                                            params={'type': 'swap'}  # Futures trading
             )
             
             self.log(f"✅ Order placed: {order['id']} | {side.upper()} {quantity} {symbol}")

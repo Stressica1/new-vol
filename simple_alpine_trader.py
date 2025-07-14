@@ -25,7 +25,7 @@ from strategy import VolumeAnomalyStrategy
 
 class SimpleAlpineTrader:
     def __init__(self):
-        self.console = Console(width=120, height=40, force_terminal=True)
+        self.console = Console(width=140, height=50, force_terminal=True)
         self.config = TradingConfig()
         self.exchange_config = get_exchange_config()
         self.strategy = VolumeAnomalyStrategy()

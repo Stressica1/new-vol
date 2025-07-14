@@ -435,8 +435,8 @@ class AlpineTradingDashboard:
         """Update account data from exchange - FUTURES BALANCE"""
         try:
             if self.connection.exchange:
-                # Fetch futures balance specifically
-                balance = self.connection.exchange.fetch_balance({'type': 'future'})
+                            # Fetch futures balance specifically
+            balance = self.connection.exchange.fetch_balance({'type': 'swap'})
                 
                 # Get futures balance info from the response
                 usdt_info = balance.get('USDT', {})
@@ -468,8 +468,8 @@ class AlpineTradingDashboard:
         """Update positions from exchange - FUTURES POSITIONS"""
         try:
             if self.connection.exchange:
-                # Fetch futures positions specifically
-                positions = self.connection.exchange.fetch_positions(None, {'type': 'future'})
+                            # Fetch futures positions specifically
+            positions = self.connection.exchange.fetch_positions(None, {'type': 'swap'})
                 active_positions = []
                 
                 for pos in positions:
