@@ -34,7 +34,16 @@ class OptimizedTradeExecutor:
         with self.execution_lock:
             try:
                 symbol = signal['symbol']
-                action = signal['action']
+                # Support multiple naming conventions – bots may provide either
+                # `action` (BUY/SELL) or `type` (LONG/SHORT)
+                if 'action' in signal:
+                    action = signal['action'].upper()
+                elif 'type' in signal:
+                    action = 'BUY' if signal['type'].upper() == 'LONG' else 'SELL'
+                else:
+                    logger.warning("Signal missing 'action'/'type' field")
+                    return None
+                
                 confidence = signal.get('confidence', 0)
                 
                 # Validate signal
@@ -100,7 +109,7 @@ class OptimizedTradeExecutor:
             confidence_multiplier = 0.5 + (confidence / 100)  # 0.5x to 1.5x
             
             # Adjust for confluence
-            if signal.get('confluence', False):
+            if signal.get('confluence', False) or signal.get('is_confluence', False):
                 confidence_multiplier *= self.config.confluence_position_multiplier
             
             # Calculate final size
@@ -309,19 +318,28 @@ class TradingOrchestrator:
         logger.success("🚀 Trading orchestrator started")
     
     def _run_bot(self, bot):
-        """Run a single bot"""
+        """Run a single bot (polls for new trading signals)"""
         while self.running:
             try:
-                # Get signals from bot
-                signals = bot.generate_signals()
-                
-                # Execute signals
+                # ------------------------------------------------------------------
+                # Flexible signal retrieval
+                # ------------------------------------------------------------------
+                if hasattr(bot, "generate_signals"):
+                    signals = bot.generate_signals()
+                elif hasattr(bot, "analyze_signals"):
+                    # AlpineBot exposes `analyze_signals` instead – keep legacy support✅
+                    signals = bot.analyze_signals()
+                else:
+                    logger.warning(f"{bot.__class__.__name__} has no signal generation method")
+                    signals = []
+
+                # Execute any qualifying signals
                 for signal in signals:
-                    if signal.get('confidence', 0) > 50:
+                    if signal.get("confidence", 0) > 50:
                         self.executor.execute_signal(signal)
-                
+
                 time.sleep(10)  # Check every 10 seconds
-                
+
             except Exception as e:
                 logger.error(f"Bot error ({bot.__class__.__name__}): {e}")
                 time.sleep(30)

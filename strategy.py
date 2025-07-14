@@ -256,6 +256,17 @@ class VolumeAnomalyStrategy:
             safe_log('warning', f"⚠️ Confluence analysis error: {e}")
             return []
 
+    def analyze_timeframe_signals(self, timeframe_data: Dict[str, pd.DataFrame], symbol: str) -> List[Dict]:
+        """Alias for backwards-compatibility 🔄
+
+        AlpineBot still expects a `analyze_timeframe_signals` method on the strategy
+        instance.  The original method was renamed to `analyze_confluence_signals`.
+        This thin wrapper simply forwards the call so that existing integrations
+        continue to work without touching other modules.
+        """
+        # Directly reuse the more descriptive implementation
+        return self.analyze_confluence_signals(timeframe_data, symbol)
+
     def generate_single_timeframe_signals(self, df: pd.DataFrame, symbol: str, timeframe: str) -> List[Dict]:
         """📊 Generate signals for a single timeframe with enhanced logic"""
         try:
