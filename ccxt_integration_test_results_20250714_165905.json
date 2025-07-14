@@ -1,0 +1,321 @@
+{
+  "total_tests": 17,
+  "passed_tests": 16,
+  "failed_tests": 1,
+  "success_rate": 94.11764705882352,
+  "test_results": [
+    {
+      "test_name": "CCXT Version Check",
+      "success": true,
+      "details": "CCXT version 4.4.94 loaded successfully",
+      "timestamp": "2025-07-14T16:59:04.982037",
+      "data": {
+        "version": "4.4.94"
+      }
+    },
+    {
+      "test_name": "Supported Exchanges",
+      "success": true,
+      "details": "CCXT supports 105 exchanges",
+      "timestamp": "2025-07-14T16:59:04.982320",
+      "data": {
+        "exchange_count": 105,
+        "sample_exchanges": [
+          "alpaca",
+          "apex",
+          "ascendex",
+          "bequant",
+          "bigone",
+          "binance",
+          "binancecoinm",
+          "binanceus",
+          "binanceusdm",
+          "bingx"
+        ]
+      }
+    },
+    {
+      "test_name": "Bitget Exchange Support",
+      "success": true,
+      "details": "Bitget support: Available",
+      "timestamp": "2025-07-14T16:59:04.982511",
+      "data": {
+        "bitget_supported": true
+      }
+    },
+    {
+      "test_name": "BITGET Initialization",
+      "success": true,
+      "details": "Successfully initialized bitget",
+      "timestamp": "2025-07-14T16:59:04.987771",
+      "data": {
+        "exchange": "bitget",
+        "has_spot": true,
+        "has_futures": true,
+        "has_margin": true,
+        "rate_limit": 50
+      }
+    },
+    {
+      "test_name": "BINANCE Initialization",
+      "success": true,
+      "details": "Successfully initialized binance",
+      "timestamp": "2025-07-14T16:59:04.993536",
+      "data": {
+        "exchange": "binance",
+        "has_spot": true,
+        "has_futures": true,
+        "has_margin": true,
+        "rate_limit": 50
+      }
+    },
+    {
+      "test_name": "OKX Initialization",
+      "success": true,
+      "details": "Successfully initialized okx",
+      "timestamp": "2025-07-14T16:59:04.997535",
+      "data": {
+        "exchange": "okx",
+        "has_spot": true,
+        "has_futures": true,
+        "has_margin": true,
+        "rate_limit": 103.0
+      }
+    },
+    {
+      "test_name": "BYBIT Initialization",
+      "success": true,
+      "details": "Successfully initialized bybit",
+      "timestamp": "2025-07-14T16:59:05.001293",
+      "data": {
+        "exchange": "bybit",
+        "has_spot": true,
+        "has_futures": true,
+        "has_margin": true,
+        "rate_limit": 20
+      }
+    },
+    {
+      "test_name": "Bitget Market Structure",
+      "success": true,
+      "details": "Bitget market structure validated",
+      "timestamp": "2025-07-14T16:59:05.008622",
+      "data": {
+        "sample_market": {
+          "id": "BTCUSDT_UMCBL",
+          "symbol": "BTC/USDT:USDT",
+          "base": "BTC",
+          "quote": "USDT",
+          "settle": "USDT",
+          "type": "swap",
+          "spot": false,
+          "margin": false,
+          "future": false,
+          "swap": true,
+          "option": false,
+          "active": true,
+          "contract": true,
+          "linear": true,
+          "inverse": false,
+          "contractSize": 0.001,
+          "precision": {
+            "amount": 3,
+            "price": 1
+          }
+        }
+      }
+    },
+    {
+      "test_name": "Bitget Order Parameters",
+      "success": true,
+      "details": "Order parameter structure validated",
+      "timestamp": "2025-07-14T16:59:05.008894",
+      "data": {
+        "order_params": {
+          "symbol": "BTC/USDT:USDT",
+          "type": "limit",
+          "side": "buy",
+          "amount": 0.001,
+          "price": 50000,
+          "params": {
+            "marginMode": "cross",
+            "leverage": 5,
+            "timeInForce": "GTC",
+            "reduceOnly": false,
+            "postOnly": false
+          }
+        }
+      }
+    },
+    {
+      "test_name": "CCXT Error Classes",
+      "success": false,
+      "details": "Error handling classes available: 6",
+      "timestamp": "2025-07-14T16:59:05.009095",
+      "data": {
+        "available_errors": [
+          "AuthenticationError",
+          "BaseError",
+          "ChecksumError",
+          "ExchangeError",
+          "NetworkError",
+          "UnsubscribeError"
+        ],
+        "expected_errors": [
+          "AuthenticationError",
+          "InsufficientFunds",
+          "InvalidOrder",
+          "NetworkError",
+          "ExchangeError"
+        ]
+      }
+    },
+    {
+      "test_name": "Ticker Data Structure",
+      "success": true,
+      "details": "Ticker structure validated",
+      "timestamp": "2025-07-14T16:59:05.010295",
+      "data": {
+        "ticker_fields": [
+          "symbol",
+          "timestamp",
+          "datetime",
+          "high",
+          "low",
+          "bid",
+          "bidVolume",
+          "ask",
+          "askVolume",
+          "vwap",
+          "open",
+          "close",
+          "last",
+          "previousClose",
+          "change",
+          "percentage",
+          "average",
+          "baseVolume",
+          "quoteVolume",
+          "info"
+        ]
+      }
+    },
+    {
+      "test_name": "OHLCV Data Structure",
+      "success": true,
+      "details": "OHLCV structure validated with 3 candles",
+      "timestamp": "2025-07-14T16:59:05.010457",
+      "data": {
+        "ohlcv_sample": [
+          1640995200000,
+          47000.0,
+          48000.0,
+          46500.0,
+          47800.0,
+          123.45
+        ],
+        "format": "[timestamp, open, high, low, close, volume]"
+      }
+    },
+    {
+      "test_name": "Order Data Structure",
+      "success": true,
+      "details": "Order structure validated",
+      "timestamp": "2025-07-14T16:59:05.010671",
+      "data": {
+        "order_fields": [
+          "id",
+          "clientOrderId",
+          "timestamp",
+          "datetime",
+          "lastTradeTimestamp",
+          "symbol",
+          "type",
+          "timeInForce",
+          "side",
+          "amount",
+          "price",
+          "cost",
+          "average",
+          "filled",
+          "remaining",
+          "status",
+          "fee",
+          "trades",
+          "info"
+        ]
+      }
+    },
+    {
+      "test_name": "Balance Data Structure",
+      "success": true,
+      "details": "Balance structure validated",
+      "timestamp": "2025-07-14T16:59:05.010823",
+      "data": {
+        "balance_fields": [
+          "info",
+          "USDT",
+          "BTC",
+          "free",
+          "used",
+          "total"
+        ]
+      }
+    },
+    {
+      "test_name": "Configuration Structure",
+      "success": true,
+      "details": "Configuration structure validated",
+      "timestamp": "2025-07-14T16:59:05.011177",
+      "data": {
+        "config_fields": [
+          "apiKey",
+          "secret",
+          "password",
+          "sandbox",
+          "enableRateLimit",
+          "timeout",
+          "options"
+        ]
+      }
+    },
+    {
+      "test_name": "Symbol Format Conversion",
+      "success": true,
+      "details": "Symbol conversion validated for 3 pairs",
+      "timestamp": "2025-07-14T16:59:05.011345",
+      "data": {
+        "test_symbols": [
+          [
+            "BTC/USDT",
+            "BTC/USDT:USDT"
+          ],
+          [
+            "ETH/USDT",
+            "ETH/USDT:USDT"
+          ],
+          [
+            "ADA/USDT",
+            "ADA/USDT:USDT"
+          ]
+        ]
+      }
+    },
+    {
+      "test_name": "Error Mapping",
+      "success": true,
+      "details": "Error mapping validated for 5 error types",
+      "timestamp": "2025-07-14T16:59:05.011539",
+      "data": {
+        "error_types": [
+          "insufficient_funds",
+          "invalid_order",
+          "network_error",
+          "authentication_error",
+          "exchange_error"
+        ]
+      }
+    }
+  ],
+  "timestamp": "2025-07-14T16:59:05.015701"
+}

@@ -32,9 +32,14 @@ class AlpineDisplayV2:
     """🏔️ Ultra-Modern Alpine Trading Interface - Revolutionary Design with Next-Generation Features"""
     
     def __init__(self):
-        self.console = Console(width=140, height=50, force_terminal=True)
+        # Ensure console dimensions are properly constrained
+        self.console = Console(width=140, height=50, force_terminal=True, legacy_windows=False)
         self.config = TradingConfig()
         self.start_time = datetime.now()
+        
+        # UI layout constraints to ensure content stays in boxes
+        self.max_table_width = 130  # Leave margin for borders
+        self.max_content_height = 45  # Leave space for headers/footers
         
         # 📊 Enhanced Trading Statistics
         self.total_trades = 0
@@ -99,14 +104,14 @@ class AlpineDisplayV2:
     
     def create_glowing_border(self, content, title: str, color: str = "cyan") -> Panel:
         """Create glowing border effect 🌟"""
-        glow_chars = ["═", "╔", "╗", "╚", "╝", "║"]
         return Panel(
             content,
             title=f"✨ {title} ✨",
             title_align="center",
             border_style=f"bold {color}",
             box=box.DOUBLE_EDGE,
-            padding=(1, 2)
+            padding=(1, 2),
+            width=self.max_table_width  # Constrain width to prevent overflow
         )
     
     def create_ultra_modern_header(self) -> Panel:
@@ -152,7 +157,8 @@ class AlpineDisplayV2:
             header_content,
             style=f"bold {self.midnight_blue}",
             box=box.DOUBLE_EDGE,
-            border_style=f"bold {self.neon_cyan}"
+            border_style=f"bold {self.neon_cyan}",
+            width=self.max_table_width
         )
     
     def _create_startup_banner(self) -> Panel:
@@ -179,18 +185,19 @@ class AlpineDisplayV2:
             box=box.DOUBLE_EDGE,
             title="🌟 ALPINE FINANCIAL INTELLIGENCE 🌟",
             title_align="center",
-            border_style=f"bold {self.neon_cyan}"
+            border_style=f"bold {self.neon_cyan}",
+            width=self.max_table_width
         )
     
     def create_premium_account_panel(self, balance: float, equity: float, margin: float, free_margin: float) -> Panel:
         """Create premium account panel with visual indicators 💎"""
         
-        # Create modern account table
-        account_table = Table(show_header=False, box=None, padding=(0, 2))
-        account_table.add_column("Icon", style="bold", width=4)
-        account_table.add_column("Label", style="bold white", width=16)
-        account_table.add_column("Value", style="bold", width=18)
-        account_table.add_column("Trend", style="bold", width=4)
+        # Create modern account table with constrained width
+        account_table = Table(show_header=False, box=None, padding=(0, 1), width=self.max_table_width - 10)
+        account_table.add_column("Icon", style="bold", width=4, no_wrap=True)
+        account_table.add_column("Label", style="bold white", width=16, no_wrap=True)
+        account_table.add_column("Value", style="bold", width=18, no_wrap=True)
+        account_table.add_column("Trend", style="bold", width=4, no_wrap=True)
         
         # Balance with trend indicator
         balance_style = f"bold {self.matrix_green}" if balance > 0 else f"bold {self.danger_gradient}"
@@ -246,11 +253,11 @@ class AlpineDisplayV2:
     def create_performance_dashboard(self) -> Panel:
         """Create sophisticated performance dashboard 📈"""
         
-        perf_table = Table(show_header=False, box=None, padding=(0, 2))
-        perf_table.add_column("Metric", style="bold", width=4)
-        perf_table.add_column("Label", style="bold white", width=16)
-        perf_table.add_column("Value", style="bold", width=20)
-        perf_table.add_column("Status", style="bold", width=6)
+        perf_table = Table(show_header=False, box=None, padding=(0, 1), width=self.max_table_width - 10)
+        perf_table.add_column("Metric", style="bold", width=4, no_wrap=True)
+        perf_table.add_column("Label", style="bold white", width=16, no_wrap=True)
+        perf_table.add_column("Value", style="bold", width=20, no_wrap=True)
+        perf_table.add_column("Status", style="bold", width=6, no_wrap=True)
         
         # Calculate advanced metrics
         win_rate = (self.winning_trades / self.total_trades * 100) if self.total_trades > 0 else 0
@@ -332,15 +339,15 @@ class AlpineDisplayV2:
                 self.neon_purple
             )
         
-        pos_table = Table(box=None, padding=(0, 1))
-        pos_table.add_column("🎯", style="bold", width=4)
-        pos_table.add_column("SYMBOL", style="bold white", width=12)
-        pos_table.add_column("SIDE", style="bold", width=8)
-        pos_table.add_column("SIZE", style="white", width=12)
-        pos_table.add_column("ENTRY", style="white", width=12)
-        pos_table.add_column("CURRENT", style="white", width=12)
-        pos_table.add_column("P&L", style="bold", width=16)
-        pos_table.add_column("📊", style="bold", width=4)
+        pos_table = Table(box=None, padding=(0, 1), width=self.max_table_width - 10)
+        pos_table.add_column("🎯", style="bold", width=4, no_wrap=True)
+        pos_table.add_column("SYMBOL", style="bold white", width=10, no_wrap=True)
+        pos_table.add_column("SIDE", style="bold", width=6, no_wrap=True)
+        pos_table.add_column("SIZE", style="white", width=10, no_wrap=True)
+        pos_table.add_column("ENTRY", style="white", width=10, no_wrap=True)
+        pos_table.add_column("CURRENT", style="white", width=10, no_wrap=True)
+        pos_table.add_column("P&L", style="bold", width=14, no_wrap=True)
+        pos_table.add_column("📊", style="bold", width=4, no_wrap=True)
         
         for i, pos in enumerate(positions[:8]):  # Show max 8 positions with elite styling
             symbol = pos.get('symbol', 'N/A').replace('/USDT:USDT', '')
@@ -400,15 +407,15 @@ class AlpineDisplayV2:
                 self.neon_purple
             )
         
-        sig_table = Table(box=None, padding=(0, 1))
-        sig_table.add_column("🕐", style="white", width=8)
-        sig_table.add_column("🎯", style="bold white", width=10)
-        sig_table.add_column("SIGNAL", style="bold", width=12)
-        sig_table.add_column("VOLUME", style="white", width=10)
-        sig_table.add_column("PRICE", style="white", width=12)
-        sig_table.add_column("STRENGTH", style="bold", width=12)
-        sig_table.add_column("STATUS", style="bold", width=12)
-        sig_table.add_column("🚀", style="bold", width=4)
+        sig_table = Table(box=None, padding=(0, 1), width=self.max_table_width - 10)
+        sig_table.add_column("🕐", style="white", width=8, no_wrap=True)
+        sig_table.add_column("🎯", style="bold white", width=8, no_wrap=True)
+        sig_table.add_column("SIGNAL", style="bold", width=10, no_wrap=True)
+        sig_table.add_column("VOLUME", style="white", width=8, no_wrap=True)
+        sig_table.add_column("PRICE", style="white", width=10, no_wrap=True)
+        sig_table.add_column("STRENGTH", style="bold", width=10, no_wrap=True)
+        sig_table.add_column("STATUS", style="bold", width=10, no_wrap=True)
+        sig_table.add_column("🚀", style="bold", width=4, no_wrap=True)
         
         for signal in signals[:6]:  # Show max 6 signals with neural styling
             # Signal type with neural aesthetics
@@ -545,7 +552,8 @@ class AlpineDisplayV2:
             Padding(Align.center(status_text), (0, 1)),
             style=f"bold {self.midnight_blue}",
             box=box.ROUNDED,
-            border_style=f"bold {self.electric_blue}"
+            border_style=f"bold {self.electric_blue}",
+            width=self.max_table_width
         )
     
     def create_revolutionary_layout(self, account_data: Dict, positions: List[Dict], 

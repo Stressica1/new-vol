@@ -773,8 +773,23 @@ class AlpineBot:
                 params = {
                     'marginMode': 'cross',
                     'leverage': self.config.leverage,
-                    'timeInForce': 'GTC'  # Good Till Cancelled - fixes "order validity period" error
+                    'timeInForce': 'GTC',  # Good Till Cancelled - fixes "order validity period" error
+                    'reduceOnly': False,   # New position, not closing
+                    'postOnly': False      # Allow taker orders for immediate execution
                 }
+                
+                # For Bitget, we need to set the position mode and leverage first
+                try:
+                    # Set position mode to one-way (unilateral) for simple trading
+                    self.exchange.set_position_mode(False, exchange_symbol)
+                except:
+                    pass  # Ignore if already set or not supported
+                
+                try:
+                    # Set leverage for the symbol
+                    self.exchange.set_leverage(self.config.leverage, exchange_symbol)
+                except Exception as leverage_error:
+                    logger.warning(f"Could not set leverage: {leverage_error}")
                 
                 order = self.exchange.create_order(
                     symbol=exchange_symbol,
@@ -847,6 +862,45 @@ class AlpineBot:
         except ccxt.InvalidOrder as e:
             error_msg = f"📋 Invalid order for {symbol}: {str(e)}"
             logger.error(error_msg)
+            
+            # Try to handle specific Bitget order errors
+            error_str = str(e).lower()
+            if "minimum order size" in error_str:
+                logger.error("💡 Suggestion: Increase position size to meet minimum requirements")
+            elif "invalid symbol" in error_str:
+                logger.error("💡 Suggestion: Check if symbol is available for futures trading")
+            elif "precision" in error_str:
+                logger.error("💡 Suggestion: Adjust price/amount precision")
+            
+            self.log_activity(error_msg, "ERROR")
+            return False
+            
+        except ccxt.NetworkError as e:
+            error_msg = f"🌐 Network error for {symbol}: {str(e)}"
+            logger.error(error_msg)
+            logger.info("🔄 Retrying order in 2 seconds...")
+            
+            # Retry once for network errors
+            try:
+                import time
+                time.sleep(2)
+                if self.exchange is not None:
+                    order = self.exchange.create_order(
+                        symbol=exchange_symbol,
+                        type='limit',
+                        side=side,
+                        amount=position_size,
+                        price=limit_price,
+                        params=params
+                    )
+                    if order and order.get('id'):
+                        logger.success(f"✅ Order executed successfully on retry: {order['id']}")
+                        return True
+                else:
+                    logger.error("❌ Exchange is None during retry")
+            except Exception as retry_error:
+                logger.error(f"❌ Retry also failed: {retry_error}")
+            
             self.log_activity(error_msg, "ERROR")
             return False
             
@@ -857,6 +911,16 @@ class AlpineBot:
             logger.error(f"🔍 Full traceback: {traceback.format_exc()}")
             logger.error(f"🔍 Order parameters: symbol={symbol}, side={side}, amount={position_size}, price={limit_price}")
             logger.error(f"🔍 Exchange params: {params}")
+            
+            # Common Bitget-specific error handling
+            error_str = str(e).lower()
+            if "order validity period" in error_str:
+                logger.error("💡 Suggestion: timeInForce parameter issue - using GTC")
+            elif "leverage" in error_str:
+                logger.error("💡 Suggestion: Set leverage first or check leverage limits")
+            elif "position mode" in error_str:
+                logger.error("💡 Suggestion: Set position mode to hedge first")
+            
             self.log_activity(error_msg, "ERROR")
             return False
             
@@ -1173,7 +1237,18 @@ def main():
         console = Console()
         
         console.print("🤖 [bold cyan]ALPINE BOT V2.0 STARTING[/bold cyan]")
-        manager.kill_alpine_processes(exclude_current=True)
+        console.print("🔄 [yellow]Scanning for existing bot processes...[/yellow]")
+        
+        # Kill all other Alpine/trading bot processes 
+        killed_count = manager.kill_alpine_processes(exclude_current=True)
+        
+        if killed_count > 0:
+            console.print(f"✅ [green]Successfully killed {killed_count} existing bot processes[/green]")
+            time.sleep(1)  # Give time for processes to fully terminate
+        else:
+            console.print("✅ [green]No existing bot processes found[/green]")
+        
+        console.print("🚀 [bold green]Starting new Alpine Bot instance...[/bold green]")
         
         # Create and run Alpine bot
         bot = AlpineBot()
@@ -1191,7 +1266,7 @@ if __name__ == "__main__":
     console.print("🏔️  ALPINE TRADING BOT V2.0", style="bold green", justify="center")
     console.print("Volume Anomaly Strategy | 90% Success Rate", style="cyan", justify="center") 
     console.print("Beautiful Mint Green Terminal Interface", style="green", justify="center")
-    console.print("🔄 HOT-RELOAD ENABLED", style="bold yellow", justify="center")
+    console.print("🛑 AUTO-KILL OTHER BOTS ENABLED", style="bold red", justify="center")
     console.print("="*60 + "\n", style="bold cyan")
     
     main()

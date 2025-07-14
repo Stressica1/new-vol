@@ -25,7 +25,21 @@ class AlpineBotManager:
             'simple_alpine.py', 
             'simple_alpine_trader.py',
             'trading_dashboard.py',
-            'volume_anom_bot.py'
+            'volume_anom_bot.py',
+            'alpine_main.py',
+            'alpine_bitget_integration.py',
+            'alpine_bot_launcher.py',
+            'run_alpine_bot.py',
+            'launch_alpine.py',
+            'start_trading.py',
+            'main.py',
+            'demo_test.py',
+            'force_test_trade.py',
+            'quick_trade_test.py',
+            'successful_trade.py',
+            'test_ccxt_integration.py',
+            'verify_bot_functionality.py',
+            'working_trade_test.py'
         ]
     
     def find_alpine_processes(self) -> List[dict]:
@@ -37,14 +51,24 @@ class AlpineBotManager:
                 cmdline = proc.info['cmdline']
                 if cmdline and len(cmdline) > 1:
                     script_name = os.path.basename(cmdline[1]) if len(cmdline) > 1 else ''
+                    cmdline_str = ' '.join(cmdline).lower()
                     
-                    # Check if it's an Alpine bot process
+                    # Check if it's an Alpine bot process (by script name)
                     if script_name in self.alpine_processes:
                         processes.append({
                             'pid': proc.info['pid'],
                             'name': script_name,
                             'cmdline': ' '.join(cmdline)
                         })
+                    # Also check for any python process with alpine/bot/trading keywords
+                    elif (proc.info['name'] == 'python3' or proc.info['name'] == 'python') and any(keyword in cmdline_str for keyword in ['alpine', 'trading', 'bot', 'bitget', 'ccxt']):
+                        # Exclude common non-bot processes
+                        if not any(exclude in cmdline_str for exclude in ['pip', 'install', 'setup.py', 'conda', 'jupyter']):
+                            processes.append({
+                                'pid': proc.info['pid'],
+                                'name': script_name or 'python_process',
+                                'cmdline': ' '.join(cmdline)
+                            })
                         
             except (psutil.NoSuchProcess, psutil.AccessDenied, IndexError):
                 continue
@@ -136,6 +160,19 @@ def kill_all_alpine_bots():
     """Standalone function to kill all Alpine bot processes"""
     manager = AlpineBotManager()
     killed = manager.kill_alpine_processes(exclude_current=False)
+    
+    # Double-check for any remaining processes
+    time.sleep(2)
+    remaining = manager.find_alpine_processes()
+    if remaining:
+        console.print(f"⚡ Force killing {len(remaining)} remaining processes...")
+        for proc in remaining:
+            try:
+                os.kill(proc['pid'], signal.SIGKILL)
+                console.print(f"    💀 Force killed PID {proc['pid']}")
+                killed += 1
+            except:
+                pass
     
     if killed > 0:
         console.print(f"\n✅ Successfully killed {killed} Alpine bot processes")
