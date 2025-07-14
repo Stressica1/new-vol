@@ -99,6 +99,7 @@ class AlpineBot:
         # 🔄 Hot-reload system
         self.watchdog_observer = None
         self.reload_handler = None
+        self.reload_lock = threading.Lock()  # Thread-safe hot reloading
         
         # 📈 Performance tracking
         self.signal_count_minute = 0
@@ -106,8 +107,17 @@ class AlpineBot:
         self.execution_times = []
         self.api_response_times = []
         
-        # � Exchange client
+        # 🏦 Exchange client
         self.exchange = None
+        
+        # 📊 Trading data
+        self.positions = []
+        self.market_data = {}
+        self.total_signals = 0
+        self.total_trades = 0
+        self.last_update = datetime.now()
+        self.connected = False
+        self.running = False
         
         logger.info("🏔️ Alpine Bot V2.0 - Next-Generation System Initialized")
         self.log_activity("🚀 Alpine Bot V2.0 initialized with confluence trading", "SUCCESS")
@@ -964,17 +974,16 @@ class AlpineBot:
         try:
             # Run enhanced live display optimized for scalping
             with Live(
-                self.display.create_master_layout(**self.get_display_data()),
+                self.display.create_revolutionary_layout(**self.get_display_data()),
                 console=self.display.console,
                 refresh_per_second=3,  # Faster refresh for scalping
                 screen=True
             ) as live:
                 
                 while self.running:
-                    # Update display with ultra-fast refresh control
-                    if self.display.should_refresh():
-                        display_data = self.get_display_data()
-                        live.update(self.display.create_master_layout(**display_data))
+                    # Update display with ultra-fast refresh control - always refresh for real-time trading
+                    display_data = self.get_display_data()
+                    live.update(self.display.create_revolutionary_layout(**display_data))
                     
                     # Optimized sleep for scalping interface
                     time.sleep(0.3)  # 300ms refresh for real-time scalping

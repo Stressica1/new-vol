@@ -17,9 +17,9 @@ class TradingConfig:
     PASSPHRASE: str = "22672267"
     SANDBOX: bool = False  # Set to True for testing
     
-    # 💰 Trading Parameters - OPTIMIZED FOR 1M/3M HIGH WIN RATE STRATEGY
-    max_daily_loss_pct: float = 50.0
-    max_positions: int = 30  # Increased for rapid scalping on 1m/3m
+    # 💰 Trading Parameters - AGGRESSIVE 2% RISK STRATEGY (1M/3M HIGH WIN RATE)
+    max_daily_loss_pct: float = 50.0  # Matches 50% max drawdown
+    max_positions: int = 20  # Maximum 20 trades at 2% risk each
     position_size_pct: float = 2.0  # Base position size (2% of account)
     confluence_position_multiplier: float = 1.15  # +15% size on confluence signals
     stop_loss_pct: float = 1.5  # Tighter stops for scalping (will be dynamic)
@@ -27,6 +27,7 @@ class TradingConfig:
     max_drawdown_pct: float = 30.0  # Tighter drawdown control
     trailing_stop: bool = True
     trailing_stop_pct: float = 0.8  # Tight trailing for scalping
+    leverage: int = 1  # Leverage for futures trading (1x = no leverage)
     
     # 🎯 Strategy Parameters (Volume Anomaly - TUNED FOR 1M/3M SCALPING)
     volume_lookback: int = 10  # Faster signals for scalping
@@ -41,6 +42,17 @@ class TradingConfig:
     atr_multiplier: float = 1.5  # ATR multiplier for dynamic stops
     min_stop_loss_pct: float = 0.5  # Minimum stop loss (0.5%)
     max_stop_loss_pct: float = 3.0  # Maximum stop loss (3.0%)
+    
+    # 🛡️ Risk Management Configuration - AGGRESSIVE 2% PER TRADE STRATEGY
+    max_daily_loss: float = 1000.0  # Maximum daily loss in USDT (50% of typical account)
+    max_position_size: float = 200.0  # Maximum position size in USDT (increased for 2% risk)
+    max_drawdown: float = 0.50  # Maximum drawdown (50% - AGGRESSIVE)
+    max_open_positions: int = 20  # Maximum 20 trades at 2% each = 40% max exposure
+    risk_per_trade: float = 0.02  # Risk per trade (2% of account - CONFIRMED)
+    stop_loss_percentage: float = 0.015  # Stop loss percentage (1.5%)
+    take_profit_percentage: float = 0.03  # Take profit percentage (3%)
+    enable_stop_loss: bool = True
+    enable_take_profit: bool = True
     
     # ⏱️ Timeframe Configuration - FOCUS ON 1M/3M (HIGHEST WIN RATES)
     timeframes: List[str] = field(default_factory=lambda: ['1m', '3m'])  # Only highest win rate timeframes

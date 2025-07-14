@@ -68,7 +68,7 @@ class TradingEngine:
     """Main Trading Engine"""
     
     def __init__(self):
-        self.config = config.trading
+        self.config = TradingConfig()
         self.is_running = False
         self.orders: Dict[str, Order] = {}
         self.trades: List[Trade] = []

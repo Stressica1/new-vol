@@ -100,7 +100,7 @@ class TradingSystem:
         
         logger.info("="*50)
     
-    def test_trade_execution(self, symbol: str = "BTCUSDT_UMCBL", test_amount: float = 10.0):
+    def test_trade_execution(self, symbol: str = "BTC/USDT:USDT", test_amount: float = 10.0):
         """Test trade execution with small amount"""
         
         logger.info(f"Testing trade execution for {symbol} with {test_amount} USDT...")
@@ -134,6 +134,79 @@ class TradingSystem:
             
         except Exception as e:
             logger.error(f"Trade execution test failed: {str(e)}")
+            return False
+    
+    def execute_trade(self, symbol: str, side: str, amount_usdt: float, order_type: str = "market", 
+                     price: Optional[float] = None) -> bool:
+        """Execute actual trade"""
+        
+        logger.info(f"🚀 Executing {side} trade for {symbol} with {amount_usdt} USDT...")
+        
+        try:
+            # Get current price
+            ticker = bitget_client.get_ticker(symbol)
+            if not ticker:
+                logger.error(f"Failed to get ticker for {symbol}")
+                return False
+            
+            current_price = float(ticker.get('last', 0))
+            logger.info(f"Current price for {symbol}: {current_price}")
+            
+            # Calculate position size
+            position_size = amount_usdt / current_price
+            
+            logger.info(f"Position size: {position_size:.6f}")
+            
+            # Check if we can open this position
+            can_open, reason = risk_manager.can_open_position(symbol, side, position_size, current_price)
+            
+            if not can_open:
+                logger.warning(f"Cannot open position: {reason}")
+                return False
+            
+            # Place order using trading engine
+            if side.lower() in ['buy', 'long', 'open_long']:
+                order_side = 'buy'
+            else:
+                order_side = 'sell'
+            
+            if order_type.lower() == 'market':
+                order = trading_engine.place_market_order(symbol, order_side, position_size)
+            elif order_type.lower() == 'limit':
+                if price is None:
+                    price = current_price
+                order = trading_engine.place_limit_order(symbol, order_side, position_size, price)
+            else:
+                logger.error(f"Unsupported order type: {order_type}")
+                return False
+            
+            if order:
+                logger.success(f"✅ Order placed successfully: {order.order_id}")
+                logger.info(f"📊 Order details: {order_side} {position_size:.6f} {symbol} at {price or 'market'}")
+                return True
+            else:
+                logger.error("❌ Failed to place order")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Trade execution failed: {str(e)}")
+            return False
+    
+    def close_position(self, symbol: str, size: Optional[float] = None) -> bool:
+        """Close position"""
+        
+        logger.info(f"🔄 Closing position for {symbol}...")
+        
+        try:
+            success = trading_engine.close_position(symbol, size)
+            if success:
+                logger.success(f"✅ Position closed for {symbol}")
+            else:
+                logger.error(f"❌ Failed to close position for {symbol}")
+            return success
+            
+        except Exception as e:
+            logger.error(f"Failed to close position: {str(e)}")
             return False
     
     def test_risk_management(self):
@@ -330,11 +403,20 @@ class TradingSystem:
         logger.info("  balance - Show account balance")
         logger.info("  positions - Show current positions")
         logger.info("  risk - Show risk metrics")
+        logger.info("  buy <symbol> <amount> - Execute buy order (e.g., buy BTCUSDT_UMCBL 10)")
+        logger.info("  sell <symbol> <amount> - Execute sell order")
+        logger.info("  close <symbol> - Close position")
+        logger.info("  demo - Run demo trade execution")
         logger.info("  quit - Exit")
         
         while True:
             try:
-                command = input("\n> ").strip().lower()
+                command_input = input("\n> ").strip()
+                parts = command_input.split()
+                if not parts:
+                    continue
+                    
+                command = parts[0].lower()
                 
                 if command == "test":
                     self.run_comprehensive_test()
@@ -352,6 +434,34 @@ class TradingSystem:
                 elif command == "risk":
                     risk_summary = risk_manager.get_risk_summary()
                     print(json.dumps(risk_summary, indent=2))
+                elif command == "buy":
+                    if len(parts) >= 3:
+                        symbol = parts[1]
+                        try:
+                            amount = float(parts[2])
+                            self.execute_trade(symbol, "buy", amount)
+                        except ValueError:
+                            logger.error("Invalid amount. Please enter a number.")
+                    else:
+                        logger.info("Usage: buy <symbol> <amount_usdt>")
+                elif command == "sell":
+                    if len(parts) >= 3:
+                        symbol = parts[1]
+                        try:
+                            amount = float(parts[2])
+                            self.execute_trade(symbol, "sell", amount)
+                        except ValueError:
+                            logger.error("Invalid amount. Please enter a number.")
+                    else:
+                        logger.info("Usage: sell <symbol> <amount_usdt>")
+                elif command == "close":
+                    if len(parts) >= 2:
+                        symbol = parts[1]
+                        self.close_position(symbol)
+                    else:
+                        logger.info("Usage: close <symbol>")
+                elif command == "demo":
+                    self.demo_trade_execution()
                 elif command == "quit":
                     break
                 else:
@@ -365,6 +475,64 @@ class TradingSystem:
                 logger.error(f"Error: {str(e)}")
         
         logger.info("Exiting interactive mode...")
+    
+    def demo_trade_execution(self):
+        """Demo trade execution for testing"""
+        
+        logger.info("🎯 Demo Trade Execution")
+        logger.info("="*50)
+        
+        # Test connectivity first
+        if not self.test_connectivity():
+            logger.error("Cannot proceed - connectivity test failed")
+            return
+        
+        # Show available balance
+        balance = bitget_client.get_balance()
+        if balance:
+            available_balance = balance.get('available', 0)
+            logger.info(f"💰 Available balance: {available_balance:.2f} USDT")
+            
+            if available_balance < 10:
+                logger.warning("⚠️ Low balance - demo will use small amounts")
+        
+        # Demo trades (small amounts for safety)
+        demo_symbol = "BTC/USDT:USDT"
+        demo_amount = min(5.0, available_balance * 0.01)  # 1% of balance or $5, whichever is smaller
+        
+        logger.info(f"\n🚀 Demo: Attempting to buy {demo_amount:.2f} USDT worth of {demo_symbol}")
+        
+        try:
+            # Execute demo buy
+            if self.execute_trade(demo_symbol, "buy", demo_amount):
+                logger.success("✅ Demo buy order executed successfully!")
+                
+                # Wait a moment
+                time.sleep(2)
+                
+                # Show positions
+                positions = bitget_client.get_positions()
+                active_positions = [p for p in positions if float(p.get('total', 0)) != 0]
+                
+                if active_positions:
+                    logger.info(f"📊 Found {len(active_positions)} active positions")
+                    
+                    # Close the demo position after showing it
+                    for pos in active_positions:
+                        if pos.get('symbol') == demo_symbol:
+                            logger.info(f"🔄 Closing demo position for {demo_symbol}")
+                            self.close_position(demo_symbol)
+                            break
+                else:
+                    logger.info("ℹ️ No active positions found (may have been instantly filled/closed)")
+            else:
+                logger.error("❌ Demo trade failed")
+                
+        except Exception as e:
+            logger.error(f"❌ Demo trade error: {str(e)}")
+        
+        logger.info("="*50)
+        logger.info("🏁 Demo completed")
 
 def main():
     """Main function"""
@@ -382,11 +550,17 @@ def main():
             system.start_trading_system()
         elif command == "interactive":
             system.interactive_mode()
+        elif command == "trade":
+            logger.info("🚀 Quick Trade Mode - Running demo first...")
+            system.demo_trade_execution()
+            logger.info("\nEntering interactive mode for manual trading...")
+            system.interactive_mode()
         else:
-            print("Usage: python main.py [test|start|interactive]")
+            print("Usage: python main.py [test|start|interactive|trade]")
             print("  test - Run comprehensive tests")
             print("  start - Start trading system")
-            print("  interactive - Interactive mode")
+            print("  interactive - Interactive mode with manual trading")
+            print("  trade - Quick trade mode (interactive with focus on trading)")
     else:
         # Default: run comprehensive test
         system.run_comprehensive_test()

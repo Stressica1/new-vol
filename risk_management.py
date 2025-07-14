@@ -64,8 +64,8 @@ class RiskManager:
     """Comprehensive Risk Management System with Dynamic Volatility Analysis"""
     
     def __init__(self):
-        self.config = config.risk_management
-        self.trading_config = config.trading
+        self.config = TradingConfig()
+        self.trading_config = TradingConfig()
         self.daily_start_balance = 0.0
         self.daily_high_balance = 0.0
         self.daily_low_balance = 0.0

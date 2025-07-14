@@ -20,7 +20,6 @@ from rich import box
 from rich.padding import Padding
 from rich.bar import Bar
 from rich.style import Style
-from rich.gradient import Gradient
 from rich.spinner import Spinner
 from rich.tree import Tree
 from rich.rule import Rule
@@ -150,7 +149,7 @@ class AlpineDisplayV2:
         """🎆 Epic startup banner with ASCII art"""
         banner_text = f"""
 [bold cyan]╔═══════════════════════════════════════════════════════════════════════════════════════════════╗[/]
-[bold cyan]║[/]                          [bold gradient(#00FFB3,#7C3AED)]🏔️  ALPINE TRADING BOT V2.0  🏔️[/]                            [bold cyan]║[/]
+                [bold cyan]║[/]                          [bold bright_cyan]🏔️  ALPINE TRADING BOT V2.0  🏔️[/]                            [bold cyan]║[/]
 [bold cyan]║[/]                      [italic]Next-Generation AI-Powered Trading Interface[/]                       [bold cyan]║[/]
 [bold cyan]╚═══════════════════════════════════════════════════════════════════════════════════════════════╝[/]
 
