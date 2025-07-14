@@ -93,8 +93,8 @@ def run_trading_system():
         
         try:
             # Import and initialize Volume Anomaly Bot
-            from volume_anom_bot import VolumeAnomalyBot
-            volume_bot = VolumeAnomalyBot()
+            from volume_anom_bot import VolumeAnomBot
+            volume_bot = VolumeAnomBot()
             orchestrator.add_bot(volume_bot)
             logger.success("✅ Volume Anomaly Bot loaded")
         except Exception as e:

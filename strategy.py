@@ -29,19 +29,19 @@ def safe_log(level: str, message: str):
         print(f"[{level.upper()}] {message}")
 
 class VolumeAnomalyStrategy:
-    """🎯 Enhanced Volume Anomaly Strategy - Optimized for 1m/3m Confluence"""
+    """🎯 Enhanced Volume Anomaly Strategy - Optimized for 3m Timeframe"""
     
     def __init__(self):
         self.config = TradingConfig()
         
-        # Strategy parameters (optimized for 1m/3m scalping)
+        # Strategy parameters (optimized for 3m scalping)
         self.volume_lookback = self.config.volume_lookback
         self.volume_std_multiplier = self.config.volume_std_multiplier
         self.atr_period = self.config.supertrend_atr_period
         self.atr_multiplier = self.config.supertrend_multiplier
         
         # Confluence configuration
-        self.timeframes = self.config.timeframes  # ['1m', '3m']
+        self.timeframes = self.config.timeframes  # ['3m']
         self.primary_timeframe = self.config.primary_timeframe
         self.confluence_required = self.config.signal_confluence_required
         self.confluence_boost = self.config.confluence_confidence_boost
@@ -55,7 +55,7 @@ class VolumeAnomalyStrategy:
         self.confluence_signals_count = 0
         self.total_signals_count = 0
         
-        safe_log('success', f"🎯 Enhanced Strategy initialized for {self.timeframes} confluence trading")
+        safe_log('success', f"🎯 Enhanced Strategy initialized for {self.timeframes} timeframe trading")
 
     def calculate_supertrend(self, df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
         """📈 Enhanced SuperTrend calculation for faster signals"""
@@ -193,7 +193,7 @@ class VolumeAnomalyStrategy:
             }
 
     def analyze_confluence_signals(self, timeframe_data: Dict[str, pd.DataFrame], symbol: str) -> List[Dict]:
-        """🎯 Analyze confluence signals across 1m/3m timeframes"""
+        """🎯 Analyze signals across configured timeframes (3m)"""
         try:
             confluence_signals = []
             
@@ -351,7 +351,7 @@ class VolumeAnomalyStrategy:
                     signal_reasons.append(f"High volume ({current_volume_ratio:.1f}x)")
             
             # Create signal if strength meets threshold
-            if signal_type and signal_strength >= 60:  # Minimum 60% confidence for scalping
+            if signal_type and signal_strength >= self.config.min_signal_confidence:  # Use configurable threshold (75%)
                 signal = {
                     'symbol': symbol,
                     'timeframe': timeframe,
@@ -369,6 +369,9 @@ class VolumeAnomalyStrategy:
                 signals.append(signal)
                 safe_log('info', f"📊 {timeframe} Signal: {symbol} {signal_type} (Confidence: {signal_strength}%)")
                 safe_log('debug', f"   📋 Reasons: {', '.join(signal_reasons)}")
+            else:
+                if signal_type:
+                    safe_log('debug', f"🚫 {symbol} {timeframe}: Signal below threshold ({signal_strength:.1f}% < {self.config.min_signal_confidence}%)")
             
             return signals
             
@@ -377,16 +380,16 @@ class VolumeAnomalyStrategy:
             return []
 
     def should_enter_trade(self, signal: Dict, account_balance: float, current_positions: List[Dict]) -> bool:
-        """🎯 Enhanced trade entry logic with confluence consideration"""
+        """🎯 Enhanced trade entry logic with high conviction requirement"""
         
         symbol = signal.get('symbol', 'Unknown')
         confidence = signal.get('confidence', 0)
         volume_ratio = signal.get('volume_ratio', 0)
         is_confluence = signal.get('is_confluence', False)
         
-        # Lower thresholds for confluence signals
-        min_confidence = 65.0 if is_confluence else 75.0
-        min_volume_ratio = self.config.min_volume_ratio * (0.8 if is_confluence else 1.0)
+        # Use consistent 75% threshold for all signals (high conviction only)
+        min_confidence = self.config.min_trade_confidence  # 75% for all signals
+        min_volume_ratio = self.config.min_volume_ratio
         
         safe_log('debug', f"🎯 Trade Entry Check for {symbol}:")
         safe_log('debug', f"  📊 Signal Type: {'CONFLUENCE' if is_confluence else 'SINGLE TF'}")

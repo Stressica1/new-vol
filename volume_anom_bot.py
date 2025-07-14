@@ -296,6 +296,21 @@ class VolumeAnomBot:
                 'timestamp': datetime.now().isoformat(),
                 'status': 'failed'
             }
+
+    # ------------------------------------------------------------------
+    # Orchestrator compatibility
+    # ------------------------------------------------------------------
+    def generate_signals(self) -> List[Dict]:
+        """Return trading signals in executor-friendly format.
+
+        The Volume Anomaly Bot currently focuses on market-wide analysis and
+        portfolio recommendations rather than direct trade execution.  To keep
+        the TradingOrchestrator running smoothly, we return an empty list.  You
+        may extend this method later to convert high-priority recommendations
+        into actionable BUY/SELL signals following the OptimizedTradeExecutor
+        schema (keys: symbol, action, confidence, confluence, atr)."""
+
+        return []
     
     def print_summary(self, results: Dict):
         """Print a summary of the analysis results"""

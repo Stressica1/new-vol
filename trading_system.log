@@ -55,3 +55,71 @@
 2025-07-14 05:37:34 | INFO     | __main__:run_comprehensive_test:254 - TEST RESULTS: 2/4 tests passed
 2025-07-14 05:37:34 | ERROR    | __main__:run_comprehensive_test:259 - ⚠️  Some tests failed. Please check the issues above.
 2025-07-14 05:37:34 | INFO     | __main__:run_comprehensive_test:261 - ============================================================
+2025-07-14 22:49:10 | INFO     | bitget_client:initialize:18 - Bitget client initialized successfully
+2025-07-14 22:49:12 | INFO     | risk_management:__init__:81 - 🛡️ Enhanced Risk Manager with Dynamic Volatility Analysis initialized
+2025-07-14 22:49:12 | INFO     | trading_engine:__init__:80 - Trading Engine initialized
+2025-07-14 22:49:12 | INFO     | __main__:__init__:41 - Trading System initialized
+2025-07-14 22:49:12 | INFO     | __main__:run_comprehensive_test:300 - 🚀 Starting comprehensive Bitget trading system test...
+2025-07-14 22:49:12 | INFO     | __main__:run_comprehensive_test:301 - ============================================================
+2025-07-14 22:49:12 | INFO     | __main__:run_comprehensive_test:314 - 
+🔍 Running Connectivity Test...
+2025-07-14 22:49:12 | INFO     | __main__:test_connectivity:55 - Testing Bitget API connectivity...
+2025-07-14 22:49:13 | INFO     | bitget_client:test_connection:33 - Markets loaded: 1376 pairs available
+2025-07-14 22:49:13 | INFO     | bitget_client:test_connection:37 - Account balance retrieved successfully
+2025-07-14 22:49:13 | SUCCESS  | __main__:test_connectivity:75 - ✅ Bitget API connectivity test passed
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:89 - 
+==================================================
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:90 - ACCOUNT SUMMARY
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:91 - ==================================================
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:94 - 💰 Total Equity: 47.77 USDT
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:95 - 💳 Available Balance: 47.77 USDT
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:96 - 🔒 Margin Used: 0.00 USDT
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:97 - 📊 Unrealized PnL: 0.00 USDT
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:98 - 🎯 Margin Coin: USDT
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:99 - ⚖️ Leverage: 1
+2025-07-14 22:49:13 | INFO     | __main__:display_account_summary:101 - ==================================================
+2025-07-14 22:49:13 | SUCCESS  | __main__:run_comprehensive_test:318 - ✅ Connectivity Test PASSED
+2025-07-14 22:49:14 | INFO     | __main__:run_comprehensive_test:314 - 
+🔍 Running Risk Management Test...
+2025-07-14 22:49:14 | INFO     | __main__:test_risk_management:215 - Testing risk management system...
+2025-07-14 22:49:15 | INFO     | risk_management:calculate_risk_metrics:307 - Risk metrics updated: low risk level
+2025-07-14 22:49:15 | INFO     | risk_management:calculate_risk_metrics:307 - Risk metrics updated: low risk level
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:224 - 
+==================================================
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:225 - RISK MANAGEMENT SUMMARY
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:226 - ==================================================
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:228 - 🚨 Risk Level: LOW
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:229 - 📊 Open Positions: 1
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:230 - 💰 Daily PnL: 0.00 USDT
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:231 - 📉 Max Drawdown: 0.00%
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:232 - 🛑 Emergency Stop: INACTIVE
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:235 - 
+📋 Risk Limits:
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:237 -   • Max Position Size: 200.0 USDT
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:238 -   • Max Daily Loss: 1000.0 USDT
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:239 -   • Max Drawdown: 50.00%
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:240 -   • Max Open Positions: 20
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:241 -   • Risk Per Trade: 2.00%
+2025-07-14 22:49:15 | INFO     | __main__:test_risk_management:243 - ==================================================
+2025-07-14 22:49:15 | SUCCESS  | __main__:test_risk_management:245 - ✅ Risk management test passed
+2025-07-14 22:49:15 | SUCCESS  | __main__:run_comprehensive_test:318 - ✅ Risk Management Test PASSED
+2025-07-14 22:49:16 | INFO     | __main__:run_comprehensive_test:314 - 
+🔍 Running Position Monitoring Test...
+2025-07-14 22:49:16 | INFO     | __main__:test_position_monitoring:255 - Testing position monitoring...
+2025-07-14 22:49:16 | INFO     | __main__:test_position_monitoring:261 - Found 1 positions
+2025-07-14 22:49:16 | INFO     | __main__:test_position_monitoring:288 - No active positions found
+2025-07-14 22:49:16 | SUCCESS  | __main__:test_position_monitoring:290 - ✅ Position monitoring test passed
+2025-07-14 22:49:16 | SUCCESS  | __main__:run_comprehensive_test:318 - ✅ Position Monitoring Test PASSED
+2025-07-14 22:49:17 | INFO     | __main__:run_comprehensive_test:314 - 
+🔍 Running Trade Execution Test...
+2025-07-14 22:49:17 | INFO     | __main__:test_trade_execution:106 - Testing trade execution for BTC/USDT:USDT with 10.0 USDT...
+2025-07-14 22:49:17 | INFO     | __main__:test_trade_execution:116 - Current price for BTC/USDT:USDT: 121836.2
+2025-07-14 22:49:17 | INFO     | __main__:test_trade_execution:121 - Test position size: 0.000082
+2025-07-14 22:49:18 | INFO     | risk_management:calculate_risk_metrics:307 - Risk metrics updated: low risk level
+2025-07-14 22:49:18 | ERROR    | __main__:test_trade_execution:136 - Trade execution test failed: 'TradingConfig' object has no attribute 'min_order_size'
+2025-07-14 22:49:18 | ERROR    | __main__:run_comprehensive_test:320 - ❌ Trade Execution Test FAILED
+2025-07-14 22:49:19 | INFO     | __main__:run_comprehensive_test:326 - 
+============================================================
+2025-07-14 22:49:19 | INFO     | __main__:run_comprehensive_test:327 - TEST RESULTS: 3/4 tests passed
+2025-07-14 22:49:19 | ERROR    | __main__:run_comprehensive_test:332 - ⚠️  Some tests failed. Please check the issues above.
+2025-07-14 22:49:19 | INFO     | __main__:run_comprehensive_test:334 - ============================================================

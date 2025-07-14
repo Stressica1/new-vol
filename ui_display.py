@@ -32,7 +32,7 @@ class AlpineDisplayV2:
     """🏔️ Ultra-Modern Alpine Trading Interface - Revolutionary Design with Next-Generation Features"""
     
     def __init__(self):
-        self.console = Console(width=120, height=40)
+        self.console = Console(width=120, height=40, force_terminal=True)
         self.config = TradingConfig()
         self.start_time = datetime.now()
         
@@ -72,12 +72,17 @@ class AlpineDisplayV2:
         self.animation_frame = 0
         self.pulse_state = 0
         self.last_refresh = time.time()
-        self.refresh_throttle = 0.3  # Smooth 60fps-style updates
+        self.refresh_throttle = self.config.display_update_throttle  # Use config throttle
         
         # 📱 Advanced display features
         self.sparkline_data = {}
         self.trend_arrows = {"up": "▲", "down": "▼", "flat": "◆"}
         self.status_dots = {"active": "●", "idle": "○", "error": "⚠"}
+        
+        # 🎯 Display optimization
+        self.layout_cache = None
+        self.last_layout_data = None
+        self.data_hash = None
         
     def get_animated_spinner(self) -> str:
         """Create animated spinner effect ✨"""
@@ -143,7 +148,12 @@ class AlpineDisplayV2:
             Text.assemble(title_text, "\n", subtitle, "\n", status_line)
         )
         
-        self.console.print(self._create_startup_banner(), style="bold cyan")
+        return Panel(
+            header_content,
+            style=f"bold {self.midnight_blue}",
+            box=box.DOUBLE_EDGE,
+            border_style=f"bold {self.neon_cyan}"
+        )
     
     def _create_startup_banner(self) -> Panel:
         """🎆 Epic startup banner with ASCII art"""
@@ -164,7 +174,7 @@ class AlpineDisplayV2:
 [bold yellow]⚡ SYSTEM STATUS: [bold green]OPERATIONAL[/][/]
 """
         return Panel(
-            Padding(header_content, (1, 2)),
+            Padding(banner_text, (1, 2)),
             style=f"bold {self.midnight_blue}",
             box=box.DOUBLE_EDGE,
             title="🌟 ALPINE FINANCIAL INTELLIGENCE 🌟",
@@ -221,7 +231,7 @@ class AlpineDisplayV2:
             size=30,
             begin=0,
             end=100,
-            width=margin_health,
+            width=int(margin_health),
             color="green" if margin_health > 70 else "yellow" if margin_health > 30 else "red"
         )
         
@@ -540,13 +550,13 @@ class AlpineDisplayV2:
     
     def create_revolutionary_layout(self, account_data: Dict, positions: List[Dict], 
                                   signals: List[Dict], logs: List[str], status: str) -> Layout:
-        """Create revolutionary layout with quantum design principles 🌌"""
+        """Create revolutionary layout with stable design principles 🌌"""
         
-        # Update animation states
+        # Stabilized animation states - minimal updates
         current_time = time.time()
         if current_time - self.last_refresh >= self.refresh_throttle:
             self.animation_frame += 1
-            self.pulse_state += 0.2
+            self.pulse_state += 0.1  # Slower pulse for stability
             self.last_refresh = current_time
         
         # Quantum layout structure

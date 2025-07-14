@@ -20,6 +20,7 @@ from rich.console import Console
 from loguru import logger
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import signal # Added for signal handling
 
 # Configure Loguru for detailed logging
 logger.remove()  # Remove default handler
@@ -325,18 +326,32 @@ class AlpineBot:
             markets = self.exchange.load_markets()
             logger.debug(f"Loaded {len(markets)} markets")
             
-            logger.info("💰 Fetching account balance...")
-            self.log_activity("💰 Fetching account balance...", "INFO")
-            balance = self.exchange.fetch_balance()
-            logger.debug(f"Balance response: {balance}")
+            logger.info("💰 Fetching futures account balance...")
+            self.log_activity("💰 Fetching futures account balance...", "INFO")
+            balance = self.exchange.fetch_balance({'type': 'future'})
+            logger.debug(f"Futures balance response: {balance}")
             
             self.connected = True
             logger.success("✅ Successfully connected to Bitget!")
             self.log_activity("✅ Successfully connected to Bitget!", "SUCCESS")
             
-            usdt_balance = balance.get('USDT', {}).get('total', 0)
-            logger.info(f"💰 Account balance: ${usdt_balance:,.2f} USDT")
-            self.log_activity(f"💰 Account balance loaded: ${usdt_balance:,.2f}", "INFO")
+            # Get futures balance info from the raw response
+            usdt_futures_info = None
+            for info in balance.get('info', []):
+                if info.get('marginCoin') == 'USDT':
+                    usdt_futures_info = info
+                    break
+            
+            if usdt_futures_info:
+                available = float(usdt_futures_info.get('available', 0))
+                equity = float(usdt_futures_info.get('equity', 0))
+                unrealized_pnl = float(usdt_futures_info.get('unrealizedPL', 0))
+                logger.info(f"💰 Futures Account - Available: ${available:,.2f} | Equity: ${equity:,.2f} | Unrealized P&L: ${unrealized_pnl:,.2f}")
+                self.log_activity(f"💰 Futures balance loaded - Available: ${available:,.2f} | Equity: ${equity:,.2f}", "INFO")
+            else:
+                usdt_balance = balance.get('USDT', {}).get('total', 0)
+                logger.info(f"💰 Account balance: ${usdt_balance:,.2f} USDT")
+                self.log_activity(f"💰 Account balance loaded: ${usdt_balance:,.2f}", "INFO")
             
             return True
             
@@ -385,17 +400,40 @@ class AlpineBot:
                 logger.warning("Cannot fetch account data - not connected to exchange")
                 return
             
-            logger.debug("Fetching account balance...")
-            # Fetch balance
-            balance = self.exchange.fetch_balance()
-            usdt_balance = balance.get('USDT', {})
+            logger.debug("Fetching futures account balance...")
+            # Fetch futures balance
+            balance = self.exchange.fetch_balance({'type': 'future'})
             
-            self.account_data = {
-                'balance': usdt_balance.get('total', 0),
-                'equity': usdt_balance.get('total', 0),  # For futures, equity = total
-                'margin': usdt_balance.get('used', 0),
-                'free_margin': usdt_balance.get('free', 0)
-            }
+            # Get futures balance info from the raw response
+            usdt_futures_info = None
+            for info in balance.get('info', []):
+                if info.get('marginCoin') == 'USDT':
+                    usdt_futures_info = info
+                    break
+            
+            if usdt_futures_info:
+                available = float(usdt_futures_info.get('available', 0))
+                equity = float(usdt_futures_info.get('equity', 0))
+                unrealized_pnl = float(usdt_futures_info.get('unrealizedPL', 0))
+                locked = float(usdt_futures_info.get('locked', 0))
+                
+                self.account_data = {
+                    'balance': available,  # Available balance for trading
+                    'equity': equity,      # Total equity including unrealized P&L
+                    'margin': locked,      # Used margin (locked amount)
+                    'free_margin': available,  # Free margin available
+                    'unrealized_pnl': unrealized_pnl
+                }
+            else:
+                # Fallback to regular balance
+                usdt_balance = balance.get('USDT', {})
+                self.account_data = {
+                    'balance': usdt_balance.get('total', 0),
+                    'equity': usdt_balance.get('total', 0),
+                    'margin': usdt_balance.get('used', 0),
+                    'free_margin': usdt_balance.get('free', 0),
+                    'unrealized_pnl': 0
+                }
             
             logger.debug(f"Account data updated: {self.account_data}")
             
@@ -563,6 +601,37 @@ class AlpineBot:
             self.log_activity("📊 Signal scan complete: No signals found", "INFO")
         
         return all_signals
+
+    def generate_signals(self) -> List[Dict]:
+        """Generate executor-friendly signals for the TradingOrchestrator ⚡️🚀
+
+        This method wraps `analyze_signals()` and converts each internal signal
+        to the generic format expected by the OptimizedTradeExecutor
+        (requires keys: symbol, action, confidence, confluence)."""
+        # Run the full internal analysis
+        internal_signals = self.analyze_signals()
+
+        formatted_signals: List[Dict] = []
+        for sig in internal_signals:
+            # Map LONG/SHORT → BUY/SELL for uniformity
+            action = "BUY" if sig.get("type") == "LONG" else "SELL"
+
+            formatted_signals.append({
+                "symbol": sig.get("symbol"),
+                "action": action,
+                "confidence": sig.get("confidence", 0),
+                # Executor uses this to adjust position sizing
+                "confluence": sig.get("is_confluence", False),
+                # Pass through optional data if available
+                "atr": sig.get("atr"),
+                # Helpful metadata for logging/debugging
+                "source_bot": "AlpineBot"
+            })
+
+        # Log summary for debugging
+        logger.debug(f"generate_signals → produced {len(formatted_signals)} formatted signals")
+
+        return formatted_signals
     
     def execute_enhanced_trade(self, signal: Dict) -> bool:
         """🚀 Enhanced trade execution with confluence position sizing and dynamic stop loss"""
@@ -942,51 +1011,70 @@ class AlpineBot:
             logger.error(f"Error during cleanup: {e}")
     
     def run(self):
-        """Start the Alpine bot with hot-reload capability 🚀"""
+        """🚀 Start the enhanced Alpine trading bot with professional display"""
         
-        # Create logs directory if it doesn't exist
-        import os
-        os.makedirs("logs", exist_ok=True)
+        # Initialize display data
+        self.log_activity("🚀 Initializing Alpine Bot v2.0", "INFO")
         
-        # Initialize exchange
-        if not self.initialize_exchange():
-            self.console.print("❌ Failed to initialize exchange. Exiting...", style="red")
-            logger.error("Failed to initialize exchange, exiting...")
-            return
-        
-        # Setup watchdog for hot-reload
-        self.setup_watchdog()
-        
-        logger.success(f"🚀 {BOT_NAME} {VERSION} starting up with hot-reload!")
-        self.log_activity(f"🚀 {BOT_NAME} {VERSION} starting up with hot-reload!", "SUCCESS")
-        self.log_activity("🎯 Volume Anomaly Strategy loaded with 90% success rate", "INFO")
-        self.log_activity(f"💰 Risk Management: {self.config.max_daily_loss_pct}% daily loss limit", "INFO")
-        self.log_activity(f"📊 Monitoring {len(TRADING_PAIRS)} trading pairs", "INFO")
-        self.log_activity("🔄 Hot-reload system activated", "SUCCESS")
-        
+        # Set running state
         self.running = True
         
-        # Start trading loop in background thread
-        trading_thread = threading.Thread(target=self.trading_loop, daemon=True)
-        trading_thread.start()
+        # Setup signal handlers for graceful shutdown
+        def signal_handler(sig, frame):
+            self.log_activity("⏹️ Shutdown signal received", "WARNING")
+            self.running = False
+            sys.exit(0)
+        
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        
+        # Initialize exchange connection
+        if not self.initialize_exchange():
+            self.log_activity("❌ Failed to initialize exchange. Exiting.", "ERROR")
+            return
+        
+        # Initialize strategies
+        self.log_activity("📈 Loading trading strategies", "INFO")
+        
+        # Start background trading thread with enhanced error handling
+        self.trading_thread = threading.Thread(target=self.trading_loop, daemon=True)
+        self.trading_thread.start()
+        self.log_activity("🔄 Trading thread started", "INFO")
         logger.info("Trading thread started")
         
+        # Display optimization variables
+        last_display_update = time.time()
+        display_update_interval = 1.0  # Update display every 1 second
+        
         try:
-            # Run enhanced live display optimized for scalping
+            # Initialize display data first
+            self.log_activity("🎨 Initializing display interface", "INFO")
+            initial_data = self.get_display_data()
+            
+            # Run stable display with consistent refresh rate
             with Live(
-                self.display.create_revolutionary_layout(**self.get_display_data()),
+                self.display.create_revolutionary_layout(**initial_data),
                 console=self.display.console,
-                refresh_per_second=3,  # Faster refresh for scalping
+                refresh_per_second=1,  # Stable 1 FPS
                 screen=True
             ) as live:
                 
+                self.log_activity("✅ Display interface ready - Alpine Bot running!", "SUCCESS")
+                
                 while self.running:
-                    # Update display with ultra-fast refresh control - always refresh for real-time trading
-                    display_data = self.get_display_data()
-                    live.update(self.display.create_revolutionary_layout(**display_data))
+                    current_time = time.time()
                     
-                    # Optimized sleep for scalping interface
-                    time.sleep(0.3)  # 300ms refresh for real-time scalping
+                    # Only update display at consistent intervals
+                    if current_time - last_display_update >= display_update_interval:
+                        try:
+                            display_data = self.get_display_data()
+                            live.update(self.display.create_revolutionary_layout(**display_data))
+                            last_display_update = current_time
+                        except Exception as e:
+                            self.log_activity(f"⚠️ Display update error: {str(e)}", "WARNING")
+                    
+                    # Consistent sleep interval
+                    time.sleep(0.5)  # Sleep for half the display update interval
                     
         except KeyboardInterrupt:
             logger.warning("⏹️ Shutdown signal received")
@@ -997,6 +1085,15 @@ class AlpineBot:
             error_msg = f"❌ Display error: {str(e)}"
             logger.exception("Display error")
             self.log_activity(error_msg, "ERROR")
+            # Don't exit immediately on display errors, try to continue
+            self.log_activity("🔄 Attempting to continue without display...", "WARNING")
+            
+            # Fallback - run without display
+            try:
+                while self.running:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                self.running = False
             
         finally:
             self.cleanup()

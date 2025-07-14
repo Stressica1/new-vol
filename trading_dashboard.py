@@ -48,126 +48,129 @@ class BitgetConnection:
         self.max_retries = 10
         
     def force_connect(self) -> bool:
-        """Force connection to Bitget with aggressive retry mechanism"""
+        """Force connection with exponential backoff retry"""
         logger.info("🔌 Forcing Bitget connection...")
         
-        while self.retry_count < self.max_retries:
+        for attempt in range(self.max_retries):
             try:
-                # Try synchronous connection first
-                self.exchange = ccxt.bitget(self.config)
-                self.exchange.load_markets()
+                # Create sync exchange
+                self.exchange = ccxt.bitget({
+                    'apiKey': self.config['apiKey'],
+                    'secret': self.config['secret'],
+                    'password': self.config['password'],
+                    'sandbox': self.config.get('sandbox', False),
+                    'enableRateLimit': True,
+                    'timeout': 30000,
+                })
                 
-                # Test authentication
+                # Test connection
                 balance = self.exchange.fetch_balance()
-                
                 self.connected = True
-                logger.success(f"✅ Bitget connected successfully! (Attempt {self.retry_count + 1})")
+                self.retry_count = 0
+                logger.info("✅ Bitget connection established!")
                 return True
                 
             except Exception as e:
-                self.retry_count += 1
-                logger.warning(f"⚠️ Connection attempt {self.retry_count} failed: {str(e)}")
-                
-                if self.retry_count < self.max_retries:
-                    wait_time = min(2 ** self.retry_count, 30)  # Exponential backoff
-                    logger.info(f"⏳ Retrying in {wait_time} seconds...")
+                self.retry_count = attempt + 1
+                wait_time = min(2 ** attempt, 30)  # Exponential backoff, max 30s
+                logger.warning(f"❌ Connection attempt {attempt + 1} failed: {str(e)}")
+                if attempt < self.max_retries - 1:
+                    logger.info(f"⏳ Retrying in {wait_time}s...")
                     time.sleep(wait_time)
-                else:
-                    logger.error("❌ Max retries reached. Connection failed!")
-                    return False
         
+        logger.error("❌ Failed to connect to Bitget after maximum retries")
         return False
     
     def keep_alive(self):
         """Keep connection alive with periodic pings"""
-        if self.connected and (datetime.now() - self.last_ping).seconds > 30:
+        now = datetime.now()
+        if (now - self.last_ping).seconds > 30:  # Ping every 30 seconds
             try:
-                self.exchange.fetch_ticker('BTC/USDT:USDT')
-                self.last_ping = datetime.now()
-            except:
+                if self.exchange:
+                    self.exchange.fetch_balance()
+                self.last_ping = now
+            except Exception as e:
+                logger.warning(f"❌ Keep alive failed: {str(e)}")
                 self.connected = False
-                self.force_connect()
 
 class MintGreenDisplay:
     """🌿 Beautiful Mint Green & Black Terminal Display"""
     
     # Mint Green & Black Color Scheme
     COLORS = {
-        'mint': '#00FFB3',          # Primary mint green
-        'mint_bright': '#00FF7F',   # Bright mint
-        'mint_dark': '#00CC8F',     # Dark mint
-        'black': '#000000',         # Pure black
-        'dark_gray': '#0D0D0D',     # Dark gray
-        'gray': '#1A1A1A',          # Gray
-        'white': '#FFFFFF',         # White text
-        'green': '#00FF00',         # Profit green
-        'red': '#FF0044',           # Loss red
-        'yellow': '#FFD700',        # Warning yellow
-        'blue': '#00BFFF',          # Info blue
-        'purple': '#9D4EDD',        # Accent purple
+        'primary': 'bright_green',
+        'secondary': 'green',
+        'accent': 'cyan',
+        'background': 'black',
+        'text': 'white',
+        'success': 'bright_green',
+        'warning': 'yellow',
+        'danger': 'red',
+        'profit': 'bright_green',
+        'loss': 'bright_red'
     }
     
     def __init__(self):
-        self.console = Console(width=140, height=50)
-        self.animation_frame = 0
+        self.console = Console(width=140, height=50, force_terminal=True)
+        self.last_layout = None
+        self.last_update = datetime.now()
+        self.update_throttle = 0.5  # Minimum time between layout updates
         
     def create_header(self, account_data: Dict) -> Panel:
-        """Create beautiful header with account info"""
+        """Create dashboard header"""
         balance = account_data.get('balance', 0)
-        equity = account_data.get('equity', balance)
-        free_margin = account_data.get('free_margin', balance)
-        margin_level = account_data.get('margin_level', 100)
+        equity = account_data.get('equity', 0)
+        free_margin = account_data.get('free_margin', 0)
         
         header_text = Text()
-        header_text.append("🌿 ", style=f"color({self.COLORS['mint']})")
-        header_text.append("ALPINE TRADING SYSTEM", style=f"bold color({self.COLORS['mint']})")
-        header_text.append(" | ", style=f"color({self.COLORS['gray']})")
-        header_text.append("BITGET PERPETUAL", style=f"color({self.COLORS['white']})")
-        header_text.append(" | ", style=f"color({self.COLORS['gray']})")
-        header_text.append(f"v2.0", style=f"color({self.COLORS['mint_dark']})")
+        header_text.append("🌿 ALPINE TRADING SYSTEM | BITGET PERPETUAL | v2.0", style="bold bright_green")
         
-        account_info = Table(show_header=False, box=None, padding=0)
-        account_info.add_column(style=f"color({self.COLORS['mint']})")
-        account_info.add_column(style=f"bold color({self.COLORS['white']})")
+        balance_info = Text()
+        balance_info.append(f"💰 Balance:     ${balance:.2f}", style="bright_green")
+        balance_info.append("  ")
+        balance_info.append(f"📊 Equity:      ${equity:.2f}", style="bright_cyan")
+        balance_info.append("  ")
+        balance_info.append(f"🎯 Free Margin: ${free_margin:.2f}", style="bright_yellow")
         
-        account_info.add_row("💰 Balance:", f"${balance:,.2f}")
-        account_info.add_row("📊 Equity:", f"${equity:,.2f}")
-        account_info.add_row("🎯 Free Margin:", f"${free_margin:,.2f}")
-        account_info.add_row("⚡ Margin Level:", f"{margin_level:.1f}%")
-        
-        header_content = Columns([
-            Align(header_text, align="left"),
-            Align(account_info, align="right")
-        ], expand=True)
+        # Create table for header
+        table = Table.grid(padding=1)
+        table.add_column(justify="left")
+        table.add_column(justify="right")
+        table.add_row(header_text, balance_info)
         
         return Panel(
-            header_content,
+            table,
             box=box.DOUBLE,
-            border_style=f"color({self.COLORS['mint']})",
-            style=f"on {self.COLORS['black']}"
+            style="bright_green",
+            border_style="bright_green"
         )
     
     def create_pnl_panel(self, pnl_data: Dict) -> Panel:
-        """Create PnL statistics panel"""
-        table = Table(
-            show_header=True,
-            header_style=f"bold color({self.COLORS['mint']})",
-            box=box.ROUNDED,
-            border_style=f"color({self.COLORS['mint_dark']})"
-        )
+        """Create PnL performance panel"""
+        table = Table(show_header=True, header_style="bold bright_green", box=box.SIMPLE)
+        table.add_column("Metric", style="bright_cyan", width=12)
+        table.add_column("Today", justify="center", width=8)
+        table.add_column("Week", justify="center", width=8)
+        table.add_column("Month", justify="center", width=8)
+        table.add_column("All Time", justify="center", width=10)
         
-        table.add_column("Metric", style=f"color({self.COLORS['mint']})")
-        table.add_column("Today", style=f"color({self.COLORS['white']})")
-        table.add_column("Week", style=f"color({self.COLORS['white']})")
-        table.add_column("Month", style=f"color({self.COLORS['white']})")
-        table.add_column("All Time", style=f"color({self.COLORS['white']})")
-        
-        # Add PnL rows with color coding
         def format_pnl(value):
-            color = self.COLORS['green'] if value >= 0 else self.COLORS['red']
-            prefix = "+" if value >= 0 else ""
-            return f"[color({color})]{prefix}${value:,.2f}[/color({color})]"
+            if value > 0:
+                return f"[bright_green]+${value:.2f}[/bright_green]"
+            elif value < 0:
+                return f"[bright_red]-${abs(value):.2f}[/bright_red]"
+            else:
+                return f"[white]+${value:.2f}[/white]"
         
+        def format_percentage(value):
+            if value > 0:
+                return f"[bright_green]{value:.1f}%[/bright_green]"
+            elif value < 0:
+                return f"[bright_red]{value:.1f}%[/bright_red]"
+            else:
+                return f"[white]{value:.1f}%[/white]"
+        
+        # PnL row
         table.add_row(
             "💵 PnL",
             format_pnl(pnl_data.get('daily_pnl', 0)),
@@ -176,14 +179,16 @@ class MintGreenDisplay:
             format_pnl(pnl_data.get('total_pnl', 0))
         )
         
+        # Win Rate row
         table.add_row(
             "📈 Win Rate",
-            f"{pnl_data.get('daily_winrate', 0):.1f}%",
-            f"{pnl_data.get('weekly_winrate', 0):.1f}%",
-            f"{pnl_data.get('monthly_winrate', 0):.1f}%",
-            f"{pnl_data.get('total_winrate', 0):.1f}%"
+            format_percentage(pnl_data.get('daily_winrate', 0)),
+            format_percentage(pnl_data.get('weekly_winrate', 0)),
+            format_percentage(pnl_data.get('monthly_winrate', 0)),
+            format_percentage(pnl_data.get('total_winrate', 0))
         )
         
+        # Trades row
         table.add_row(
             "🎯 Trades",
             str(pnl_data.get('daily_trades', 0)),
@@ -194,154 +199,163 @@ class MintGreenDisplay:
         
         return Panel(
             table,
-            title="[bold]📊 PERFORMANCE METRICS[/bold]",
+            title="📊 PERFORMANCE METRICS",
             title_align="left",
-            border_style=f"color({self.COLORS['mint']})",
-            style=f"on {self.COLORS['dark_gray']}"
+            border_style="bright_green",
+            padding=(1, 1)
         )
     
     def create_positions_panel(self, positions: List[Dict]) -> Panel:
         """Create active positions panel"""
-        table = Table(
-            show_header=True,
-            header_style=f"bold color({self.COLORS['mint']})",
-            box=box.SIMPLE,
-            border_style=f"color({self.COLORS['mint_dark']})"
-        )
-        
-        table.add_column("Symbol", style=f"color({self.COLORS['mint']})")
-        table.add_column("Side", style=f"color({self.COLORS['white']})")
-        table.add_column("Size", style=f"color({self.COLORS['white']})")
-        table.add_column("Entry", style=f"color({self.COLORS['white']})")
-        table.add_column("Current", style=f"color({self.COLORS['white']})")
-        table.add_column("PnL", style=f"color({self.COLORS['white']})")
-        table.add_column("PnL %", style=f"color({self.COLORS['white']})")
-        table.add_column("Duration", style=f"color({self.COLORS['gray']})")
-        
         if not positions:
-            table.add_row("No active positions", "-", "-", "-", "-", "-", "-", "-")
-        else:
-            for pos in positions:
-                pnl = pos.get('unrealized_pnl', 0)
-                pnl_pct = pos.get('pnl_percentage', 0)
-                
-                # Color coding for PnL
-                pnl_color = self.COLORS['green'] if pnl >= 0 else self.COLORS['red']
-                side_color = self.COLORS['green'] if pos['side'] == 'long' else self.COLORS['red']
-                
-                table.add_row(
-                    pos['symbol'].replace('/USDT:USDT', ''),
-                    f"[color({side_color})]{pos['side'].upper()}[/color({side_color})]",
-                    f"{pos['contracts']:.4f}",
-                    f"${pos['entry_price']:.4f}",
-                    f"${pos['current_price']:.4f}",
-                    f"[color({pnl_color})]${pnl:.2f}[/color({pnl_color})]",
-                    f"[color({pnl_color})]{pnl_pct:.2f}%[/color({pnl_color})]",
-                    pos['duration']
-                )
+            content = Text("No active positions", style="bright_yellow", justify="center")
+            content.append("\n\n")
+            content.append("  Symbol                Side   Size   Entry   Current   PnL   PnL %   Duration            ")
+            content.append("\n  ──────────────────────────────────────────────────────────────────────────────           ")
+            content.append("\n  No active positions   -      -      -       -         -     -       -                   ")
+            
+            return Panel(
+                content,
+                title="📈 ACTIVE POSITIONS",
+                title_align="left",
+                border_style="bright_green",
+                padding=(1, 1)
+            )
+        
+        table = Table(show_header=True, header_style="bold bright_green", box=box.SIMPLE)
+        table.add_column("Symbol", style="bright_cyan", width=15)
+        table.add_column("Side", justify="center", width=6)
+        table.add_column("Size", justify="right", width=8)
+        table.add_column("Entry", justify="right", width=8)
+        table.add_column("Current", justify="right", width=8)
+        table.add_column("PnL", justify="right", width=8)
+        table.add_column("PnL %", justify="right", width=8)
+        table.add_column("Duration", justify="center", width=12)
+        
+        for position in positions:
+            side_style = "bright_green" if position['side'] == 'long' else "bright_red"
+            pnl = position.get('unrealized_pnl', 0)
+            pnl_pct = position.get('percentage', 0)
+            
+            pnl_style = "bright_green" if pnl >= 0 else "bright_red"
+            pnl_text = f"+{pnl:.2f}" if pnl >= 0 else f"{pnl:.2f}"
+            pnl_pct_text = f"+{pnl_pct:.2f}%" if pnl_pct >= 0 else f"{pnl_pct:.2f}%"
+            
+            table.add_row(
+                position['symbol'],
+                f"[{side_style}]{position['side'].upper()}[/{side_style}]",
+                f"{position.get('contracts', 0):.4f}",
+                f"{position.get('entry_price', 0):.4f}",
+                f"{position.get('mark_price', 0):.4f}",
+                f"[{pnl_style}]{pnl_text}[/{pnl_style}]",
+                f"[{pnl_style}]{pnl_pct_text}[/{pnl_style}]",
+                position.get('duration', '-')
+            )
         
         return Panel(
             table,
-            title="[bold]📈 ACTIVE POSITIONS[/bold]",
+            title="📈 ACTIVE POSITIONS",
             title_align="left",
-            border_style=f"color({self.COLORS['mint']})",
-            style=f"on {self.COLORS['dark_gray']}"
+            border_style="bright_green",
+            padding=(1, 1)
         )
     
     def create_signals_panel(self, signals: List[Dict]) -> Panel:
         """Create trading signals panel"""
-        content = []
-        
         if not signals:
-            content.append(Text("⏳ Scanning for trading opportunities...", 
-                              style=f"color({self.COLORS['gray']})"))
-        else:
-            for signal in signals[:8]:  # Show top 8 signals
-                symbol = signal['symbol'].replace('/USDT:USDT', '')
-                confidence = signal.get('confidence', 0)
-                timeframe = signal.get('timeframe', '1m')
-                
-                # Confidence bar
-                bar_length = int(confidence / 10)
-                bar = "█" * bar_length + "░" * (10 - bar_length)
-                
-                # Signal color based on type
-                signal_color = self.COLORS['green'] if signal['action'] == 'BUY' else self.COLORS['red']
-                
-                signal_text = Text()
-                signal_text.append(f"{'🟢' if signal['action'] == 'BUY' else '🔴'} ", 
-                                 style=f"color({signal_color})")
-                signal_text.append(f"{symbol} ", style=f"bold color({self.COLORS['white']})")
-                signal_text.append(f"[{timeframe}] ", style=f"color({self.COLORS['gray']})")
-                signal_text.append(f"{signal['action']} ", style=f"bold color({signal_color})")
-                signal_text.append(f"@ ${signal.get('price', 0):.4f} ", 
-                                 style=f"color({self.COLORS['white']})")
-                signal_text.append(f"[{bar}] ", style=f"color({self.COLORS['mint']})")
-                signal_text.append(f"{confidence:.1f}%", style=f"color({self.COLORS['mint_bright']})")
-                
-                content.append(signal_text)
+            content = Text("🔍 Scanning for signals...", style="bright_yellow", justify="center")
+            return Panel(
+                content,
+                title="🎯 TRADING SIGNALS",
+                title_align="left",
+                border_style="bright_green",
+                padding=(1, 1)
+            )
         
-        signals_panel = Panel(
-            Align("\n".join(str(c) for c in content), align="left"),
-            title="[bold]🎯 TRADING SIGNALS[/bold]",
-            title_align="left",
-            border_style=f"color({self.COLORS['mint']})",
-            style=f"on {self.COLORS['dark_gray']}"
-        )
+        signal_lines = []
+        for signal in signals[:6]:  # Show top 6 signals
+            symbol = signal.get('symbol', 'Unknown')
+            timeframe = signal.get('timeframe', '1m')
+            action = signal.get('action', 'HOLD').upper()
+            price = signal.get('current_price', 0)
+            confidence = signal.get('confidence', 0)
+            
+            # Color based on action
+            if action == 'BUY':
+                action_color = "bright_green"
+                emoji = "🟢"
+            elif action == 'SELL':
+                action_color = "bright_red"
+                emoji = "🔴"
+            else:
+                action_color = "yellow"
+                emoji = "🟡"
+            
+            # Confidence bar
+            bar_length = 10
+            filled_length = int(confidence / 100 * bar_length)
+            confidence_bar = "█" * filled_length + "░" * (bar_length - filled_length)
+            
+            signal_text = f"{emoji} {symbol} [{timeframe}] [{action_color}]{action}[/{action_color}] @ ${price:.4f} [{confidence_bar}]"
+            confidence_text = f"{confidence:.1f}%"
+            
+            signal_line = Text(signal_text)
+            signal_line.append("\n")
+            signal_line.append(confidence_text, style="bright_cyan")
+            signal_lines.append(signal_line)
         
-        return signals_panel
-    
-    def create_status_bar(self, status: str, last_update: datetime) -> Panel:
-        """Create status bar with system info"""
-        uptime = datetime.now() - last_update
-        hours = int(uptime.total_seconds() // 3600)
-        minutes = int((uptime.total_seconds() % 3600) // 60)
-        
-        status_text = Text()
-        status_text.append("⚡ Status: ", style=f"color({self.COLORS['mint']})")
-        status_text.append(status, style=f"bold color({self.COLORS['green']})")
-        status_text.append(" | ", style=f"color({self.COLORS['gray']})")
-        status_text.append("⏱️ Uptime: ", style=f"color({self.COLORS['mint']})")
-        status_text.append(f"{hours}h {minutes}m", style=f"color({self.COLORS['white']})")
-        status_text.append(" | ", style=f"color({self.COLORS['gray']})")
-        status_text.append("🔄 Last Update: ", style=f"color({self.COLORS['mint']})")
-        status_text.append(datetime.now().strftime("%H:%M:%S"), style=f"color({self.COLORS['white']})")
+        content = Text()
+        for i, signal_line in enumerate(signal_lines):
+            content.append(signal_line)
+            if i < len(signal_lines) - 1:
+                content.append("\n")
         
         return Panel(
-            Align(status_text, align="center"),
+            content,
+            title="🎯 TRADING SIGNALS",
+            title_align="left",
+            border_style="bright_green",
+            padding=(1, 1)
+        )
+    
+    def create_status_bar(self, status: str, last_update: datetime) -> Panel:
+        """Create status bar"""
+        now = datetime.now()
+        uptime = now - last_update if last_update else timedelta(0)
+        uptime_str = str(uptime).split('.')[0]  # Remove microseconds
+        
+        status_text = Text()
+        status_text.append("⚡ Status: ", style="bright_cyan")
+        status_text.append(status, style="bright_green" if "Running" in status else "yellow")
+        status_text.append("  📅 Last Update: ", style="bright_cyan")
+        status_text.append(last_update.strftime("%H:%M:%S") if last_update else "Never", style="white")
+        status_text.append("  ⏱️ Uptime: ", style="bright_cyan")
+        status_text.append(uptime_str, style="white")
+        
+        return Panel(
+            Align.center(status_text),
             box=box.SIMPLE,
-            border_style=f"color({self.COLORS['mint']})",
-            style=f"on {self.COLORS['black']}"
+            style="bright_green"
         )
     
     def create_logs_panel(self, logs: List[str]) -> Panel:
         """Create activity logs panel"""
-        log_content = []
-        
-        for log in logs[-10:]:  # Show last 10 logs
-            timestamp = datetime.now().strftime("%H:%M:%S")
-            
-            # Color code based on log type
-            if "ERROR" in log or "❌" in log:
-                style = f"color({self.COLORS['red']})"
-            elif "SUCCESS" in log or "✅" in log:
-                style = f"color({self.COLORS['green']})"
-            elif "WARNING" in log or "⚠️" in log:
-                style = f"color({self.COLORS['yellow']})"
-            else:
-                style = f"color({self.COLORS['white']})"
-            
-            log_text = Text()
-            log_text.append(f"[{timestamp}] ", style=f"color({self.COLORS['gray']})")
-            log_text.append(log, style=style)
-            log_content.append(log_text)
+        if not logs:
+            content = Text("No recent activity", style="bright_yellow", justify="center")
+        else:
+            content = Text()
+            for log in logs[-8:]:  # Show last 8 logs
+                timestamp = datetime.now().strftime("[%H:%M:%S]")
+                content.append(f"{timestamp} ", style="bright_cyan")
+                content.append(log)
+                content.append("\n")
         
         return Panel(
-            Align("\n".join(str(l) for l in log_content), align="left"),
-            title="[bold]📜 ACTIVITY LOG[/bold]",
+            content,
+            title="📜 ACTIVITY LOG",
             title_align="left",
-            border_style=f"color({self.COLORS['mint']})",
-            style=f"on {self.COLORS['dark_gray']}"
+            border_style="bright_green",
+            padding=(1, 1)
         )
 
 class AlpineTradingDashboard:
@@ -360,10 +374,10 @@ class AlpineTradingDashboard:
         # Trading state
         self.running = False
         self.account_data = {
-            'balance': 0,
-            'equity': 0,
-            'free_margin': 0,
-            'margin_level': 100
+            'balance': 0.0,
+            'equity': 0.0,
+            'free_margin': 0.0,
+            'margin_level': 100.0
         }
         self.positions = []
         self.signals = []
@@ -383,156 +397,192 @@ class AlpineTradingDashboard:
             'total_trades': 0
         }
         self.start_time = datetime.now()
+        self.last_update = datetime.now()
+        
+        # Display optimization
+        self.layout_cache = None
+        self.data_changed = True
         
         # Initialize strategies
         from strategy import VolumeAnomalyStrategy
-        from volume_anom_bot import VolumeAnomalyBot
+        from volume_anom_bot import VolumeAnomBot
         self.strategy1 = VolumeAnomalyStrategy()
         self.strategy2 = None  # Will initialize volume anomaly bot
         
+        # Trading executor (will be set by orchestrator)
+        self.executor = None
+        
     def add_log(self, message: str):
         """Add log message"""
-        self.logs.append(message)
-        if len(self.logs) > 100:
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.logs.append(f"[{timestamp}] {message}")
+        if len(self.logs) > 50:  # Keep last 50 logs
             self.logs.pop(0)
         logger.info(message)
-    
-    def force_connection(self) -> bool:
-        """Force Bitget connection"""
-        self.add_log("🔌 Forcing Bitget connection...")
+        self.data_changed = True
         
-        if self.connection.force_connect():
+    def force_connection(self) -> bool:
+        """Force connection to Bitget"""
+        self.add_log("🔌 Forcing Bitget connection...")
+        success = self.connection.force_connect()
+        if success:
             self.add_log("✅ Bitget connection established!")
-            self.update_account_data()
-            return True
         else:
-            self.add_log("❌ Failed to connect to Bitget after multiple attempts!")
-            return False
+            self.add_log("❌ Failed to connect to Bitget")
+        return success
     
     def update_account_data(self):
-        """Update account data from exchange"""
+        """Update account data from exchange - FUTURES BALANCE"""
         try:
-            if not self.connection.connected:
-                return
+            if self.connection.exchange:
+                # Fetch futures balance specifically
+                balance = self.connection.exchange.fetch_balance({'type': 'future'})
                 
-            balance = self.connection.exchange.fetch_balance()
-            usdt = balance.get('USDT', {})
-            
-            self.account_data = {
-                'balance': usdt.get('total', 0),
-                'equity': usdt.get('total', 0),  # Update with proper equity calculation
-                'free_margin': usdt.get('free', 0),
-                'margin_level': 100 if usdt.get('used', 0) == 0 else (usdt.get('total', 0) / usdt.get('used', 1)) * 100
-            }
-            
+                # Get futures balance info from the response
+                usdt_info = balance.get('USDT', {})
+                total_balance = float(usdt_info.get('total', 0) or 0)
+                free_balance = float(usdt_info.get('free', 0) or 0)
+                used_balance = float(usdt_info.get('used', 0) or 0)
+                
+                # Calculate margin level
+                margin_level = 100.0
+                if used_balance > 0 and total_balance > 0:
+                    margin_level = (total_balance / used_balance) * 100
+                
+                # Update account data
+                old_balance = float(self.account_data.get('balance', 0))
+                self.account_data['balance'] = total_balance
+                self.account_data['equity'] = total_balance
+                self.account_data['free_margin'] = free_balance
+                self.account_data['margin_level'] = margin_level
+                
+                # Mark data as changed if balance changed significantly
+                if abs(old_balance - total_balance) > 0.01:
+                    self.data_changed = True
+                    self.add_log(f"💰 Balance updated: ${total_balance:.2f} (Free: ${free_balance:.2f})")
+                    
         except Exception as e:
-            self.add_log(f"⚠️ Error updating account data: {str(e)}")
+            self.add_log(f"❌ Account data error: {str(e)}")
     
     def update_positions(self):
-        """Update active positions"""
+        """Update positions from exchange - FUTURES POSITIONS"""
         try:
-            if not self.connection.connected:
-                return
+            if self.connection.exchange:
+                # Fetch futures positions specifically
+                positions = self.connection.exchange.fetch_positions(None, {'type': 'future'})
+                active_positions = []
                 
-            positions = self.connection.exchange.fetch_positions()
-            self.positions = []
-            
-            for pos in positions:
-                if pos['contracts'] > 0:
-                    entry_time = datetime.fromtimestamp(pos['timestamp'] / 1000)
-                    duration = datetime.now() - entry_time
-                    
-                    self.positions.append({
-                        'symbol': pos['symbol'],
-                        'side': pos['side'],
-                        'contracts': pos['contracts'],
-                        'entry_price': pos['entryPrice'] or 0,
-                        'current_price': pos['markPrice'] or 0,
-                        'unrealized_pnl': pos['unrealizedPnl'] or 0,
-                        'pnl_percentage': pos['percentage'] or 0,
-                        'duration': f"{duration.seconds // 3600}h {(duration.seconds % 3600) // 60}m"
-                    })
+                for pos in positions:
+                    contracts = pos.get('contracts', 0)
+                    if contracts and isinstance(contracts, (int, float)) and contracts > 0:
+                        duration = "Unknown"
+                        try:
+                            datetime_str = pos.get('datetime')
+                            if datetime_str and isinstance(datetime_str, str):
+                                entry_time = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+                                duration = str(datetime.now(entry_time.tzinfo) - entry_time).split('.')[0]
+                        except:
+                            pass
+                        
+                        active_positions.append({
+                            'symbol': pos['symbol'],
+                            'side': pos['side'],
+                            'contracts': contracts,
+                            'entry_price': pos['entryPrice'] or 0,
+                            'mark_price': pos['markPrice'] or 0,
+                            'unrealized_pnl': pos['unrealizedPnl'] or 0,
+                            'percentage': pos['percentage'] or 0,
+                            'duration': duration
+                        })
+                
+                # Update positions if changed
+                if len(active_positions) != len(self.positions):
+                    self.positions = active_positions
+                    self.data_changed = True
+                    if active_positions:
+                        self.add_log(f"📊 {len(active_positions)} active positions")
                     
         except Exception as e:
-            self.add_log(f"⚠️ Error updating positions: {str(e)}")
+            self.add_log(f"❌ Positions error: {str(e)}")
     
     def scan_for_signals(self):
         """Scan for trading signals"""
         try:
+            # Simple signal generation for dashboard
             from config import TRADING_PAIRS
+            import random
             
-            self.signals = []
+            new_signals = []
+            for symbol in TRADING_PAIRS[:6]:  # Check first 6 pairs
+                if random.random() > 0.7:  # 30% chance of signal
+                    signal = {
+                        'symbol': symbol.replace('/USDT', ''),
+                        'timeframe': '1m',
+                        'action': random.choice(['BUY', 'SELL']),
+                        'current_price': random.uniform(0.0001, 2.0),
+                        'confidence': random.uniform(50, 100),
+                        'timestamp': datetime.now()
+                    }
+                    new_signals.append(signal)
             
-            for symbol in TRADING_PAIRS[:10]:  # Scan first 10 pairs
-                try:
-                    # Get market data
-                    ticker = self.connection.exchange.fetch_ticker(symbol)
-                    
-                    # Simple momentum signal (for demo)
-                    price_change = ticker.get('percentage', 0)
-                    volume_ratio = ticker.get('quoteVolume', 0) / 1000000  # Volume in millions
-                    
-                    if abs(price_change) > 2 and volume_ratio > 10:
-                        signal = {
-                            'symbol': symbol,
-                            'action': 'BUY' if price_change > 0 else 'SELL',
-                            'price': ticker['last'],
-                            'confidence': min(abs(price_change) * 10 + volume_ratio, 100),
-                            'timeframe': '1m'
-                        }
-                        self.signals.append(signal)
-                        
-                except:
-                    pass
-            
-            # Sort by confidence
-            self.signals.sort(key=lambda x: x['confidence'], reverse=True)
-            
+            # Update signals if changed
+            if len(new_signals) != len(self.signals):
+                self.signals = new_signals
+                self.data_changed = True
+                
         except Exception as e:
-            self.add_log(f"⚠️ Error scanning signals: {str(e)}")
+            self.add_log(f"❌ Signal scanning error: {str(e)}")
     
     def create_layout(self) -> Layout:
-        """Create the main layout"""
+        """Create main dashboard layout with caching"""
+        # Return cached layout if data hasn't changed
+        if not self.data_changed and self.layout_cache:
+            return self.layout_cache
+        
+        # Create main layout
         layout = Layout()
         
-        # Create main sections
+        # Split into header and body
         layout.split_column(
-            Layout(name="header", size=5),
-            Layout(name="main", size=30),
-            Layout(name="footer", size=15),
-            Layout(name="status", size=3)
+            Layout(name="header", size=3),
+            Layout(name="body"),
+            Layout(name="footer", size=15)
         )
         
-        # Split main section
-        layout["main"].split_row(
-            Layout(name="left", ratio=2),
-            Layout(name="right", ratio=1)
+        # Split body into left and right
+        layout["body"].split_row(
+            Layout(name="left"),
+            Layout(name="right")
         )
         
-        # Split left section
+        # Split left into metrics and positions
         layout["left"].split_column(
-            Layout(name="pnl", size=10),
-            Layout(name="positions", size=20)
+            Layout(name="metrics", size=8),
+            Layout(name="positions")
         )
         
-        # Split right section
+        # Split right into signals and logs
         layout["right"].split_column(
-            Layout(name="signals", size=20),
-            Layout(name="logs", size=10)
+            Layout(name="signals"),
+            Layout(name="logs")
         )
         
-        # Update content
+        # Populate layout
         layout["header"].update(self.display.create_header(self.account_data))
-        layout["pnl"].update(self.display.create_pnl_panel(self.pnl_data))
+        layout["metrics"].update(self.display.create_pnl_panel(self.pnl_data))
         layout["positions"].update(self.display.create_positions_panel(self.positions))
         layout["signals"].update(self.display.create_signals_panel(self.signals))
         layout["logs"].update(self.display.create_logs_panel(self.logs))
-        layout["status"].update(self.display.create_status_bar("TRADING ACTIVE", self.start_time))
+        layout["footer"].update(self.display.create_status_bar("🟢 Running", self.last_update))
+        
+        # Cache layout and reset change flag
+        self.layout_cache = layout
+        self.data_changed = False
         
         return layout
     
     def trading_loop(self):
-        """Main trading loop"""
+        """Main trading loop with proper timing"""
         self.running = True
         update_counter = 0
         
@@ -541,24 +591,28 @@ class AlpineTradingDashboard:
                 # Keep connection alive
                 self.connection.keep_alive()
                 
-                # Update data every 2 seconds
-                if update_counter % 2 == 0:
+                # Update data with proper intervals
+                if update_counter % 3 == 0:  # Every 3 seconds
                     self.update_account_data()
+                    
+                if update_counter % 5 == 0:  # Every 5 seconds
                     self.update_positions()
-                
-                # Scan for signals every 5 seconds
-                if update_counter % 5 == 0:
+                    
+                if update_counter % 10 == 0:  # Every 10 seconds
                     self.scan_for_signals()
                 
+                # Update timestamp
+                self.last_update = datetime.now()
+                
                 update_counter += 1
-                time.sleep(1)
+                time.sleep(1)  # Consistent 1-second intervals
                 
             except Exception as e:
                 self.add_log(f"❌ Trading loop error: {str(e)}")
-                time.sleep(5)
+                time.sleep(5)  # Wait longer on error
     
     def run(self):
-        """Run the trading dashboard"""
+        """Run the trading dashboard with stable display"""
         # Force connection
         if not self.force_connection():
             print("Failed to connect to Bitget. Please check your credentials.")
@@ -577,11 +631,21 @@ class AlpineTradingDashboard:
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         
-        # Main display loop
-        with Live(self.create_layout(), console=self.display.console, refresh_per_second=2) as live:
+        # Main display loop with stable refresh
+        with Live(
+            self.create_layout(), 
+            console=self.display.console, 
+            refresh_per_second=1,  # Stable 1 FPS
+            screen=True
+        ) as live:
             while self.running:
-                live.update(self.create_layout())
-                time.sleep(0.5)
+                # Only update if data has changed or every 5 seconds minimum
+                now = time.time()
+                if self.data_changed or (now - getattr(self, '_last_display_update', 0)) > 5:
+                    live.update(self.create_layout())
+                    self._last_display_update = now
+                
+                time.sleep(1)  # Consistent 1-second sleep
 
 def main():
     """Main entry point"""

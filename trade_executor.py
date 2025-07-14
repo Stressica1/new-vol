@@ -97,9 +97,19 @@ class OptimizedTradeExecutor:
     def _calculate_position_size(self, signal: Dict) -> float:
         """Calculate optimal position size based on risk and confidence"""
         try:
-            # Get account balance
-            balance = self.exchange.fetch_balance()
-            free_usdt = balance['USDT']['free']
+            # Get futures account balance
+            balance = self.exchange.fetch_balance({'type': 'future'})
+            
+            # Extract USDT futures balance
+            free_usdt = 0
+            for info in balance.get('info', []):
+                if info.get('marginCoin') == 'USDT':
+                    free_usdt = float(info.get('available', 0))
+                    break
+            
+            if free_usdt == 0:
+                # Fallback to regular balance
+                free_usdt = balance.get('USDT', {}).get('free', 0)
             
             # Base position size
             base_size = free_usdt * (self.config.position_size_pct / 100)
@@ -119,15 +129,34 @@ class OptimizedTradeExecutor:
             max_position = free_usdt * 0.1  # Max 10% per position
             position_size = min(position_size, max_position)
             
-            # Get symbol info for minimum size
-            markets = self.exchange.markets
+            # Convert USD position size to asset amount
             symbol = signal['symbol']
+            
+            # Get current price to convert USD to asset amount
+            try:
+                ticker = self.exchange.fetch_ticker(symbol)
+                current_price = ticker['last']
+                position_size_asset = position_size / current_price
+            except Exception as e:
+                logger.error(f"Failed to get ticker for {symbol}: {e}")
+                return 0
+            
+            # Check minimum size requirements
+            markets = self.exchange.markets
             if symbol in markets:
                 min_size = markets[symbol]['limits']['amount']['min']
-                if position_size < min_size:
+                if position_size_asset < min_size:
+                    logger.warning(f"Position size {position_size_asset:.4f} below minimum {min_size} for {symbol}")
+                    return 0
+                
+                # Also check minimum notional value
+                min_notional = markets[symbol]['limits']['cost']['min']
+                if min_notional and position_size < min_notional:
+                    logger.warning(f"Position value ${position_size:.2f} below minimum ${min_notional} for {symbol}")
                     return 0
             
-            return position_size
+            logger.debug(f"Position size calculation: ${position_size:.2f} USD = {position_size_asset:.4f} {symbol.split('/')[0]}")
+            return position_size_asset
             
         except Exception as e:
             logger.error(f"Position size calculation error: {e}")
@@ -151,7 +180,7 @@ class OptimizedTradeExecutor:
     def _calculate_risk_levels(self, entry_price: float, action: str, signal: Dict) -> Tuple[float, float]:
         """Calculate dynamic stop loss and take profit levels"""
         # Use ATR-based stops if available
-        if self.config.use_dynamic_stop_loss and 'atr' in signal:
+        if self.config.use_dynamic_stop_loss and 'atr' in signal and signal['atr'] is not None:
             atr = signal['atr']
             stop_distance = atr * self.config.atr_multiplier
             
@@ -178,13 +207,19 @@ class OptimizedTradeExecutor:
         """Place order with retry logic and optimization"""
         for attempt in range(self.retry_attempts):
             try:
-                # Place main order
+                # Place main order with futures-specific parameters
+                params = {
+                    'marginCoin': 'USDT',  # Required for Bitget futures
+                    'timeInForce': 'IOC'   # Immediate or Cancel
+                }
+                
                 if self.use_limit_orders:
                     order = self.exchange.create_limit_order(
                         symbol=symbol,
                         side=side,
                         amount=amount,
-                        price=price
+                        price=price,
+                        params=params
                     )
                     
                     # Wait for fill or timeout
@@ -202,13 +237,15 @@ class OptimizedTradeExecutor:
                         order = self.exchange.create_market_order(
                             symbol=symbol,
                             side=side,
-                            amount=amount
+                            amount=amount,
+                            params=params
                         )
                 else:
                     order = self.exchange.create_market_order(
                         symbol=symbol,
                         side=side,
-                        amount=amount
+                        amount=amount,
+                        params=params
                     )
                 
                 # Place stop loss order

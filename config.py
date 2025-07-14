@@ -29,12 +29,17 @@ class TradingConfig:
     trailing_stop_pct: float = 0.8  # Tight trailing for scalping
     leverage: int = 1  # Leverage for futures trading (1x = no leverage)
     
-    # 🎯 Strategy Parameters (Volume Anomaly - TUNED FOR 1M/3M SCALPING)
+    # 🎯 Strategy Parameters (Volume Anomaly - TUNED FOR 3M SCALPING)
     volume_lookback: int = 10  # Faster signals for scalping
     volume_std_multiplier: float = 1.5  # More sensitive for frequent signals
     min_volume_ratio: float = 2.8  # Lower threshold for more signals
     supertrend_atr_period: int = 6  # Faster trend detection for scalping
     supertrend_multiplier: float = 2.0  # More sensitive signals
+    
+    # 📊 Signal Quality Configuration - HIGH CONVICTION TRADING
+    min_signal_confidence: float = 75.0  # Minimum 75% confidence for signal generation
+    min_trade_confidence: float = 75.0  # Minimum 75% confidence for trade execution
+    confluence_min_confidence: float = 75.0  # Minimum confidence for confluence signals (same as single TF now)
     
     # ⚡ Dynamic Stop Loss Configuration (ATR-based volatility)
     use_dynamic_stop_loss: bool = True
@@ -54,14 +59,16 @@ class TradingConfig:
     enable_stop_loss: bool = True
     enable_take_profit: bool = True
     
-    # ⏱️ Timeframe Configuration - FOCUS ON 1M/3M (HIGHEST WIN RATES)
-    timeframes: List[str] = field(default_factory=lambda: ['1m', '3m'])  # Only highest win rate timeframes
-    primary_timeframe: str = '1m'  # Primary execution timeframe
-    signal_confluence_required: int = 2  # Both timeframes must agree for confluence
+    # ⏱️ Timeframe Configuration - FOCUS ON 3M ONLY (HIGH WIN RATE)
+    timeframes: List[str] = field(default_factory=lambda: ['3m'])  # Only 3-minute timeframe for cleaner signals
+    primary_timeframe: str = '3m'  # Primary execution timeframe
+    signal_confluence_required: int = 1  # Only one timeframe available
     confluence_confidence_boost: float = 0.15  # +15% confidence on confluence signals
     
-    # 📊 Display Settings - Enhanced for real-time scalping
-    refresh_rate: float = 0.3  # Faster refresh for scalping (300ms)
+    # �� Display Settings - Optimized for stable terminal display
+    refresh_rate: float = 1.0  # Stable 1-second refresh for consistent display
+    display_refresh_per_second: int = 1  # Rich Live display refresh rate
+    display_update_throttle: float = 1.0  # Minimum time between display updates
     max_log_lines: int = 50  # Reduced for cleaner display
     
     # 🎨 UI Colors (Enhanced Mint Green Cyber Theme)
