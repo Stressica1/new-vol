@@ -21,6 +21,7 @@ import sys
 # Import local modules
 from config import get_exchange_config, TradingConfig
 from strategy import VolumeAnomalyStrategy
+from bot_manager import AlpineBotManager
 
 class SimpleAlpineBot:
     def __init__(self):
@@ -137,29 +138,19 @@ class SimpleAlpineBot:
                     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
                     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
                     
-                    # Generate signals using the strategy - try different method names
+                    # Generate signals using the Volume Anomaly Strategy
                     signals = []
                     try:
-                        if hasattr(self.strategy, 'generate_signals'):
-                            signals = self.strategy.generate_signals(df, symbol, '3m')
-                        elif hasattr(self.strategy, 'analyze'):
-                            signals = self.strategy.analyze(df, symbol, '3m')
-                        elif hasattr(self.strategy, 'get_signals'):
-                            signals = self.strategy.get_signals(df, symbol, '3m')
-                        else:
-                            # Create a basic signal for demo
-                            if len(df) > 20:
-                                # Simple momentum signal
-                                recent_price = df['close'].iloc[-1]
-                                previous_price = df['close'].iloc[-10]
-                                if recent_price > previous_price * 1.01:  # 1% gain
-                                    signals = [{
-                                        'action': 'BUY',
-                                        'confidence': 75.0,
-                                        'price': recent_price
-                                    }]
+                        # Use the proper Volume Anomaly Strategy method
+                        signals = self.strategy.generate_single_timeframe_signals(df, symbol, '3m')
+                        
+                        # Convert signal format if needed (from 'type' to 'action')
+                        for signal in signals:
+                            if 'type' in signal and 'action' not in signal:
+                                signal['action'] = 'BUY' if signal['type'] == 'LONG' else 'SELL'
+                                
                     except Exception as e:
-                        self.log(f"⚠️ Strategy error for {symbol}: {str(e)}")
+                        self.log(f"⚠️ Volume Anomaly Strategy error for {symbol}: {str(e)}")
                         continue
                     
                     # Filter for high-confidence signals
@@ -423,8 +414,21 @@ class SimpleAlpineBot:
             self.log("👋 Simple Alpine Bot shutdown complete")
 
 def main():
-    bot = SimpleAlpineBot()
-    bot.run()
+    """Main entry point with process management"""
+    try:
+        # Kill all other Alpine bot processes first
+        manager = AlpineBotManager()
+        console = Console()
+        
+        console.print("🤖 [bold green]SIMPLE ALPINE BOT STARTING[/bold green]")
+        manager.kill_alpine_processes(exclude_current=True)
+        
+        bot = SimpleAlpineBot()
+        bot.run()
+    except KeyboardInterrupt:
+        print("\n👋 Simple Alpine Bot stopped by user")
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
 
 if __name__ == "__main__":
     main() 

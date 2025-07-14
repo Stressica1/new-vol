@@ -18,8 +18,8 @@ from typing import Dict, List, Optional, Tuple
 from rich.live import Live
 from rich.console import Console
 from loguru import logger
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+# from watchdog.observers import Observer
+# from watchdog.events import FileSystemEventHandler
 import signal # Added for signal handling
 
 # Configure Loguru for detailed logging
@@ -36,44 +36,47 @@ from config import TradingConfig, get_exchange_config, TRADING_PAIRS, BOT_NAME, 
 from ui_display import AlpineDisplayV2  # Updated to use V2
 from strategy import VolumeAnomalyStrategy
 from risk_manager import AlpineRiskManager
+from bot_manager import AlpineBotManager
 
-class CodeReloadHandler(FileSystemEventHandler):
-    """🔄 Hot-reload handler for code changes"""
-    
-    def __init__(self, bot_instance):
-        self.bot = bot_instance
-        self.last_reload = {}
-        self.reload_cooldown = 2.0  # Prevent rapid reloads
-        
-    def on_modified(self, event):
-        if event.is_directory:
-            return
-            
-        file_path = event.src_path
-        if not file_path.endswith('.py'):
-            return
-            
-        # Skip __pycache__ and other temp files
-        if '__pycache__' in file_path or file_path.endswith('.pyc'):
-            return
-            
-        # Check cooldown
-        current_time = time.time()
-        if file_path in self.last_reload:
-            if current_time - self.last_reload[file_path] < self.reload_cooldown:
-                return
-                
-        self.last_reload[file_path] = current_time
-        
-        try:
-            filename = os.path.basename(file_path)
-            if filename in ['strategy.py', 'risk_manager.py', 'ui_display.py', 'config.py']:
-                logger.info(f"🔄 Detected change in {filename}, hot-reloading...")
-                self.bot.log_activity(f"🔄 Hot-reloading {filename}...", "INFO")
-                self.bot.hot_reload_module(filename)
-        except Exception as e:
-            logger.error(f"❌ Error handling file change: {e}")
-            self.bot.log_activity(f"❌ Reload error: {e}", "ERROR")
+# NOTE: Watchdog functionality temporarily disabled due to import issues
+# Uncomment the watchdog imports above and this class when watchdog is properly installed
+# class CodeReloadHandler(FileSystemEventHandler):
+#     """🔄 Hot-reload handler for code changes"""
+#     
+#     def __init__(self, bot_instance):
+#         self.bot = bot_instance
+#         self.last_reload = {}
+#         self.reload_cooldown = 2.0  # Prevent rapid reloads
+#         
+#     def on_modified(self, event):
+#         if event.is_directory:
+#             return
+#             
+#         file_path = event.src_path
+#         if not file_path.endswith('.py'):
+#             return
+#             
+#         # Skip __pycache__ and other temp files
+#         if '__pycache__' in file_path or file_path.endswith('.pyc'):
+#             return
+#             
+#         # Check cooldown
+#         current_time = time.time()
+#         if file_path in self.last_reload:
+#             if current_time - self.last_reload[file_path] < self.reload_cooldown:
+#                 return
+#                 
+#         self.last_reload[file_path] = current_time
+#         
+#         try:
+#             filename = os.path.basename(file_path)
+#             if filename in ['strategy.py', 'risk_manager.py', 'ui_display.py', 'config.py']:
+#                 logger.info(f"🔄 Detected change in {filename}, hot-reloading...")
+#                 self.bot.log_activity(f"🔄 Hot-reloading {filename}...", "INFO")
+#                 self.bot.hot_reload_module(filename)
+#         except Exception as e:
+#             logger.error(f"❌ Error handling file change: {e}")
+#             self.bot.log_activity(f"❌ Reload error: {e}", "ERROR")
 
 class AlpineBot:
     """🏔️ Alpine Trading Bot V2.0 - Next-Generation Confluence Trading System"""
@@ -179,7 +182,6 @@ class AlpineBot:
                     old_positions = getattr(self.risk_manager, 'active_positions', [])
                     old_closed = getattr(self.risk_manager, 'closed_positions', [])
                     old_daily_pnl = getattr(self.risk_manager, 'daily_pnl', 0)
-                    old_session_start = getattr(self.risk_manager, 'session_start_balance', 0)
                     old_trading_halted = getattr(self.risk_manager, 'trading_halted', False)
                     
                     # Reload risk manager module
@@ -191,7 +193,6 @@ class AlpineBot:
                     new_risk_manager.active_positions = old_positions
                     new_risk_manager.closed_positions = old_closed
                     new_risk_manager.daily_pnl = old_daily_pnl
-                    new_risk_manager.session_start_balance = old_session_start
                     new_risk_manager.trading_halted = old_trading_halted
                     
                     self.risk_manager = new_risk_manager
@@ -215,7 +216,7 @@ class AlpineBot:
                     importlib.reload(ui_display)
                     
                     # Create new instance and restore state
-                    new_display = ui_display.AlpineDisplay()
+                    new_display = ui_display.AlpineDisplayV2()
                     for key, value in old_stats.items():
                         setattr(new_display, key, value)
                     
@@ -261,7 +262,7 @@ class AlpineBot:
     def restore_from_backup(self):
         """Restore critical state from backup 🔄"""
         try:
-            if self.module_backup:
+            if hasattr(self, 'module_backup') and self.module_backup:
                 self.account_data = self.module_backup.get('account_data', {})
                 self.positions = self.module_backup.get('positions', [])
                 self.market_data = self.module_backup.get('market_data', {})
@@ -318,7 +319,14 @@ class AlpineBot:
             logger.debug(f"Exchange config keys: {list(exchange_config.keys())}")
             self.log_activity(f"🔧 Exchange config loaded: {list(exchange_config.keys())}", "INFO")
             
-            self.exchange = ccxt.bitget(exchange_config)
+            self.exchange = ccxt.bitget({
+                'apiKey': exchange_config.get('apiKey', ''),
+                'secret': exchange_config.get('secret', ''),
+                'password': exchange_config.get('password', ''),
+                'sandbox': exchange_config.get('sandbox', False),
+                'enableRateLimit': exchange_config.get('enableRateLimit', True),
+                'defaultType': exchange_config.get('defaultType', 'swap')
+            })
             
             # Test connection
             logger.info("📡 Testing connection with load_markets()...")
@@ -337,10 +345,12 @@ class AlpineBot:
             
             # Get futures balance info from the raw response
             usdt_futures_info = None
-            for info in balance.get('info', []):
-                if info.get('marginCoin') == 'USDT':
-                    usdt_futures_info = info
-                    break
+            info_list = balance.get('info', [])
+            if isinstance(info_list, list):
+                for info in info_list:
+                    if isinstance(info, dict) and info.get('marginCoin') == 'USDT':
+                        usdt_futures_info = info
+                        break
             
             if usdt_futures_info:
                 available = float(usdt_futures_info.get('available', 0))
@@ -396,7 +406,7 @@ class AlpineBot:
         """Fetch account balance and positions 💰"""
         
         try:
-            if not self.connected:
+            if not self.connected or not self.exchange:
                 logger.warning("Cannot fetch account data - not connected to exchange")
                 return
             
@@ -406,10 +416,12 @@ class AlpineBot:
             
             # Get futures balance info from the raw response
             usdt_futures_info = None
-            for info in balance.get('info', []):
-                if info.get('marginCoin') == 'USDT':
-                    usdt_futures_info = info
-                    break
+            info_list = balance.get('info', [])
+            if isinstance(info_list, list):
+                for info in info_list:
+                    if isinstance(info, dict) and info.get('marginCoin') == 'USDT':
+                        usdt_futures_info = info
+                        break
             
             if usdt_futures_info:
                 available = float(usdt_futures_info.get('available', 0))
@@ -443,16 +455,17 @@ class AlpineBot:
             logger.debug("Fetching positions...")
             # Fetch positions
             positions = self.exchange.fetch_positions()
-            self.positions = [pos for pos in positions if pos['contracts'] > 0]
+            self.positions = [pos for pos in positions if float(pos['contracts'] or 0) > 0]
             logger.debug(f"Found {len(self.positions)} active positions")
             
             # Update risk manager positions
             for pos in self.positions:
-                self.risk_manager.update_position(
-                    pos['symbol'], 
-                    pos['markPrice'], 
-                    pos.get('unrealizedPnl', 0)
-                )
+                symbol = str(pos['symbol'])
+                mark_price = pos.get('markPrice', 0)
+                current_price = float(mark_price) if mark_price is not None else 0.0
+                unrealized_pnl_val = pos.get('unrealizedPnl', 0)
+                unrealized_pnl = float(unrealized_pnl_val) if unrealized_pnl_val is not None else 0.0
+                self.risk_manager.update_position(symbol, current_price, unrealized_pnl)
             
         except Exception as e:
             error_msg = f"❌ Error fetching account data: {str(e)}"
@@ -463,7 +476,7 @@ class AlpineBot:
         """Fetch OHLCV data for analysis 📊"""
         
         try:
-            if not self.connected:
+            if not self.connected or not self.exchange:
                 logger.warning(f"Cannot fetch market data for {symbol} - not connected")
                 return None
             
@@ -479,7 +492,9 @@ class AlpineBot:
             logger.debug(f"Received {len(ohlcv)} candles for {symbol}")
             
             # Convert to DataFrame
-            df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+            column_names = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+            df = pd.DataFrame(ohlcv)
+            df.columns = column_names
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
             df.set_index('timestamp', inplace=True)
             
@@ -577,7 +592,7 @@ class AlpineBot:
                         should_enter = self.strategy.should_enter_trade(
                             signal,
                             self.account_data.get('balance', 1000),  # Default balance for testing
-                            self.active_positions
+                            [pos for pos in self.active_positions]  # Convert to proper format
                         )
                         
                         if should_enter:
@@ -646,31 +661,18 @@ class AlpineBot:
             
             logger.info(f"🎯 Executing {'🚀 CONFLUENCE' if is_confluence else '📈 STANDARD'} {signal_type} trade for {symbol}")
             
-            # Enhanced position sizing with confluence boost
-            if hasattr(self.risk_manager, 'calculate_confluence_position_size'):
-                position_size = self.risk_manager.calculate_confluence_position_size(
-                    symbol, current_price, is_confluence
-                )
-            else:
-                position_size = self.strategy.calculate_position_size(
-                    signal, self.account_data.get('balance', 0), current_price
-                )
+            # Calculate position size using strategy method
+            position_size = self.strategy.calculate_position_size(
+                signal, 
+                self.account_data.get('balance', 0), 
+                current_price
+            )
             
-            # Dynamic volatility-based stop loss
-            if hasattr(self.risk_manager, 'calculate_dynamic_stop_loss'):
-                market_data = self.risk_manager.price_data_cache.get(symbol)
-                stop_loss_price = self.risk_manager.calculate_dynamic_stop_loss(
-                    symbol, current_price, signal_type, market_data
-                )
-            else:
-                stop_loss_price, _ = self.strategy.calculate_stop_loss_take_profit(signal, current_price)
-                stop_loss_price = stop_loss_price
-            
-            # Enhanced take profit calculation
-            _, take_profit_price = self.strategy.calculate_stop_loss_take_profit(signal, current_price)
+            # Calculate stop loss and take profit using strategy method
+            stop_loss_price, take_profit_price = self.strategy.calculate_stop_loss_take_profit(signal, current_price)
             
             logger.info(f"💰 Position size: {position_size:.4f} {'(+15% confluence boost)' if is_confluence else ''}")
-            logger.info(f"🛡️ Dynamic stop loss: ${stop_loss_price:.4f}")
+            logger.info(f"🛡️ Stop loss: ${stop_loss_price:.4f}")
             logger.info(f"🎯 Take profit: ${take_profit_price:.4f}")
             
             # Simulate trade execution (replace with actual exchange calls)
@@ -718,6 +720,11 @@ class AlpineBot:
         """Execute a trade based on signal 💰"""
         
         try:
+            if not self.connected or not self.exchange:
+                logger.error("Cannot execute trade - not connected to exchange")
+                self.log_activity("❌ Cannot execute trade - not connected to exchange", "ERROR")
+                return False
+                
             symbol = signal['symbol']
             signal_type = signal['type']
             current_price = signal['price']
@@ -725,21 +732,21 @@ class AlpineBot:
             logger.info(f"🎯 Attempting to execute {signal_type} trade for {symbol} at ${current_price}")
             
             # Check if we can open position
-            can_open, reason = self.risk_manager.can_open_position(signal, self.account_data['balance'])
+            can_open, reason = self.risk_manager.can_open_position(signal, self.account_data.get('balance', 0))
             
             if not can_open:
                 logger.warning(f"🚫 Trade rejected for {symbol}: {reason}")
                 self.log_activity(f"🚫 Trade rejected: {reason}", "WARNING")
                 return False
             
-            # Calculate position size
+            # Calculate position size using risk manager
             logger.debug("Calculating position size...")
             position_size, risk_info = self.risk_manager.calculate_position_size(
-                signal, self.account_data['balance'], current_price
+                signal, self.account_data.get('balance', 0), current_price
             )
             logger.debug(f"Position size calculated: {position_size}, risk_info: {risk_info}")
             
-            # Calculate stop loss and take profit
+            # Calculate stop loss and take profit using risk manager
             logger.debug("Calculating risk levels...")
             risk_levels = self.risk_manager.calculate_stop_loss_take_profit(
                 signal, current_price, position_size
@@ -766,7 +773,7 @@ class AlpineBot:
                     'side': signal_type.lower(),
                     'entry_price': current_price,
                     'position_size': position_size,
-                    'position_value': risk_info['adjusted_value'],
+                    'position_value': risk_info.get('adjusted_value', position_size * current_price),
                     'stop_loss': risk_levels['stop_loss'],
                     'take_profit': risk_levels['take_profit'],
                     'trailing_stop_distance': risk_levels.get('trailing_stop_distance'),
@@ -784,7 +791,8 @@ class AlpineBot:
                 self.log_activity(trade_msg, "TRADE")
                 
                 # Update display stats
-                self.display.update_stats({'pnl': 0})  # Will be updated when closed
+                if hasattr(self.display, 'update_stats'):
+                    self.display.update_stats({'pnl': 0})  # Will be updated when closed
                 
                 return True
             else:
@@ -833,9 +841,14 @@ class AlpineBot:
                 
                 logger.debug(f"Monitoring position: {symbol} {side}")
                 
+                if not self.connected or not self.exchange:
+                    logger.warning("Cannot monitor positions - not connected to exchange")
+                    return
+                
                 # Fetch current price
                 ticker = self.exchange.fetch_ticker(symbol)
-                current_price = ticker['last']
+                last_price = ticker.get('last', 0)
+                current_price = float(last_price) if last_price is not None else 0.0
                 
                 # Calculate unrealized P&L
                 entry_price = position['entry_price']
@@ -889,6 +902,10 @@ class AlpineBot:
         """Close a position 🔄"""
         
         try:
+            if not self.connected or not self.exchange:
+                logger.error("Cannot close position - not connected to exchange")
+                return
+                
             symbol = position['symbol']
             side = 'sell' if position['side'] == 'long' else 'buy'
             size = position['position_size']
@@ -921,7 +938,8 @@ class AlpineBot:
                     self.log_activity(close_msg, "TRADE")
                     
                     # Update display stats
-                    self.display.update_stats({'pnl': realized_pnl})
+                    if hasattr(self.display, 'update_stats'):
+                        self.display.update_stats({'pnl': realized_pnl})
             else:
                 logger.error(f"Failed to close position {symbol} - no order ID returned")
                 
@@ -955,7 +973,8 @@ class AlpineBot:
                     # Execute trades on valid signals
                     for signal in signals:
                         logger.debug(f"🔍 Checking signal for execution: {signal}")
-                        if self.strategy.should_enter_trade(signal, self.account_data.get('balance', 0), self.positions):
+                        position_list = [{'symbol': pos['symbol'], 'side': pos['side']} for pos in self.active_positions]
+                        if self.strategy.should_enter_trade(signal, self.account_data.get('balance', 0), position_list):
                             logger.info(f"🚀 Executing trade for signal: {signal}")
                             self.execute_trade(signal)
                         else:
@@ -1102,26 +1121,31 @@ class AlpineBot:
 
 def main():
     """Main entry point 🏔️"""
-    
-    # Create and run Alpine bot
-    bot = AlpineBot()
-    bot.run()
-
-if __name__ == "__main__":
-    # Display startup banner
-    console = Console()
-    console.print("\n" + "="*60, style="bold cyan")
-    console.print("🏔️  ALPINE TRADING BOT", style="bold green", justify="center")
-    console.print("Volume Anomaly Strategy | 90% Success Rate", style="cyan", justify="center") 
-    console.print("Beautiful Mint Green Terminal Interface", style="green", justify="center")
-    console.print("🔄 HOT-RELOAD ENABLED", style="bold yellow", justify="center")
-    console.print("="*60 + "\n", style="bold cyan")
-    
     try:
-        main()
+        # Kill all other Alpine bot processes first
+        manager = AlpineBotManager()
+        console = Console()
+        
+        console.print("🤖 [bold cyan]ALPINE BOT V2.0 STARTING[/bold cyan]")
+        manager.kill_alpine_processes(exclude_current=True)
+        
+        # Create and run Alpine bot
+        bot = AlpineBot()
+        bot.run()
     except KeyboardInterrupt:
         console.print("\n👋 Alpine bot terminated by user", style="yellow")
     except Exception as e:
         console.print(f"\n❌ Fatal error: {str(e)}", style="red")
         logger.exception("Fatal error in main")
-        sys.exit(1)
+
+if __name__ == "__main__":
+    # Display startup banner
+    console = Console()
+    console.print("\n" + "="*60, style="bold cyan")
+    console.print("🏔️  ALPINE TRADING BOT V2.0", style="bold green", justify="center")
+    console.print("Volume Anomaly Strategy | 90% Success Rate", style="cyan", justify="center") 
+    console.print("Beautiful Mint Green Terminal Interface", style="green", justify="center")
+    console.print("🔄 HOT-RELOAD ENABLED", style="bold yellow", justify="center")
+    console.print("="*60 + "\n", style="bold cyan")
+    
+    main()

@@ -22,6 +22,7 @@ import pandas as pd
 # Import local modules
 from config import get_exchange_config, TradingConfig, TRADING_PAIRS
 from strategy import VolumeAnomalyStrategy
+from bot_manager import AlpineBotManager
 
 class SimpleAlpineTrader:
     def __init__(self):
@@ -113,7 +114,7 @@ class SimpleAlpineTrader:
             self.log(f"❌ Positions update error: {str(e)}")
     
     def scan_and_execute(self):
-        """Scan for signals and execute trades immediately"""
+        """Scan for Volume Anomaly signals and execute trades immediately"""
         try:
             if not self.exchange:
                 return
@@ -125,42 +126,55 @@ class SimpleAlpineTrader:
             
             for symbol in pairs_to_scan:
                 try:
-                    # Get current ticker - CCXT format
+                    # Fetch market data for 3m timeframe (Volume Anomaly Strategy)
+                    ohlcv = self.exchange.fetch_ohlcv(symbol, '3m', limit=100)
+                    
+                    if len(ohlcv) < 50:  # Need enough data for Volume Anomaly analysis
+                        continue
+                        
+                    # Convert to pandas DataFrame
+                    df = pd.DataFrame(ohlcv)
+                    df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+                    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+                    
+                    # Generate Volume Anomaly signals
+                    volume_signals = self.strategy.generate_single_timeframe_signals(df, symbol, '3m')
+                    
+                    # Get current price
                     ticker = self.exchange.fetch_ticker(symbol)
                     current_price = ticker['last']
                     
-                    # Get 24h change
-                    price_change_24h = ticker.get('percentage', 0) or 0
-                    price_change_24h = float(price_change_24h)
-                    
-                    # Simple signal: if price is up > 2% in 24h, it's a buy signal
-                    if price_change_24h > 2.0:
-                        confidence = min(50.0 + price_change_24h * 10.0, 95.0)  # Scale confidence
-                        
-                        signal = {
-                            'symbol': symbol.split('/')[0],  # Extract base symbol (e.g., DOGE from DOGE/USDT:USDT)
-                            'action': 'BUY',
-                            'price': current_price,
-                            'confidence': confidence,
-                            'timeframe': '1d',
-                            'change_24h': price_change_24h
-                        }
-                        
-                        self.signals.append(signal)
-                        
-                        # Execute if confidence > 80% and above 75% threshold [[memory:3208189]]
-                        if confidence > 80:
-                            self.execute_trade(symbol, 'BUY', current_price, confidence)
+                    # Process Volume Anomaly signals
+                    for signal in volume_signals:
+                        if signal.get('confidence', 0) >= 75.0:  # 75% minimum confidence
+                            
+                            # Convert to display format
+                            display_signal = {
+                                'symbol': symbol.split('/')[0],  # Extract base symbol
+                                'action': 'BUY' if signal['type'] == 'LONG' else 'SELL',
+                                'price': current_price,
+                                'confidence': signal['confidence'],
+                                'timeframe': '3m',
+                                'volume_ratio': signal.get('volume_ratio', 1.0),
+                                'reasons': signal.get('reasons', [])
+                            }
+                            
+                            self.signals.append(display_signal)
+                            
+                            # Execute if confidence > 80% (Volume Anomaly threshold)
+                            if signal['confidence'] >= 80.0:
+                                action = 'BUY' if signal['type'] == 'LONG' else 'SELL'
+                                self.execute_trade(symbol, action, current_price, signal['confidence'])
                     
                 except Exception as e:
                     self.log(f"⚠️ Error scanning {symbol}: {str(e)}")
                     continue
             
             if self.signals:
-                self.log(f"📊 Found {len(self.signals)} signals")
+                self.log(f"📊 Found {len(self.signals)} Volume Anomaly signals")
             
         except Exception as e:
-            self.log(f"❌ Signal scan error: {str(e)}")
+            self.log(f"❌ Volume Anomaly scan error: {str(e)}")
     
     def execute_trade(self, symbol, action, price, confidence):
         """Execute a simple trade"""
@@ -419,18 +433,31 @@ class SimpleAlpineTrader:
             self.log("👋 Alpine Live Trader stopped")
 
 def main():
-    print("🚨 WARNING: This is LIVE TRADING mode!")
-    print("🚨 This bot will execute REAL trades with REAL money!")
-    print("🚨 Press Ctrl+C at any time to stop")
-    print()
-    
-    response = input("Type 'YES' to start live trading: ")
-    if response.upper() != 'YES':
-        print("❌ Live trading cancelled")
-        return
-    
-    trader = SimpleAlpineTrader()
-    trader.run()
+    """Main entry point with process management"""
+    try:
+        # Kill all other Alpine bot processes first
+        manager = AlpineBotManager()
+        console = Console()
+        
+        console.print("🤖 [bold red]SIMPLE ALPINE TRADER STARTING - LIVE TRADING![/bold red]")
+        manager.kill_alpine_processes(exclude_current=True)
+        
+        print("🚨 WARNING: This is LIVE TRADING mode!")
+        print("🚨 This bot will execute REAL trades with REAL money!")
+        print("🚨 Press Ctrl+C at any time to stop")
+        print()
+        
+        response = input("Type 'YES' to start live trading: ")
+        if response.upper() != 'YES':
+            print("❌ Live trading cancelled")
+            return
+        
+        trader = SimpleAlpineTrader()
+        trader.run()
+    except KeyboardInterrupt:
+        print("\n👋 Simple Alpine Trader stopped by user")
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
 
 if __name__ == "__main__":
     main() 
