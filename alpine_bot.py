@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 import sys
 import os
 import importlib
+import io
+import contextlib
 from typing import Dict, List, Optional, Tuple
 from rich.live import Live
 from rich.console import Console
@@ -30,7 +32,9 @@ logger.add("logs/alpine_bot_{time:YYYY-MM-DD}.log",
           retention="30 days",
           level="DEBUG",
           format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}")
-logger.add(sys.stderr, level="INFO", format="<green>{time:HH:mm:ss}</green> | <level>{level}</level> | {message}")
+
+# Remove stderr logging to prevent interference with UI
+# logger.add(sys.stderr, level="INFO", format="<green>{time:HH:mm:ss}</green> | <level>{level}</level> | {message}")
 
 # Import our components
 from config import TradingConfig, get_exchange_config, TRADING_PAIRS, BOT_NAME, VERSION
@@ -79,6 +83,33 @@ from bot_manager import AlpineBotManager
 #             logger.error(f"❌ Error handling file change: {e}")
 #             self.bot.log_activity(f"❌ Reload error: {e}", "ERROR")
 
+class ErrorCapture:
+    """Capture stdout/stderr to prevent interference with UI display"""
+    def __init__(self, error_callback=None):
+        self.error_callback = error_callback
+        self.captured_output = []
+        
+    def __enter__(self):
+        self.original_stdout = sys.stdout
+        self.original_stderr = sys.stderr
+        sys.stdout = self
+        sys.stderr = self
+        return self
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self.original_stdout
+        sys.stderr = self.original_stderr
+        
+    def write(self, text):
+        if text.strip() and self.error_callback:
+            self.error_callback(text.strip())
+        # Also write to log file but not to terminal
+        if text.strip():
+            logger.debug(f"Captured output: {text.strip()}")
+            
+    def flush(self):
+        pass
+
 class AlpineBot:
     """🏔️ Alpine Trading Bot V2.0 - Next-Generation Confluence Trading System"""
     
@@ -97,6 +128,9 @@ class AlpineBot:
         # 📊 Trading state management
         self.active_positions = []
         self.current_signals = []
+        
+        # 🚨 Initialize error capture
+        self.error_capture = None
         self.activity_log = []
         self.error_log = []  # Track system errors for display
         self.account_data = {}
@@ -305,6 +339,26 @@ class AlpineBot:
         if len(self.activity_log) > 100:
             self.activity_log = self.activity_log[-100:]
     
+    def handle_captured_error(self, error_text: str):
+        """Handle errors captured from stdout/stderr"""
+        if "BadSymbol" in error_text or "does not have market symbol" in error_text:
+            error_type = "Market"
+        elif "ccxt" in error_text.lower() or "exchange" in error_text.lower():
+            error_type = "API"
+        else:
+            error_type = "System"
+            
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        error_entry = {
+            "time": timestamp,
+            "type": error_type,
+            "message": error_text[:80]  # Truncate for display
+        }
+        self.error_log.append(error_entry)
+        # Keep only last 3 errors for clean display
+        if len(self.error_log) > 3:
+            self.error_log.pop(0)
+    
     def initialize_exchange(self) -> bool:
         """Initialize Bitget exchange connection 🔌"""
         
@@ -404,7 +458,7 @@ class AlpineBot:
             return False
     
     def fetch_account_data(self):
-        """Fetch account balance and positions 💰"""
+        """Fetch account and position data from exchange and enforce risk management immediately"""
         
         try:
             if not self.connected or not self.exchange:
@@ -493,7 +547,42 @@ class AlpineBot:
                 
             # Sync active_positions with exchange positions
             self.active_positions = self.positions.copy()
-            
+
+            # --- ENFORCE RISK MANAGEMENT IMMEDIATELY ---
+            # 1. Run risk checks after loading positions
+            self.risk_manager.check_risk_limits(self.account_data['balance'])
+            if self.risk_manager.trading_halted:
+                self.log_activity("🛑 Trading halted: Risk limits breached on startup!", "ERROR")
+
+            # 2. For each position, check if SL/TP would have been hit and close if so
+            for pos in self.active_positions[:]:
+                symbol = pos['symbol']
+                side = pos['side']
+                entry = pos['entry_price']
+                size = pos['size']
+                current = pos['current_price']
+                # Calculate stop loss and take profit based on config
+                stop_loss_pct = getattr(self.config, 'stop_loss_pct', 2.0) / 100
+                take_profit_pct = getattr(self.config, 'take_profit_pct', 4.0) / 100
+                if side == 'long':
+                    stop_loss = entry * (1 - stop_loss_pct)
+                    take_profit = entry * (1 + take_profit_pct)
+                    if current <= stop_loss:
+                        self.log_activity(f"❌ Closing LONG {symbol}: breached stop loss (${current:.4f} <= ${stop_loss:.4f})", "ERROR")
+                        self.close_position(pos, current, reason="Stop Loss Breach")
+                    elif current >= take_profit:
+                        self.log_activity(f"✅ Closing LONG {symbol}: take profit hit (${current:.4f} >= ${take_profit:.4f})", "SUCCESS")
+                        self.close_position(pos, current, reason="Take Profit Hit")
+                else:
+                    stop_loss = entry * (1 + stop_loss_pct)
+                    take_profit = entry * (1 - take_profit_pct)
+                    if current >= stop_loss:
+                        self.log_activity(f"❌ Closing SHORT {symbol}: breached stop loss (${current:.4f} >= ${stop_loss:.4f})", "ERROR")
+                        self.close_position(pos, current, reason="Stop Loss Breach")
+                    elif current <= take_profit:
+                        self.log_activity(f"✅ Closing SHORT {symbol}: take profit hit (${current:.4f} <= ${take_profit:.4f})", "SUCCESS")
+                        self.close_position(pos, current, reason="Take Profit Hit")
+
             if len(self.positions) > 0:
                 self.log_activity(f"📊 Loaded {len(self.positions)} existing positions from exchange", "SUCCESS")
                 for pos in self.positions:
@@ -538,10 +627,17 @@ class AlpineBot:
             return df
             
         except Exception as e:
-            error_msg = f"Market data error for {symbol}: {str(e)}"
-            logger.exception(f"Error fetching market data for {symbol}")
-            self.log_activity(error_msg, "ERROR")
-            return None
+            # Handle BadSymbol errors silently to avoid terminal pollution
+            if "BadSymbol" in str(e) or "does not have market symbol" in str(e):
+                # Log to file only, don't display in terminal
+                logger.debug(f"Market symbol not available: {symbol}")
+                self.handle_captured_error(f"Market: {symbol} not available on exchange")
+                return None
+            else:
+                error_msg = f"Market data error for {symbol}: {str(e)}"
+                logger.exception(f"Error fetching market data for {symbol}")
+                self.log_activity(error_msg, "ERROR")
+                return None
     
     def analyze_signals(self):
         """Analyze all trading pairs for volume anomaly signals across multiple timeframes 🎯"""
@@ -1187,92 +1283,94 @@ class AlpineBot:
     def run(self):
         """🚀 Start the enhanced Alpine trading bot with professional display"""
         
-        # Initialize display data
-        self.log_activity("🚀 Initializing Alpine Bot v2.0", "INFO")
-        
-        # Set running state
-        self.running = True
-        
-        # Setup signal handlers for graceful shutdown
-        def signal_handler(sig, frame):
-            self.log_activity("⏹️ Shutdown signal received", "WARNING")
-            self.running = False
-            sys.exit(0)
-        
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-        
-        # Initialize exchange connection
-        if not self.initialize_exchange():
-            self.log_activity("❌ Failed to initialize exchange. Exiting.", "ERROR")
-            return
-        
-        # Initialize strategies
-        self.log_activity("📈 Loading trading strategies", "INFO")
-        
-        # Start background trading thread with enhanced error handling
-        self.trading_thread = threading.Thread(target=self.trading_loop, daemon=True)
-        self.trading_thread.start()
-        self.log_activity("🔄 Trading thread started", "INFO")
-        logger.info("Trading thread started")
-        
-        # Display optimization variables
-        last_display_update = time.time()
-        display_update_interval = 1.0  # Update display every 1 second
-        
-        try:
-            # Initialize display data first
-            self.log_activity("🎨 Initializing display interface", "INFO")
-            initial_data = self.get_display_data()
+        # Setup error capture to prevent terminal interference
+        with ErrorCapture(error_callback=self.handle_captured_error):
+            # Initialize display data
+            self.log_activity("🚀 Initializing Alpine Bot v2.0", "INFO")
             
-            # Run stable display with consistent refresh rate
-            with Live(
-                self.display.create_revolutionary_layout(**initial_data),
-                console=self.display.console,
-                refresh_per_second=1,  # Stable 1 FPS
-                screen=True
-            ) as live:
-                
-                self.log_activity("✅ Display interface ready - Alpine Bot running!", "SUCCESS")
-                
-                while self.running:
-                    current_time = time.time()
-                    
-                    # Only update display at consistent intervals
-                    if current_time - last_display_update >= display_update_interval:
-                        try:
-                            display_data = self.get_display_data()
-                            live.update(self.display.create_revolutionary_layout(**display_data))
-                            last_display_update = current_time
-                        except Exception as e:
-                            self.log_activity(f"⚠️ Display update error: {str(e)}", "WARNING")
-                    
-                    # Consistent sleep interval
-                    time.sleep(0.5)  # Sleep for half the display update interval
-                    
-        except KeyboardInterrupt:
-            logger.warning("⏹️ Shutdown signal received")
-            self.log_activity("⏹️ Shutdown signal received", "WARNING")
-            self.running = False
+            # Set running state
+            self.running = True
             
-        except Exception as e:
-            error_msg = f"❌ Display error: {str(e)}"
-            logger.exception("Display error")
-            self.log_activity(error_msg, "ERROR")
-            # Don't exit immediately on display errors, try to continue
-            self.log_activity("🔄 Attempting to continue without display...", "WARNING")
-            
-            # Fallback - run without display
-            try:
-                while self.running:
-                    time.sleep(1)
-            except KeyboardInterrupt:
+            # Setup signal handlers for graceful shutdown
+            def signal_handler(sig, frame):
+                self.log_activity("⏹️ Shutdown signal received", "WARNING")
                 self.running = False
+                sys.exit(0)
             
-        finally:
-            self.cleanup()
-            logger.info("👋 Alpine bot shutdown complete")
-            self.log_activity("👋 Alpine bot shutdown complete", "INFO")
+            signal.signal(signal.SIGINT, signal_handler)
+            signal.signal(signal.SIGTERM, signal_handler)
+            
+            # Initialize exchange connection
+            if not self.initialize_exchange():
+                self.log_activity("❌ Failed to initialize exchange. Exiting.", "ERROR")
+                return
+            
+            # Initialize strategies
+            self.log_activity("📈 Loading trading strategies", "INFO")
+            
+            # Start background trading thread with enhanced error handling
+            self.trading_thread = threading.Thread(target=self.trading_loop, daemon=True)
+            self.trading_thread.start()
+            self.log_activity("🔄 Trading thread started", "INFO")
+            logger.info("Trading thread started")
+            
+            # Display optimization variables
+            last_display_update = time.time()
+            display_update_interval = 1.0  # Update display every 1 second
+            
+            try:
+                # Initialize display data first
+                self.log_activity("🎨 Initializing display interface", "INFO")
+                initial_data = self.get_display_data()
+                
+                # Run stable display with consistent refresh rate
+                with Live(
+                    self.display.create_revolutionary_layout(**initial_data),
+                    console=self.display.console,
+                    refresh_per_second=1,  # Stable 1 FPS
+                    screen=True
+                ) as live:
+                    
+                    self.log_activity("✅ Display interface ready - Alpine Bot running!", "SUCCESS")
+                    
+                    while self.running:
+                        current_time = time.time()
+                        
+                        # Only update display at consistent intervals
+                        if current_time - last_display_update >= display_update_interval:
+                            try:
+                                display_data = self.get_display_data()
+                                live.update(self.display.create_revolutionary_layout(**display_data))
+                                last_display_update = current_time
+                            except Exception as e:
+                                self.log_activity(f"⚠️ Display update error: {str(e)}", "WARNING")
+                        
+                        # Consistent sleep interval
+                        time.sleep(0.5)  # Sleep for half the display update interval
+                        
+            except KeyboardInterrupt:
+                logger.warning("⏹️ Shutdown signal received")
+                self.log_activity("⏹️ Shutdown signal received", "WARNING")
+                self.running = False
+                
+            except Exception as e:
+                error_msg = f"❌ Display error: {str(e)}"
+                logger.exception("Display error")
+                self.log_activity(error_msg, "ERROR")
+                # Don't exit immediately on display errors, try to continue
+                self.log_activity("🔄 Attempting to continue without display...", "WARNING")
+                
+                # Fallback - run without display
+                try:
+                    while self.running:
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    self.running = False
+                
+            finally:
+                self.cleanup()
+                logger.info("👋 Alpine bot shutdown complete")
+                self.log_activity("👋 Alpine bot shutdown complete", "INFO")
 
 def main():
     """Main entry point 🏔️"""
@@ -1295,9 +1393,19 @@ def main():
         
         console.print("🚀 [bold green]Starting new Alpine Bot instance...[/bold green]")
         
-        # Create and run Alpine bot
-        bot = AlpineBot()
-        bot.run()
+        # Redirect stderr to prevent console pollution during trading
+        original_stderr = sys.stderr
+        sys.stderr = open(os.devnull, 'w')
+        
+        try:
+            # Create and run Alpine bot
+            bot = AlpineBot()
+            bot.run()
+        finally:
+            # Restore stderr
+            sys.stderr.close()
+            sys.stderr = original_stderr
+            
     except KeyboardInterrupt:
         console.print("\n👋 Alpine bot terminated by user", style="yellow")
     except Exception as e:
