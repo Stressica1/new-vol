@@ -27,7 +27,7 @@ logger.add(
     level="DEBUG"
 )
 
-from config import config
+from config import TradingConfig
 from bitget_client import bitget_client
 from risk_management import risk_manager
 from trading_engine import trading_engine

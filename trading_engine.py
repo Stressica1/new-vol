@@ -9,7 +9,7 @@ import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-from config import config
+from config import TradingConfig
 from bitget_client import bitget_client
 from risk_management import risk_manager, RiskLevel
 

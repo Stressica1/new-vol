@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import ta
 
-from config import config
+from config import TradingConfig
 from bitget_client import bitget_client
 
 class RiskLevel(Enum):

@@ -114,6 +114,9 @@ BOT_NAME = "Alpine"
 VERSION = "v1.0.0"
 AUTHOR = "Alpine Trading Systems"
 
+# Global config instance
+config = TradingConfig()
+
 def get_exchange_config() -> Dict[str, Any]:
     """Get Bitget exchange configuration"""
     config = TradingConfig()
