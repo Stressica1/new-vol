@@ -1,0 +1,74 @@
+# 📈 Trading Strategy Development Rules
+
+## Volume Anomaly Strategy in [strategy.py](mdc:strategy.py)
+
+### Core Strategy Logic
+
+1. **Volume Anomaly Detection**: Identify unusual volume spikes above 2.8x average
+2. **SuperTrend Confirmation**: Use ATR-based trend direction confirmation
+3. **Confluence Analysis**: Combine multiple timeframe signals when available
+4. **High Confidence Filtering**: Only generate signals with 75%+ confidence
+
+### Signal Generation Patterns
+
+```python
+def generate_signal(self, df: pd.DataFrame, symbol: str) -> Optional[Dict]:
+    """
+    Generate volume anomaly signals with confidence scoring
+    Returns: Signal dict with confidence, type, volume_ratio, entry_price
+    """
+    # Pattern: Always validate data sufficiency first
+    if len(df) < self.min_data_length:
+        return None
+    
+    # Pattern: Calculate indicators with error handling
+    try:
+        volume_ratio = self.calculate_volume_anomaly(df)
+        trend_direction = self.calculate_supertrend(df)
+        confidence = self.calculate_confidence(volume_ratio, trend_direction)
+    except Exception as e:
+        logger.error(f"Signal generation error: {e}")
+        return None
+```
+
+### Risk Management Integration
+
+- **Position Sizing**: Based on account balance and risk percentage
+- **Dynamic Stop Loss**: ATR-based stop loss calculation
+- **Confluence Boost**: +15% position size for confluence signals
+- **Maximum Exposure**: Respect maximum position limits
+
+### Strategy Performance Patterns
+
+1. **Signal Tracking**: Maintain history of generated signals
+2. **Confidence Scoring**: Implement robust confidence calculation
+3. **Error Resilience**: Handle missing data and calculation errors
+4. **Memory Efficiency**: Limit stored signal history to prevent memory leaks
+
+### Trading Logic Flow
+
+```python
+# 1. Data Validation
+if not self.validate_data(df):
+    return None
+
+# 2. Indicator Calculation
+indicators = self.calculate_indicators(df)
+
+# 3. Signal Generation
+signal = self.generate_signal_from_indicators(indicators)
+
+# 4. Confidence Filtering
+if signal and signal['confidence'] >= self.min_confidence:
+    return signal
+```
+
+### Hot-Reload Considerations
+
+- **State Preservation**: Maintain signal history during reloads
+- **Configuration Updates**: React to config changes without restart
+- **Graceful Degradation**: Handle partial reload failures
+description:
+globs:
+alwaysApply: false
+---

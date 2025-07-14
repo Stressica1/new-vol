@@ -1,0 +1,53 @@
+# 🏔️ Alpine Trading Bot Development Rules
+
+## Core System Architecture
+
+This is a professional cryptocurrency trading bot with the following key components:
+
+### Main Entry Points
+- [alpine_bot.py](mdc:alpine_bot.py) - Main bot engine with hot-reload capability
+- [config.py](mdc:config.py) - Central configuration with trading pairs and risk settings
+- [strategy.py](mdc:strategy.py) - Volume anomaly trading strategy implementation
+- [risk_manager.py](mdc:risk_manager.py) - Risk management and position sizing
+- [ui_display.py](mdc:ui_display.py) - Rich terminal interface with real-time updates
+
+### Critical Development Principles
+
+1. **Never Break Trading Logic**: Always preserve existing trading functionality when making changes
+2. **Configuration First**: All trading parameters must be configurable in [config.py](mdc:config.py)
+3. **Error Resilience**: Use extensive try-catch blocks and graceful error handling
+4. **Real Exchange Integration**: This connects to Bitget exchange with real API credentials
+5. **Hot-Reload Support**: Code changes should be detectable without stopping the bot
+
+## Trading Pairs Management
+
+- **Current Setup**: 150 verified Bitget USDT futures pairs in [config.py](mdc:config.py)
+- **Validation Required**: Always verify trading pairs exist on Bitget before adding
+- **Categories**: Meme coins, AI tokens, Gaming, DeFi, Layer 1, Altcoins
+- **Format**: Must use "SYMBOL/USDT:USDT" format for futures trading
+
+## Risk Management Rules
+
+- **Aggressive Strategy**: 2% risk per trade, max 20 simultaneous positions (40% exposure)
+- **High Confidence Only**: 75% minimum confidence threshold for signal generation
+- **Dynamic Stop Loss**: ATR-based with 1.5x multiplier
+- **Max Drawdown**: 50% maximum allowed (aggressive trader profile)
+
+## Logging and Monitoring
+
+- **Loguru Integration**: All logging goes through loguru with file rotation
+- **Real-time Display**: Rich terminal UI with live trading data
+- **Activity Logging**: Emoji-based activity logs for user-friendly feedback
+- **Performance Tracking**: Signal counts, execution times, API response times
+
+## Code Quality Standards
+
+- **Type Hints**: Use proper typing for all function parameters and returns
+- **Error Handling**: Catch specific exceptions (ccxt.AuthenticationError, etc.)
+- **Memory Management**: Clean up resources in finally blocks
+- **Threading**: Use daemon threads for background tasks
+- **Signal Handling**: Proper SIGINT/SIGTERM handling for graceful shutdown
+description:
+globs:
+alwaysApply: false
+---

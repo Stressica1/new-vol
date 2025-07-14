@@ -1,0 +1,152 @@
+# 🚨 Error Handling Patterns for Trading Bots
+
+## Exchange API Error Handling
+
+### CCXT Exception Hierarchy
+
+```python
+try:
+    # Exchange operations
+    balance = exchange.fetch_balance()
+except ccxt.AuthenticationError as e:
+    logger.error(f"🔐 Authentication Error: {e}")
+    # Handle: Check API credentials, show user-friendly message
+except ccxt.NetworkError as e:
+    logger.error(f"🌐 Network Error: {e}")
+    # Handle: Retry with backoff, check internet connection
+except ccxt.ExchangeError as e:
+    logger.error(f"🏦 Exchange Error: {e}")
+    # Handle: Log specific exchange issue, possibly halt trading
+except ccxt.BaseError as e:
+    logger.error(f"❌ CCXT Error: {e}")
+    # Handle: Generic CCXT error handling
+except Exception as e:
+    logger.exception(f"❌ Unexpected error: {e}")
+    # Handle: Log full traceback, attempt graceful recovery
+```
+
+### Data Validation Patterns
+
+```python
+def validate_market_data(self, df: pd.DataFrame) -> bool:
+    """Validate market data before processing"""
+    if df is None or df.empty:
+        logger.warning("📊 Empty market data received")
+        return False
+    
+    if len(df) < self.min_required_candles:
+        logger.warning(f"📊 Insufficient data: {len(df)} < {self.min_required_candles}")
+        return False
+    
+    required_columns = ['open', 'high', 'low', 'close', 'volume']
+    if not all(col in df.columns for col in required_columns):
+        logger.error(f"📊 Missing required columns: {df.columns}")
+        return False
+    
+    return True
+```
+
+## Trading Logic Error Handling
+
+### Position Management Errors
+
+```python
+def execute_trade(self, signal: Dict) -> bool:
+    """Execute trade with comprehensive error handling"""
+    try:
+        # Pre-trade validation
+        if not self.validate_signal(signal):
+            return False
+        
+        # Position size calculation
+        position_size = self.calculate_position_size(signal)
+        if position_size <= 0:
+            logger.warning("💰 Invalid position size calculated")
+            return False
+        
+        # Order execution
+        order = self.exchange.create_market_order(...)
+        
+    except ccxt.InsufficientFunds:
+        logger.error("💰 Insufficient funds for trade")
+        self.log_activity("❌ Trade failed: Insufficient funds", "ERROR")
+        return False
+    except ccxt.InvalidOrder:
+        logger.error("📋 Invalid order parameters")
+        return False
+    except Exception as e:
+        logger.exception(f"❌ Trade execution failed: {e}")
+        return False
+```
+
+### Signal Generation Error Recovery
+
+```python
+def analyze_signals(self) -> List[Dict]:
+    """Analyze signals with error recovery per symbol"""
+    all_signals = []
+    
+    for symbol in self.trading_pairs:
+        try:
+            signals = self.analyze_symbol(symbol)
+            if signals:
+                all_signals.extend(signals)
+        except Exception as e:
+            # Don't let one symbol failure stop entire scan
+            logger.error(f"❌ Error analyzing {symbol}: {e}")
+            continue  # Continue with next symbol
+    
+    return all_signals
+```
+
+## Resource Management
+
+### Memory and Threading
+
+```python
+def cleanup_resources(self):
+    """Clean up resources on shutdown"""
+    try:
+        if hasattr(self, 'watchdog_observer') and self.watchdog_observer:
+            self.watchdog_observer.stop()
+            self.watchdog_observer.join(timeout=5)
+    except Exception as e:
+        logger.error(f"Error stopping watchdog: {e}")
+    
+    try:
+        # Close exchange connections
+        if hasattr(self, 'exchange') and self.exchange:
+            self.exchange.close()
+    except Exception as e:
+        logger.error(f"Error closing exchange: {e}")
+```
+
+## Logging Best Practices
+
+### Structured Logging with Context
+
+```python
+def log_trading_action(self, action: str, symbol: str, details: Dict):
+    """Log trading actions with full context"""
+    logger.info(
+        f"🎯 {action}",
+        extra={
+            'symbol': symbol,
+            'action': action,
+            'details': details,
+            'timestamp': datetime.now().isoformat()
+        }
+    )
+```
+
+### Error Recovery Strategies
+
+1. **Graceful Degradation**: Continue operation with reduced functionality
+2. **Retry with Backoff**: Exponential backoff for network errors
+3. **Circuit Breaker**: Stop problematic operations temporarily
+4. **Failover**: Switch to backup systems or reduced mode
+5. **User Notification**: Clear, actionable error messages
+description:
+globs:
+alwaysApply: false
+---

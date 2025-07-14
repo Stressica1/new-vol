@@ -49,12 +49,12 @@ show_help() {
 
 # Function to check if bot is running
 is_bot_running() {
-    pgrep -f "start_trading.py" > /dev/null 2>&1
+    pgrep -f "run_alpine_bot.py\|alpine_bot.py" > /dev/null 2>&1
 }
 
 # Function to get bot PID
 get_bot_pid() {
-    pgrep -f "start_trading.py" 2>/dev/null | head -1
+    pgrep -f "run_alpine_bot.py\|alpine_bot.py" 2>/dev/null | head -1
 }
 
 # Main command handling
@@ -67,7 +67,7 @@ case "${1:-help}" in
             exit 1
         fi
         echo -e "${BLUE}📊 Configuration: 3m signals only, 75%+ confidence${NC}"
-        python start_trading.py --trade &
+        python3 run_alpine_bot.py &
         sleep 3
         if is_bot_running; then
             echo -e "${GREEN}✅ Trading bot started successfully (PID: $(get_bot_pid))${NC}"
@@ -85,7 +85,7 @@ case "${1:-help}" in
             echo "Use './alpine restart' to restart or './alpine stop' to stop"
             exit 1
         fi
-        python start_trading.py --demo &
+        python3 run_alpine_bot.py &
         sleep 3
         if is_bot_running; then
             echo -e "${GREEN}✅ Demo bot started successfully (PID: $(get_bot_pid))${NC}"
@@ -98,7 +98,7 @@ case "${1:-help}" in
     "stop")
         echo -e "${YELLOW}⏹️  Stopping Alpine Trading Bot...${NC}"
         if is_bot_running; then
-            pkill -f "start_trading.py"
+            pkill -f "run_alpine_bot.py\|alpine_bot.py"
             sleep 2
             if ! is_bot_running; then
                 echo -e "${GREEN}✅ Trading bot stopped successfully${NC}"
@@ -164,7 +164,7 @@ case "${1:-help}" in
     "balance")
         echo -e "${GREEN}💰 Account Balance${NC}"
         echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        python -c "
+        python3 -c "
 import sys
 sys.path.append('.')
 from bitget_client import BitgetClient
@@ -193,19 +193,19 @@ except Exception as e:
     "test")
         echo -e "${GREEN}🧪 Running System Tests${NC}"
         echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        python check_status.py
+        python3 check_status.py
         ;;
         
     "connection"|"conn")
         echo -e "${GREEN}🔌 Testing Bitget Connection${NC}"
         echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        python test_connection.py
+        python3 test_connection.py
         ;;
         
     "config")
         echo -e "${GREEN}⚙️  Configuration Status${NC}"
         echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        python -c "
+        python3 -c "
 from config import TradingConfig
 config = TradingConfig()
 print(f'🎯 Timeframes: {config.timeframes}')

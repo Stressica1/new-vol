@@ -10,6 +10,7 @@ import time
 import ccxt
 import pandas as pd
 import numpy as np
+import traceback
 from datetime import datetime, timedelta
 import sys
 import os
@@ -129,19 +130,9 @@ class AlpineBot:
     def setup_watchdog(self):
         """Setup file watching for hot-reload 👀"""
         try:
-            if self.watchdog_observer:
-                self.watchdog_observer.stop()
-                self.watchdog_observer.join()
-            
-            self.watchdog_observer = Observer()
-            self.reload_handler = CodeReloadHandler(self)
-            
-            # Watch current directory for Python files
-            self.watchdog_observer.schedule(self.reload_handler, ".", recursive=False)
-            self.watchdog_observer.start()
-            
-            logger.info("👀 Watchdog started - monitoring code changes")
-            self.log_activity("👀 Hot-reload watchdog activated", "SUCCESS")
+            # Watchdog functionality disabled due to import issues
+            logger.info("👀 Watchdog disabled - hot-reload not available")
+            self.log_activity("👀 Hot-reload disabled (watchdog not installed)", "INFO")
             
         except Exception as e:
             logger.error(f"❌ Failed to setup watchdog: {e}")
@@ -325,7 +316,10 @@ class AlpineBot:
                 'password': exchange_config.get('password', ''),
                 'sandbox': exchange_config.get('sandbox', False),
                 'enableRateLimit': exchange_config.get('enableRateLimit', True),
-                'defaultType': exchange_config.get('defaultType', 'swap')
+                'options': {
+                    'defaultType': 'swap',  # For futures trading
+                    'marginMode': 'cross'  # Use cross margin
+                }
             })
             
             # Test connection
@@ -596,7 +590,7 @@ class AlpineBot:
                         )
                         
                         if should_enter:
-                            success = self.execute_enhanced_trade(signal)
+                            success = self.execute_trade(signal)  # Use real trade execution, not simulation
                             if success:
                                 self.log_activity(f"✅ {'🚀 Confluence' if is_confluence else '📈 Standard'} trade executed", "SUCCESS")
                 else:
@@ -727,7 +721,12 @@ class AlpineBot:
                 
             symbol = signal['symbol']
             signal_type = signal['type']
-            current_price = signal['price']
+            current_price = signal['entry_price']
+            
+            # Bitget uses the symbol format directly (e.g., 'ALCH/USDT:USDT' for futures)
+            # No conversion needed - use symbol as-is
+            exchange_symbol = symbol
+            logger.debug(f"🔄 Using symbol format: {exchange_symbol}")
             
             logger.info(f"🎯 Attempting to execute {signal_type} trade for {symbol} at ${current_price}")
             
@@ -757,12 +756,46 @@ class AlpineBot:
             side = 'buy' if signal_type == 'LONG' else 'sell'
             logger.info(f"Placing {side} order for {symbol}: size={position_size}, price=${current_price}")
             
-            # Place market order
-            order = self.exchange.create_market_order(
-                symbol, side, position_size, current_price
-            )
+            # Place limit order (Bitget doesn't support market orders)
+            # Adjust price slightly to ensure immediate execution
+            price_adjustment = 0.001  # 0.1% adjustment
+            if side == 'buy':
+                # Buy slightly above current price
+                limit_price = current_price * (1 + price_adjustment)
+            else:
+                # Sell slightly below current price  
+                limit_price = current_price * (1 - price_adjustment)
+                
+            logger.info(f"📤 Placing {side} limit order: symbol={symbol} (exchange: {exchange_symbol}), size={position_size}, price=${limit_price:.6f}")
             
-            logger.debug(f"Order response: {order}")
+            try:
+                # Use params for futures orders (Bitget-specific)
+                params = {
+                    'marginMode': 'cross',
+                    'leverage': self.config.leverage,
+                    'timeInForce': 'GTC'  # Good Till Cancelled - fixes "order validity period" error
+                }
+                
+                order = self.exchange.create_order(
+                    symbol=exchange_symbol,
+                    type='limit',
+                    side=side,
+                    amount=position_size,
+                    price=limit_price,
+                    params=params
+                )
+                
+                logger.debug(f"Order response: {order}")
+                logger.info(f"✅ Order placed successfully: ID={order.get('id', 'Unknown')}")
+                
+            except Exception as order_error:
+                import traceback
+                logger.error(f"❌ Order placement failed: {str(order_error)}")
+                logger.error(f"🔍 Full traceback: {traceback.format_exc()}")
+                logger.error(f"🔍 Order parameters: symbol={symbol}, side={side}, amount={position_size}")
+                logger.error(f"🔍 Exchange params: {params}")
+                self.log_activity(f"❌ Order failed: {str(order_error)}", "ERROR")
+                raise order_error
             
             if order and order.get('id'):
                 logger.success(f"✅ Order executed successfully: {order['id']}")
@@ -781,7 +814,8 @@ class AlpineBot:
                     'signal': signal
                 }
                 
-                # Add to risk manager
+                # Add to active positions and risk manager
+                self.active_positions.append(position)
                 self.risk_manager.add_position(position)
                 
                 self.total_trades += 1
@@ -789,6 +823,10 @@ class AlpineBot:
                            f"| Size: {position_size:.4f} | Entry: ${current_price:.4f}")
                 logger.success(trade_msg)
                 self.log_activity(trade_msg, "TRADE")
+                
+                # Log position details
+                logger.info(f"📊 Position opened: SL=${risk_levels['stop_loss']:.4f} | TP=${risk_levels['take_profit']:.4f}")
+                self.log_activity(f"📊 Position limits: SL=${risk_levels['stop_loss']:.4f} | TP=${risk_levels['take_profit']:.4f}", "INFO")
                 
                 # Update display stats
                 if hasattr(self.display, 'update_stats'):
@@ -813,14 +851,22 @@ class AlpineBot:
             return False
             
         except ccxt.ExchangeError as e:
+            import traceback
             error_msg = f"🏦 Exchange error for {symbol}: {str(e)}"
             logger.error(error_msg)
+            logger.error(f"🔍 Full traceback: {traceback.format_exc()}")
+            logger.error(f"🔍 Order parameters: symbol={symbol}, side={side}, amount={position_size}, price={limit_price}")
+            logger.error(f"🔍 Exchange params: {params}")
             self.log_activity(error_msg, "ERROR")
             return False
             
         except Exception as e:
+            import traceback
             error_msg = f"❌ Trade execution failed for {symbol}: {str(e)}"
             logger.exception(f"Trade execution failed for {symbol}")
+            logger.error(f"🔍 Full traceback: {traceback.format_exc()}")
+            logger.error(f"🔍 Order parameters: symbol={symbol}, side={side}, amount={position_size}, price={limit_price}")
+            logger.error(f"🔍 Exchange params: {params}")
             self.log_activity(error_msg, "ERROR")
             return False
         

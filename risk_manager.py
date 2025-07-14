@@ -73,9 +73,22 @@ class AlpineRiskManager:
             if pos['symbol'] == signal['symbol']:
                 return False, f"📋 Position already exists for {signal['symbol']}"
         
-        # Check minimum account balance
-        if account_balance < 100:  # Minimum $100
-            return False, "💰 Insufficient account balance"
+        # Calculate proposed position size and required margin
+        base_position_value = account_balance * (self.config.position_size_pct / 100)
+        confidence_multiplier = signal.get('confidence', 75) / 100
+        adjusted_position_value = base_position_value * confidence_multiplier
+        
+        # Required margin with leverage
+        required_margin = adjusted_position_value / self.config.leverage
+        
+        # Check if we have enough margin
+        if required_margin > account_balance:
+            return False, f"💰 Insufficient account balance (need ${required_margin:.2f} margin, have ${account_balance:.2f})"
+        
+        # Check minimum trade value (reduced for smaller accounts)
+        min_trade_value = 5.0  # Minimum $5 trade value
+        if adjusted_position_value < min_trade_value:
+            return False, f"📉 Position too small (${adjusted_position_value:.2f} < ${min_trade_value} minimum)"
         
         return True, "✅ Position approved"
     

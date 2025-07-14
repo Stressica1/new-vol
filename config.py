@@ -20,27 +20,32 @@ class TradingConfig:
     # 💰 Trading Parameters - AGGRESSIVE 2% RISK STRATEGY (1M/3M HIGH WIN RATE)
     max_daily_loss_pct: float = 50.0  # Matches 50% max drawdown
     max_positions: int = 20  # Maximum 20 trades at 2% risk each
-    position_size_pct: float = 2.0  # Base position size (2% of account)
+    position_size_pct: float = 20.0  # Base position size (20% of account) - increased for small balance
     confluence_position_multiplier: float = 1.15  # +15% size on confluence signals
     stop_loss_pct: float = 1.5  # Tighter stops for scalping (will be dynamic)
     take_profit_pct: float = 3.0  # Quick profits for scalping
     max_drawdown_pct: float = 30.0  # Tighter drawdown control
     trailing_stop: bool = True
     trailing_stop_pct: float = 0.8  # Tight trailing for scalping
-    leverage: int = 1  # Leverage for futures trading (1x = no leverage)
+    leverage: int = 35  # Leverage for futures trading (35x minimum as requested)
     min_order_size: float = 10.0  # Minimum order size in USDT
     
-    # 🎯 Strategy Parameters (Volume Anomaly - TUNED FOR 3M SCALPING)
-    volume_lookback: int = 10  # Faster signals for scalping
-    volume_std_multiplier: float = 1.5  # More sensitive for frequent signals
-    min_volume_ratio: float = 2.8  # Lower threshold for more signals
-    supertrend_atr_period: int = 6  # Faster trend detection for scalping
-    supertrend_multiplier: float = 2.0  # More sensitive signals
+    # 🎯 Strategy Parameters (Volume Anomaly - MATCHED TO TRADINGVIEW SETTINGS)
+    volume_lookback: int = 20  # Matches TradingView "Volume Avg Lookback: 20"
+    volume_std_multiplier: float = 1.2  # Reduced for more sensitivity
+    min_volume_ratio: float = 2.75  # Minimum 2.75x volume ratio as requested
+    supertrend_atr_period: int = 6  # Reduced for faster signals (was 10)
+    supertrend_multiplier: float = 2.0  # Reduced for more sensitivity (was 3.0)
     
-    # 📊 Signal Quality Configuration - HIGH CONVICTION TRADING
-    min_signal_confidence: float = 75.0  # Minimum 75% confidence for signal generation
-    min_trade_confidence: float = 75.0  # Minimum 75% confidence for trade execution
-    confluence_min_confidence: float = 75.0  # Minimum confidence for confluence signals (same as single TF now)
+    # 📐 Fibonacci Golden Zone Parameters
+    fib_pivot_length: int = 20  # Pivot lookback period
+    fib_golden_zone_low: float = 0.7  # Golden zone lower bound (70%)
+    fib_golden_zone_high: float = 0.885  # Golden zone upper bound (88.5%)
+    
+    # 📊 Signal Quality Configuration - OPTIMIZED FOR MORE SIGNALS
+    min_signal_confidence: float = 60.0  # Reduced from 75% to 60% for more signals
+    min_trade_confidence: float = 65.0  # Minimum 65% confidence for trade execution
+    confluence_min_confidence: float = 70.0  # Higher confidence required for confluence signals
     
     # ⚡ Dynamic Stop Loss Configuration (ATR-based volatility)
     use_dynamic_stop_loss: bool = True
@@ -92,40 +97,158 @@ class TradingConfig:
     }
 
 # 📈 Supported Trading Pairs - HIGH VOLATILITY & LOW PRICE FOCUS (NO BTC/ETH)
-# These are the most volatile and highest ticking coins under $500 - ALL VERIFIED AVAILABLE
+# 🚀 VERIFIED BITGET TRADING PAIRS - 150 HIGH-VOLATILITY COINS FOR MAXIMUM SIGNAL DETECTION
 TRADING_PAIRS = [
-    # MEME COINS - EXTREME VOLATILITY (ALL UNDER $1)
-    'DOGE/USDT:USDT',      # Dogecoin - High volatility, under $1
-    'SHIB/USDT:USDT',      # Shiba Inu - Micro-cap, extreme volatility
-    'PEPE/USDT:USDT',      # Pepe - Meme coin, high volatility
-    'FLOKI/USDT:USDT',     # Floki - Meme coin, high volatility
-    'WIF/USDT:USDT',       # Dogwifhat - Solana meme, extreme volatility
-    'GOAT/USDT:USDT',      # Goatseus Maximus - Viral meme, extreme volatility
-    'PNUT/USDT:USDT',      # Peanut - Trending meme, high volatility
-    'POPCAT/USDT:USDT',    # Popcat - Meme coin, high volatility
-    'TURBO/USDT:USDT',     # Turbo - AI meme coin, high volatility
-    'MOODENG/USDT:USDT',   # Moo Deng - Trending meme, extreme volatility
-    
-    # LOW-CAP ALTCOINS - HIGH VOLATILITY (ALL UNDER $100)
-    'ADA/USDT:USDT',       # Cardano - Under $1, high volatility
-    'DOT/USDT:USDT',       # Polkadot - Under $10, high volatility
-    'LINK/USDT:USDT',      # Chainlink - Under $50, high volatility
-    'AVAX/USDT:USDT',      # Avalanche - Under $100, high volatility
-    'GALA/USDT:USDT',      # Gala - Under $1, gaming token, high volatility
-    
-    # TRENDING ALTCOINS - EXTREME VOLATILITY (ALL UNDER $10)
-    'XRP/USDT:USDT',       # XRP - Under $5, high volatility
-    'XLM/USDT:USDT',       # Stellar - Under $1, extreme volatility
-    'ALGO/USDT:USDT',      # Algorand - Under $1, high volatility
-    'HBAR/USDT:USDT',      # Hedera - Under $1, high volatility
-    'SUI/USDT:USDT',       # Sui - Under $10, trending, high volatility
-    
-    # MICRO-CAP GEMS - MAXIMUM VOLATILITY (ALL UNDER $5)
-    'PENGU/USDT:USDT',     # Pudgy Penguins - Under $1, extreme volatility
-    'VIRTUAL/USDT:USDT',   # Virtuals Protocol - Under $5, high volatility
-    'ENA/USDT:USDT',       # Ethena - Under $2, high volatility
-    'ACT/USDT:USDT',       # Act - AI token, extreme volatility
-    'CHILLGUY/USDT:USDT'   # Chill Guy - Trending meme, extreme volatility
+    "$AI/USDT:USDT",  # $AI - AI token
+    "$ALT/USDT:USDT",  # $ALT - Alternative layer
+    "$DEGEN/USDT:USDT",  # $DEGEN - Base ecosystem meme
+    "10000000AIDOGE/USDT:USDT",  # 10000000AIDOGE - AI meme
+    "1000000MOG/USDT:USDT",  # 1000000MOG - Meme token
+    "10000ELON/USDT:USDT",  # 10000ELON - Elon meme
+    "10000WHY/USDT:USDT",  # 10000WHY - Meme token
+    "1000BONK/USDT:USDT",  # 1000BONK - Solana meme
+    "1000CAT/USDT:USDT",  # 1000CAT - Cat meme
+    "1000RATS/USDT:USDT",  # 1000RATS - Bitcoin ordinal
+    "1000SATS/USDT:USDT",  # 1000SATS - Bitcoin inscription
+    "1000XEC/USDT:USDT",  # 1000XEC - eCash
+    "1INCH/USDT:USDT",  # 1INCH - DEX aggregator
+    "1MBABYDOGE/USDT:USDT",  # 1MBABYDOGE - Baby Doge
+    "1MCHEEMS/USDT:USDT",  # 1MCHEEMS - Cheems meme
+    "A/USDT:USDT",  # A - Arweave ecosystem
+    "AAVE/USDT:USDT",  # AAVE - DeFi lending
+    "ACE/USDT:USDT",  # ACE - Gaming token
+    "ACH/USDT:USDT",  # ACH - Payment token
+    "ACT/USDT:USDT",  # ACT - AI token
+    "ACX/USDT:USDT",  # ACX - Cross-chain
+    "ADA/USDT:USDT",  # ADA - Cardano
+    "AERGO/USDT:USDT",  # AERGO - Enterprise blockchain
+    "AERO/USDT:USDT",  # AERO - Base ecosystem
+    "AEVO/USDT:USDT",  # AEVO - Options trading
+    "AGI/USDT:USDT",  # AGI - AI token
+    "AGLD/USDT:USDT",  # AGLD - Gaming token
+    "AGT/USDT:USDT",  # AGT - Agent token
+    "AI16Z/USDT:USDT",  # AI16Z - AI investment
+    "AIN/USDT:USDT",  # AIN - AI network
+    "AIOZ/USDT:USDT",  # AIOZ - Video streaming
+    "AIXBT/USDT:USDT",  # AIXBT - AI trading
+    "AKT/USDT:USDT",  # AKT - Cloud computing
+    "ALCH/USDT:USDT",  # ALCH - Gaming token
+    "ALGO/USDT:USDT",  # ALGO - Algorand
+    "ALICE/USDT:USDT",  # ALICE - Gaming metaverse
+    "ALPHA/USDT:USDT",  # ALPHA - DeFi protocol
+    "ALPINE/USDT:USDT",  # ALPINE - Fan token
+    "AMP/USDT:USDT",  # AMP - Payment token
+    "ANIME/USDT:USDT",  # ANIME - Anime ecosystem
+    "ANKR/USDT:USDT",  # ANKR - Web3 infrastructure
+    "APE/USDT:USDT",  # APE - ApeCoin
+    "API3/USDT:USDT",  # API3 - Oracle network
+    "APT/USDT:USDT",  # APT - Aptos
+    "AR/USDT:USDT",  # AR - Arweave
+    "ARB/USDT:USDT",  # ARB - Arbitrum
+    "ARC/USDT:USDT",  # ARC - Cross-chain
+    "ARK/USDT:USDT",  # ARK - Blockchain platform
+    "ARKM/USDT:USDT",  # ARKM - Analytics platform
+    "ARPA/USDT:USDT",  # ARPA - Privacy computing
+    "ASR/USDT:USDT",  # ASR - Fan token
+    "ASRR/USDT:USDT",  # ASRR - Fan token
+    "ASTR/USDT:USDT",  # ASTR - Polkadot parachain
+    "ATA/USDT:USDT",  # ATA - Blockchain platform
+    "ATH/USDT:USDT",  # ATH - AI token
+    "ATOM/USDT:USDT",  # ATOM - Cosmos
+    "AUCTION/USDT:USDT",  # AUCTION - NFT marketplace
+    "AUDIO/USDT:USDT",  # AUDIO - Music streaming
+    "AVA/USDT:USDT",  # AVA - Gaming metaverse
+    "AVAAI/USDT:USDT",  # AVAAI - AI token
+    "AVAIL/USDT:USDT",  # AVAIL - Data availability
+    "AVAX/USDT:USDT",  # AVAX - Avalanche
+    "AVL/USDT:USDT",  # AVL - Aviation token
+    "AWE/USDT:USDT",  # AWE - Gaming token
+    "AXS/USDT:USDT",  # AXS - Axie Infinity
+    "B/USDT:USDT",  # B - Blockchain token
+    "B2/USDT:USDT",  # B2 - Layer 2 solution
+    "B3/USDT:USDT",  # B3 - Gaming token
+    "BABY/USDT:USDT",  # BABY - Meme token
+    "BADGER/USDT:USDT",  # BADGER - DeFi protocol
+    "BAKE/USDT:USDT",  # BAKE - DEX token
+    "BAN/USDT:USDT",  # BAN - Meme token
+    "BANANA/USDT:USDT",  # BANANA - Gaming token
+    "BANANAS31/USDT:USDT",  # BANANAS31 - Meme token
+    "BAND/USDT:USDT",  # BAND - Oracle network
+    "BANK/USDT:USDT",  # BANK - Banking token
+    "BAT/USDT:USDT",  # BAT - Browser token
+    "BB/USDT:USDT",  # BB - Infrastructure
+    "BCH/USDT:USDT",  # BCH - Bitcoin Cash
+    "BDXN/USDT:USDT",  # BDXN - Gaming token
+    "BEAM/USDT:USDT",  # BEAM - Privacy coin
+    "BEL/USDT:USDT",  # BEL - Cloud storage
+    "BERA/USDT:USDT",  # BERA - DeFi protocol
+    "BGB/USDT:USDT",  # BGB - Exchange token
+    "BGSC/USDT:USDT",  # BGSC - Gaming token
+    "BICO/USDT:USDT",  # BICO - Wallet infrastructure
+    "BID/USDT:USDT",  # BID - Auction platform
+    "BIGTIME/USDT:USDT",  # BIGTIME - Gaming token
+    "BIO/USDT:USDT",  # BIO - Biotech token
+    "BLAST/USDT:USDT",  # BLAST - Layer 2
+    "BLUENEW/USDT:USDT",  # BLUENEW - Meme token
+    "BLUR/USDT:USDT",  # BLUR - NFT marketplace
+    "BMT/USDT:USDT",  # BMT - Gaming token
+    "BNB/USDT:USDT",  # BNB - Binance Coin
+    "BNT/USDT:USDT",  # BNT - Bancor
+    "BOMBNEW/USDT:USDT",  # BOMBNEW - Meme token
+    "BOME/USDT:USDT",  # BOME - Meme token
+    "BR/USDT:USDT",  # BR - Fan token
+    "BRETT/USDT:USDT",  # BRETT - Base meme
+    "BROCCOLI/USDT:USDT",  # BROCCOLI - Meme token
+    "BSV/USDT:USDT",  # BSV - Bitcoin SV
+    "BSW/USDT:USDT",  # BSW - DEX token
+    "BTC/USDT:USDT",  # BTC - Bitcoin
+    "BULLA/USDT:USDT",  # BULLA - Meme token
+    "C98/USDT:USDT",  # C98 - Wallet platform
+    "CAKE/USDT:USDT",  # CAKE - PancakeSwap
+    "CARV/USDT:USDT",  # CARV - Gaming data
+    "CATI/USDT:USDT",  # CATI - Gaming token
+    "CBK/USDT:USDT",  # CBK - Payment token
+    "CELO/USDT:USDT",  # CELO - Mobile payments
+    "CELR/USDT:USDT",  # CELR - Layer 2
+    "CETUS/USDT:USDT",  # CETUS - DEX protocol
+    "CFX/USDT:USDT",  # CFX - Conflux
+    "CGPT/USDT:USDT",  # CGPT - AI token
+    "CHESS/USDT:USDT",  # CHESS - DeFi protocol
+    "CHILLGUY/USDT:USDT",  # CHILLGUY - Trending meme
+    "CHR/USDT:USDT",  # CHR - Gaming blockchain
+    "CHZ/USDT:USDT",  # CHZ - Fan tokens
+    "CKB/USDT:USDT",  # CKB - Nervos Network
+    "COMP/USDT:USDT",  # COMP - Compound
+    "COOKIE/USDT:USDT",  # COOKIE - Gaming token
+    "CORE/USDT:USDT",  # CORE - Blockchain platform
+    "COS/USDT:USDT",  # COS - Content platform
+    "COTI/USDT:USDT",  # COTI - Payment platform
+    "COW/USDT:USDT",  # COW - DEX protocol
+    "CRO/USDT:USDT",  # CRO - Crypto.com
+    "CROSS/USDT:USDT",  # CROSS - Cross-chain
+    "CRV/USDT:USDT",  # CRV - Curve DAO
+    "CTC/USDT:USDT",  # CTC - Gaming token
+    "CTK/USDT:USDT",  # CTK - Cloud platform
+    "CTSI/USDT:USDT",  # CTSI - Cartesi
+    "CUDIS/USDT:USDT",  # CUDIS - Payment token
+    "CVC/USDT:USDT",  # CVC - Identity verification
+    "CVX/USDT:USDT",  # CVX - DeFi protocol
+    "CYBER/USDT:USDT",  # CYBER - Social protocol
+    "DBR/USDT:USDT",  # DBR - DeFi protocol
+    "DEEP/USDT:USDT",  # DEEP - AI computing
+    "DENT/USDT:USDT",  # DENT - Mobile data
+    "DEXE/USDT:USDT",  # DEXE - Trading platform
+    "DF/USDT:USDT",  # DF - DeFi protocol
+    "DIA/USDT:USDT",  # DIA - Oracle platform
+    "DMC/USDT:USDT",  # DMC - Data storage
+    "DOG/USDT:USDT",  # DOG - Meme token
+    "DOGE/USDT:USDT",  # DOGE - Dogecoin
+    "DOGS/USDT:USDT",  # DOGS - Telegram meme
+    "DOLO/USDT:USDT",  # DOLO - Gaming token
+    "DOOD/USDT:USDT",  # DOOD - Meme token
+    "DOT/USDT:USDT",  # DOT - Polkadot
+    "DRIFT/USDT:USDT",  # DRIFT - Derivatives
+    "DUCK/USDT:USDT",  # DUCK - Meme token
 ]
 
 # 🚀 Bot Settings
@@ -147,6 +270,6 @@ def get_exchange_config() -> Dict[str, Any]:
         'enableRateLimit': True,
         'options': {
             'defaultType': 'swap',  # For futures trading
-            'marginMode': 'isolated'
+            'marginMode': 'cross'
         }
     }

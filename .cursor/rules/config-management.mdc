@@ -1,0 +1,46 @@
+# 🔧 Configuration Management Rules
+
+## Trading Configuration in [config.py](mdc:config.py)
+
+### Critical Configuration Sections
+
+1. **API Credentials**: Bitget exchange credentials (NEVER commit real credentials)
+2. **Trading Pairs**: 150+ verified USDT futures pairs - always validate on Bitget
+3. **Risk Parameters**: Aggressive 2% per trade strategy with 50% max drawdown
+4. **Strategy Settings**: Volume anomaly detection with 75% confidence threshold
+5. **UI Settings**: Terminal display refresh rates and color schemes
+
+### Trading Pairs Validation Pattern
+
+```python
+# Always verify pairs exist on exchange before adding
+import ccxt
+exchange = ccxt.bitget(config)
+markets = exchange.load_markets()
+valid_pairs = [symbol for symbol in markets.keys() if symbol.endswith('/USDT:USDT')]
+```
+
+### Risk Management Configuration
+
+- `risk_per_trade: float = 0.02` (2% per trade)
+- `max_open_positions: int = 20` (maximum positions)
+- `max_drawdown: float = 0.50` (50% max drawdown)
+- `min_signal_confidence: float = 75.0` (75% minimum confidence)
+
+### Configuration Update Patterns
+
+1. **Hot-Reload Support**: Changes should be detectable by running bot
+2. **Validation**: Always validate new trading pairs before deployment
+3. **Backup**: Keep previous working configurations as comments
+4. **Environment**: Support sandbox/production environment switching
+
+### Timeframe Configuration
+
+- Primary: 3-minute timeframe for signal generation
+- Reduced complexity: Single timeframe focus for clean signals
+- Volume lookback: 20 periods for moving average calculation
+- ATR period: 14 for dynamic stop loss calculation
+description:
+globs:
+alwaysApply: false
+---

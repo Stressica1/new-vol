@@ -1,0 +1,148 @@
+# 🎨 Terminal UI Development Rules
+
+## Rich Terminal Interface in [ui_display.py](mdc:ui_display.py)
+
+### Core UI Principles
+
+1. **Real-time Updates**: Use Rich Live for smooth, flicker-free updates
+2. **Performance Optimization**: Limit refresh rates to prevent CPU overload
+3. **Emoji Integration**: Use emojis for quick visual status identification
+4. **Color Coding**: Consistent color scheme for different data types
+5. **Responsive Layout**: Adapt to different terminal sizes
+
+### Display Update Patterns
+
+```python
+def create_display_layout(self, **data) -> Layout:
+    """Create responsive terminal layout"""
+    try:
+        # Pattern: Always validate data before rendering
+        if not self.validate_display_data(data):
+            return self.create_error_layout("Invalid display data")
+        
+        # Pattern: Use try-catch for each panel to prevent total failure
+        panels = []
+        panels.append(self.create_header_panel(data.get('status', 'UNKNOWN')))
+        panels.append(self.create_account_panel(data.get('account_data', {})))
+        panels.append(self.create_positions_panel(data.get('positions', [])))
+        
+        return Layout(*panels)
+    except Exception as e:
+        logger.error(f"Display layout error: {e}")
+        return self.create_fallback_layout()
+```
+
+### Performance Considerations
+
+```python
+# Pattern: Throttle updates to prevent CPU overload
+class DisplayManager:
+    def __init__(self):
+        self.last_update = 0
+        self.min_update_interval = 1.0  # Minimum 1 second between updates
+    
+    def should_update(self) -> bool:
+        current_time = time.time()
+        if current_time - self.last_update >= self.min_update_interval:
+            self.last_update = current_time
+            return True
+        return False
+```
+
+### Status Display Patterns
+
+```python
+def get_status_display(self, status: str) -> str:
+    """Convert status to emoji-enhanced display"""
+    status_map = {
+        'ACTIVE': '🟢 ACTIVE TRADING',
+        'HALTED': '🛑 TRADING HALTED',
+        'DISCONNECTED': '❌ DISCONNECTED',
+        'CONNECTING': '🔄 CONNECTING...',
+        'ERROR': '⚠️ ERROR STATE'
+    }
+    return status_map.get(status, f"❓ {status}")
+```
+
+### Data Formatting Patterns
+
+```python
+def format_currency(self, amount: float) -> str:
+    """Format currency with appropriate precision"""
+    if amount >= 1000:
+        return f"${amount:,.2f}"
+    elif amount >= 1:
+        return f"${amount:.4f}"
+    else:
+        return f"${amount:.8f}"
+
+def format_percentage(self, pct: float) -> str:
+    """Format percentage with color coding"""
+    color = "green" if pct >= 0 else "red"
+    return f"[{color}]{pct:+.2f}%[/{color}]"
+```
+
+### Layout Responsiveness
+
+```python
+def create_responsive_layout(self, terminal_size: Tuple[int, int]) -> Layout:
+    """Create layout that adapts to terminal size"""
+    width, height = terminal_size
+    
+    if width < 80:
+        # Compact layout for narrow terminals
+        return self.create_compact_layout()
+    elif width < 120:
+        # Standard layout
+        return self.create_standard_layout()
+    else:
+        # Wide layout with additional panels
+        return self.create_wide_layout()
+```
+
+### Error Display Patterns
+
+```python
+def create_error_panel(self, error_msg: str) -> Panel:
+    """Create user-friendly error display"""
+    return Panel(
+        f"❌ [red]{error_msg}[/red]\n\n"
+        f"🔄 [yellow]Attempting recovery...[/yellow]",
+        title="System Error",
+        border_style="red"
+    )
+```
+
+### Activity Log Display
+
+```python
+def format_activity_logs(self, logs: List[str], max_lines: int = 10) -> str:
+    """Format activity logs with emoji and time stamps"""
+    if not logs:
+        return "[dim]No recent activity[/dim]"
+    
+    # Show most recent logs first
+    recent_logs = logs[-max_lines:]
+    formatted_logs = []
+    
+    for log in recent_logs:
+        # Pattern: Add timestamp if not present
+        if not log.startswith(tuple("0123456789")):
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            log = f"{timestamp} {log}"
+        formatted_logs.append(log)
+    
+    return "\n".join(formatted_logs)
+```
+
+### Live Update Best Practices
+
+1. **Stable Refresh Rate**: Use consistent refresh intervals (1 FPS recommended)
+2. **Data Validation**: Always validate data before rendering
+3. **Graceful Degradation**: Show partial data if some components fail
+4. **Memory Management**: Limit stored display history
+5. **Thread Safety**: Use proper locking for multi-threaded updates
+description:
+globs:
+alwaysApply: false
+---
