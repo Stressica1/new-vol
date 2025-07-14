@@ -1,0 +1,57 @@
+2025-07-14 05:37:29 | INFO     | bitget_client:__init__:32 - Bitget client initialized successfully
+2025-07-14 05:37:29 | INFO     | risk_management:__init__:66 - Risk Manager initialized
+2025-07-14 05:37:29 | INFO     | trading_engine:__init__:80 - Trading Engine initialized
+2025-07-14 05:37:29 | INFO     | __main__:__init__:41 - Trading System initialized
+2025-07-14 05:37:29 | INFO     | __main__:run_comprehensive_test:227 - 🚀 Starting comprehensive Bitget trading system test...
+2025-07-14 05:37:29 | INFO     | __main__:run_comprehensive_test:228 - ============================================================
+2025-07-14 05:37:29 | INFO     | __main__:run_comprehensive_test:241 - 
+🔍 Running Connectivity Test...
+2025-07-14 05:37:29 | INFO     | __main__:test_connectivity:55 - Testing Bitget API connectivity...
+2025-07-14 05:37:29 | ERROR    | bitget_client:test_connection:47 - Connection test failed: 'Client' object has no attribute 'public_get_time'
+2025-07-14 05:37:29 | ERROR    | __main__:test_connectivity:60 - Failed to connect to Bitget API
+2025-07-14 05:37:29 | ERROR    | __main__:run_comprehensive_test:247 - ❌ Connectivity Test FAILED
+2025-07-14 05:37:30 | INFO     | __main__:run_comprehensive_test:241 - 
+🔍 Running Risk Management Test...
+2025-07-14 05:37:30 | INFO     | __main__:test_risk_management:142 - Testing risk management system...
+2025-07-14 05:37:31 | ERROR    | bitget_client:get_balance:86 - Failed to get balance: 'str' object has no attribute 'get'
+2025-07-14 05:37:31 | ERROR    | risk_management:calculate_risk_metrics:91 - Failed to get account info for risk calculation
+2025-07-14 05:37:31 | ERROR    | bitget_client:get_balance:86 - Failed to get balance: 'str' object has no attribute 'get'
+2025-07-14 05:37:31 | ERROR    | risk_management:calculate_risk_metrics:91 - Failed to get account info for risk calculation
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:151 - 
+==================================================
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:152 - RISK MANAGEMENT SUMMARY
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:153 - ==================================================
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:155 - 🚨 Risk Level: HIGH
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:156 - 📊 Open Positions: 0
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:157 - 💰 Daily PnL: 0.00 USDT
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:158 - 📉 Max Drawdown: 0.00%
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:159 - 🛑 Emergency Stop: INACTIVE
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:162 - 
+📋 Risk Limits:
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:164 -   • Max Position Size: 1000.0 USDT
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:165 -   • Max Daily Loss: 100.0 USDT
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:166 -   • Max Drawdown: 5.00%
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:167 -   • Max Open Positions: 5
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:168 -   • Risk Per Trade: 1.00%
+2025-07-14 05:37:31 | INFO     | __main__:test_risk_management:170 - ==================================================
+2025-07-14 05:37:31 | SUCCESS  | __main__:test_risk_management:172 - ✅ Risk management test passed
+2025-07-14 05:37:31 | SUCCESS  | __main__:run_comprehensive_test:245 - ✅ Risk Management Test PASSED
+2025-07-14 05:37:32 | INFO     | __main__:run_comprehensive_test:241 - 
+🔍 Running Position Monitoring Test...
+2025-07-14 05:37:32 | INFO     | __main__:test_position_monitoring:182 - Testing position monitoring...
+2025-07-14 05:37:32 | INFO     | bitget_client:get_positions:68 - Positions retrieved: 1
+2025-07-14 05:37:32 | INFO     | __main__:test_position_monitoring:188 - Found 1 positions
+2025-07-14 05:37:32 | INFO     | __main__:test_position_monitoring:215 - No active positions found
+2025-07-14 05:37:32 | SUCCESS  | __main__:test_position_monitoring:217 - ✅ Position monitoring test passed
+2025-07-14 05:37:32 | SUCCESS  | __main__:run_comprehensive_test:245 - ✅ Position Monitoring Test PASSED
+2025-07-14 05:37:33 | INFO     | __main__:run_comprehensive_test:241 - 
+🔍 Running Trade Execution Test...
+2025-07-14 05:37:33 | INFO     | __main__:test_trade_execution:106 - Testing trade execution for BTCUSDT_UMCBL with 10.0 USDT...
+2025-07-14 05:37:33 | ERROR    | bitget_client:get_ticker:96 - Failed to get ticker for BTCUSDT_UMCBL: 'Client' object has no attribute 'mix_get_ticker'
+2025-07-14 05:37:33 | ERROR    | __main__:test_trade_execution:112 - Failed to get ticker for BTCUSDT_UMCBL
+2025-07-14 05:37:33 | ERROR    | __main__:run_comprehensive_test:247 - ❌ Trade Execution Test FAILED
+2025-07-14 05:37:34 | INFO     | __main__:run_comprehensive_test:253 - 
+============================================================
+2025-07-14 05:37:34 | INFO     | __main__:run_comprehensive_test:254 - TEST RESULTS: 2/4 tests passed
+2025-07-14 05:37:34 | ERROR    | __main__:run_comprehensive_test:259 - ⚠️  Some tests failed. Please check the issues above.
+2025-07-14 05:37:34 | INFO     | __main__:run_comprehensive_test:261 - ============================================================
