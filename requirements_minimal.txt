@@ -6,3 +6,4 @@ scipy
 rich
 loguru
 watchdog
+scikit-learn

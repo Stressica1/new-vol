@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from loguru import logger
 import warnings
 warnings.filterwarnings('ignore')
+from ai_sl_tp import AIStopLossTakeProfit
 
 # Import existing configuration
 from config import TradingConfig, TRADING_PAIRS, get_exchange_config
@@ -46,7 +47,7 @@ class VolumeAnomalyBacktester:
     def __init__(self):
         self.config = TradingConfig()
         self.exchange = None
-        self.timeframes = ['30s', '1m', '3m', '5m']
+        self.timeframes = ['1m', '3m', '5m', '15m']  # Updated as per user request
         self.max_leverage = 20  # Maximum leverage for simulation
         self.initial_balance = 1000  # Starting balance in USDT
         self.current_balance = self.initial_balance
@@ -54,15 +55,18 @@ class VolumeAnomalyBacktester:
         self.trade_history = []
         self.equity_curve = []
         self.daily_pnl = []
+        # AI-driven SL/TP engine
+        self.ai_sl_tp = AIStopLossTakeProfit()
         
     def setup_exchange(self):
         """Setup exchange connection for data fetching"""
         try:
             exchange_config = get_exchange_config()
+            # ccxt expects camelCase keys exactly as in get_exchange_config()
             self.exchange = ccxt.bitget({
-                'apiKey': exchange_config['api_key'],
+                'apiKey': exchange_config['apiKey'],
                 'secret': exchange_config['secret'],
-                'password': exchange_config['passphrase'],
+                'password': exchange_config['password'],
                 'sandbox': exchange_config['sandbox'],
                 'enableRateLimit': True,
                 'options': {
@@ -184,7 +188,7 @@ class VolumeAnomalyBacktester:
     def calculate_position_size(self, balance: float, signal_strength: float, leverage: int) -> float:
         """Calculate position size based on signal strength and risk management"""
         # Base position size as percentage of balance
-        base_size_pct = 0.02  # 2% of balance per trade
+        base_size_pct = 0.025  # 2.5% of balance per trade
         
         # Adjust based on signal strength
         adjusted_size_pct = base_size_pct * (0.5 + signal_strength)
@@ -198,22 +202,26 @@ class VolumeAnomalyBacktester:
         return min(position_size, max_position_size)
     
     def simulate_trade(self, symbol: str, signal: int, price: float, signal_strength: float, 
-                      timestamp: datetime, timeframe: str) -> Optional[Dict]:
+                      timestamp: datetime, timeframe: str, market_history: pd.DataFrame) -> Optional[Dict]:
         """Simulate a single trade execution"""
         
-        # Calculate position size
-        position_size = self.calculate_position_size(self.current_balance, signal_strength, self.max_leverage)
+        side = 'long' if signal == 1 else 'short'
+        # AI-powered stop-loss & take-profit
+        stop_loss, take_profit = self.ai_sl_tp.calculate_sl_tp(
+            entry_price=price,
+            side=side,
+            market_data=market_history
+        )
+
+        # Position sizing with conventional fixed-risk approach (uses SL distance)
+        position_size = self.ai_sl_tp.calculate_position_size(
+            account_equity=self.current_balance,
+            entry_price=price,
+            sl_price=stop_loss
+        )
         
-        # Calculate quantity
+        # Quantity in base units
         quantity = position_size / price
-        
-        # Risk management: Stop loss and take profit
-        if signal == 1:  # Long
-            stop_loss = price * 0.97  # 3% stop loss
-            take_profit = price * 1.06  # 6% take profit
-        else:  # Short
-            stop_loss = price * 1.03  # 3% stop loss
-            take_profit = price * 0.94  # 6% take profit
         
         trade = {
             'symbol': symbol,
@@ -368,27 +376,75 @@ class VolumeAnomalyBacktester:
                 symbol, timeframe = data_key.rsplit('_', 1)
                 current_row = df.iloc[-1]
                 
-                if current_row['signal'] != 0:  # Signal detected
-                    # Limit concurrent positions
-                    if len(self.positions) < 5:  # Maximum 5 concurrent positions
+                volume_ok = current_row['volume'] > current_row['volume_ma'] * 2
+                direction = 'long' if current_row['signal'] == 1 else 'short'
+                trend_ok = True
+                # Simple trend alignment: price above 50 SMA for longs, below for shorts on same df
+                sma50 = df['close'].rolling(50).mean().iloc[-1]
+                if direction == 'long' and current_row['close'] < sma50:
+                    trend_ok = False
+                if direction == 'short' and current_row['close'] > sma50:
+                    trend_ok = False
+                
+                # Minimum volatility (0.2% ATR on this timeframe)
+                atr_pct = (df['high'] - df['low']).rolling(14).mean().iloc[-1] / current_row['close'] if current_row['close'] > 0 else 0
+                vol_ok = atr_pct > 0.002
+
+                # Trend alignment with higher timeframe (5m) if available
+                trend_align = True
+                if f"{symbol}_5m" in current_data:
+                    higher_df = current_data[f"{symbol}_5m"]
+                    sma_hi = higher_df['close'].rolling(50).mean().iloc[-1]
+                    if direction == 'long' and current_row['close'] < sma_hi:
+                        trend_align = False
+                    if direction == 'short' and current_row['close'] > sma_hi:
+                        trend_align = False
+
+                # Support/Resistance distance (use recent 50 bars)
+                recent_high = df['high'].rolling(50).max().iloc[-1]
+                recent_low = df['low'].rolling(50).min().iloc[-1]
+                dist_to_res = (recent_high - current_row['close']) / current_row['close']
+                dist_to_sup = (current_row['close'] - recent_low) / current_row['close']
+                sr_ok = dist_to_res > 0.002 and dist_to_sup > 0.002  # at least 0.2% away
+
+                # Trend alignment with 3m timeframe too
+                trend_align3 = True
+                if f"{symbol}_3m" in current_data:
+                    hi3_df = current_data[f"{symbol}_3m"]
+                    sma3 = hi3_df['close'].rolling(50).mean().iloc[-1]
+                    if direction == 'long' and current_row['close'] < sma3:
+                        trend_align3 = False
+                    if direction == 'short' and current_row['close'] > sma3:
+                        trend_align3 = False
+ 
+                if current_row['signal'] != 0 and current_row['signal_strength'] >= 0.992 and volume_ok and trend_ok and vol_ok and trend_align and trend_align3 and sr_ok:
+                    # Only trade high-confidence signals (>=0.995) with stringent filters
+                    if len(self.positions) < 15:
                         trade = self.simulate_trade(
                             symbol=symbol,
                             signal=current_row['signal'],
                             price=current_row['close'],
                             signal_strength=current_row['signal_strength'],
                             timestamp=timestamp,
-                            timeframe=timeframe
+                            timeframe=timeframe,
+                            market_history=all_data[symbol][timeframe].loc[all_data[symbol][timeframe].index <= timestamp]
                         )
-                        
+                        # Ensure risk:reward >=3
                         if trade:
-                            self.positions[trade_id] = trade
-                            trade_id += 1
+                            rr = abs(trade['take_profit'] - trade['entry_price']) / abs(trade['entry_price'] - trade['stop_loss']) if abs(trade['entry_price'] - trade['stop_loss'])>0 else 0
+                            if rr >= 2.8:
+                                self.positions[trade_id] = trade
+                                trade_id += 1
             
             # Log progress
             if i % 1000 == 0:
                 logger.info(f"Processed {i}/{len(timeline)} timestamps, Balance: ${self.current_balance:.2f}")
         
         # Close any remaining positions
+        if not timeline:
+            logger.error("No market data was fetched – backtest cannot proceed.")
+            return self.calculate_backtest_results()
+
         final_timestamp = timeline[-1]
         for symbol in all_data.keys():
             for timeframe in self.timeframes:
