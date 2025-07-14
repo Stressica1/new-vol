@@ -454,19 +454,52 @@ class AlpineBot:
             self.risk_manager.initialize_session(self.account_data['balance'])
             
             logger.debug("Fetching positions...")
-            # Fetch positions
+            # Fetch positions from exchange
             positions = self.exchange.fetch_positions()
-            self.positions = [pos for pos in positions if float(pos['contracts'] or 0) > 0]
-            logger.debug(f"Found {len(self.positions)} active positions")
+            exchange_positions = [pos for pos in positions if float(pos['contracts'] or 0) > 0]
+            logger.debug(f"Found {len(exchange_positions)} active positions on exchange")
             
-            # Update risk manager positions
-            for pos in self.positions:
+            # Convert exchange positions to internal format
+            self.positions = []
+            for pos in exchange_positions:
                 symbol = str(pos['symbol'])
+                side = str(pos.get('side', 'long')).lower()
+                contracts = float(pos.get('contracts', 0) or 0)
+                entry_price = float(pos.get('entryPrice', 0) or 0)
                 mark_price = pos.get('markPrice', 0)
-                current_price = float(mark_price) if mark_price is not None else 0.0
+                current_price = float(mark_price) if mark_price is not None else entry_price
                 unrealized_pnl_val = pos.get('unrealizedPnl', 0)
                 unrealized_pnl = float(unrealized_pnl_val) if unrealized_pnl_val is not None else 0.0
+                
+                # Create internal position format
+                internal_position = {
+                    'symbol': symbol,
+                    'side': side,
+                    'size': contracts,
+                    'position_size': contracts,
+                    'entry_price': entry_price,
+                    'current_price': current_price,
+                    'unrealized_pnl': unrealized_pnl,
+                    'timestamp': datetime.now(),
+                    'exchange_data': pos  # Keep original exchange data
+                }
+                
+                self.positions.append(internal_position)
+                
+                # Update risk manager with existing position
                 self.risk_manager.update_position(symbol, current_price, unrealized_pnl)
+                
+                logger.info(f"📊 Existing position: {symbol} {side.upper()} {contracts:.4f} @ ${entry_price:.4f} | P&L: ${unrealized_pnl:.2f}")
+                
+            # Sync active_positions with exchange positions
+            self.active_positions = self.positions.copy()
+            
+            if len(self.positions) > 0:
+                self.log_activity(f"📊 Loaded {len(self.positions)} existing positions from exchange", "SUCCESS")
+                for pos in self.positions:
+                    self.log_activity(f"  💼 {pos['symbol'].replace('/USDT:USDT', '')} {pos['side'].upper()} | Size: {pos['size']:.4f} | P&L: ${pos['unrealized_pnl']:.2f}", "INFO")
+            else:
+                logger.debug("No existing positions found on exchange")
             
         except Exception as e:
             error_msg = f"❌ Error fetching account data: {str(e)}"
@@ -1048,6 +1081,10 @@ class AlpineBot:
                 closed_pos = self.risk_manager.close_position(symbol, close_price, realized_pnl, reason)
                 
                 if closed_pos:
+                    # Remove position from active positions list
+                    self.active_positions = [pos for pos in self.active_positions if pos['symbol'] != symbol]
+                    self.positions = [pos for pos in self.positions if pos['symbol'] != symbol]
+                    
                     pnl_emoji = "💚" if realized_pnl > 0 else "❤️"
                     close_msg = (f"{pnl_emoji} Position closed: {symbol.replace('/USDT:USDT', '')} "
                                f"| {reason} | P&L: ${realized_pnl:.2f}")
