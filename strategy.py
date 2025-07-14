@@ -1,6 +1,6 @@
 """
-🏔️ Alpine Trading Bot - Volume Anomaly Strategy
-Implementing the exact logic from the PineScript indicator
+🏔️ Alpine Trading Bot - Enhanced Volume Anomaly Strategy
+Optimized for 1m/3m confluence signals with dynamic position sizing
 """
 
 import pandas as pd
@@ -29,358 +29,358 @@ def safe_log(level: str, message: str):
         print(f"[{level.upper()}] {message}")
 
 class VolumeAnomalyStrategy:
-    """🎯 Volume Anomaly Strategy - 90% Success Rate Implementation"""
+    """🎯 Enhanced Volume Anomaly Strategy - Optimized for 1m/3m Confluence"""
     
     def __init__(self):
         self.config = TradingConfig()
         
-        # Strategy parameters (from PineScript)
+        # Strategy parameters (optimized for 1m/3m scalping)
         self.volume_lookback = self.config.volume_lookback
         self.volume_std_multiplier = self.config.volume_std_multiplier
         self.atr_period = self.config.supertrend_atr_period
         self.atr_multiplier = self.config.supertrend_multiplier
         
-        # Timeframe configuration
-        self.timeframes = self.config.timeframes
+        # Confluence configuration
+        self.timeframes = self.config.timeframes  # ['1m', '3m']
         self.primary_timeframe = self.config.primary_timeframe
         self.confluence_required = self.config.signal_confluence_required
+        self.confluence_boost = self.config.confluence_confidence_boost
         
-        # Volume analysis parameters
+        # Enhanced volume analysis
         self.vol_burst_factor = 1.5
         self.vol_explode_factor = 2.0
         
-        # Signal history
+        # Signal tracking
         self.signals_history = []
+        self.confluence_signals_count = 0
+        self.total_signals_count = 0
         
+        safe_log('success', f"🎯 Enhanced Strategy initialized for {self.timeframes} confluence trading")
+
     def calculate_supertrend(self, df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
-        """Calculate SuperTrend indicator 📈"""
-        
-        high = df['high']
-        low = df['low']
-        close = df['close']
-        
-        # Calculate ATR
-        atr = ta.volatility.AverageTrueRange(high=high, low=low, close=close, window=self.atr_period).average_true_range()
-        
-        # Calculate HL2 (typical price)
-        hl2 = (high + low) / 2
-        
-        # Calculate upper and lower bands
-        upper_band = hl2 + (self.atr_multiplier * atr)
-        lower_band = hl2 - (self.atr_multiplier * atr)
-        
-        # Initialize SuperTrend
-        supertrend = pd.Series(index=df.index, dtype=float)
-        direction = pd.Series(index=df.index, dtype=int)
-        
-        # Calculate SuperTrend values
-        for i in range(1, len(df)):
-            if close.iloc[i] <= lower_band.iloc[i-1]:
-                supertrend.iloc[i] = lower_band.iloc[i]
-                direction.iloc[i] = 1  # Uptrend
-            elif close.iloc[i] >= upper_band.iloc[i-1]:
-                supertrend.iloc[i] = upper_band.iloc[i]
-                direction.iloc[i] = -1  # Downtrend
-            else:
-                if direction.iloc[i-1] == 1 and lower_band.iloc[i] < supertrend.iloc[i-1]:
-                    supertrend.iloc[i] = supertrend.iloc[i-1]
-                elif direction.iloc[i-1] == -1 and upper_band.iloc[i] > supertrend.iloc[i-1]:
-                    supertrend.iloc[i] = supertrend.iloc[i-1]
-                else:
-                    supertrend.iloc[i] = lower_band.iloc[i] if direction.iloc[i-1] == 1 else upper_band.iloc[i]
-                direction.iloc[i] = direction.iloc[i-1]
-        
-        return supertrend, direction
-    
-    def calculate_volume_analysis(self, df: pd.DataFrame) -> Dict[str, pd.Series]:
-        """Calculate volume analysis indicators 📊"""
-        
-        volume = df['volume']
-        
-        # Volume moving average
-        vol_ma = volume.rolling(window=self.volume_lookback).mean()
-        
-        # Volume standard deviation
-        vol_std = volume.rolling(window=self.volume_lookback).std()
-        
-        # Volume upper band (anomaly threshold)
-        vol_upper = vol_ma + (vol_std * self.volume_std_multiplier)
-        
-        # Volume conditions
-        vol_burst = volume > (vol_ma * self.vol_burst_factor)
-        vol_explosive = volume > (vol_ma * self.vol_explode_factor)
-        vol_anomalous = volume > vol_upper  # This is the main signal from PineScript
-        
-        # Volume multiple
-        vol_multiple = volume / vol_ma
-        
-        return {
-            'vol_ma': vol_ma,
-            'vol_std': vol_std,
-            'vol_upper': vol_upper,
-            'vol_burst': vol_burst,
-            'vol_explosive': vol_explosive,
-            'vol_anomalous': vol_anomalous,  # Main signal
-            'vol_multiple': vol_multiple
-        }
-    
-    def calculate_ema_pullback(self, df: pd.DataFrame) -> Dict[str, pd.Series]:
-        """Calculate EMA pullback conditions 📉"""
-        
-        close = df['close']
-        volume = df['volume']
-        
-        # EMAs
-        ema_fast = close.ewm(span=8).mean()
-        ema_slow = close.ewm(span=21).mean()
-        
-        # Volume MA for pullback confirmation
-        vol_ma = volume.rolling(window=self.volume_lookback).mean()
-        
-        return {
-            'ema_fast': ema_fast,
-            'ema_slow': ema_slow,
-            'vol_ma': vol_ma
-        }
-    
-    def analyze_timeframe_signals(self, timeframe_data: Dict[str, pd.DataFrame], symbol: str) -> List[Dict]:
-        """Analyze multiple timeframes for signal confluence 📊"""
-        
-        timeframe_signals = {}
-        
-        # Generate signals for each timeframe
-        for timeframe, df in timeframe_data.items():
-            if df is None or len(df) < max(self.volume_lookback, self.atr_period, 21):
-                continue
+        """📈 Enhanced SuperTrend calculation for faster signals"""
+        try:
+            if len(df) < self.atr_period:
+                safe_log('warning', f"⚠️ Insufficient data for SuperTrend: {len(df)} < {self.atr_period}")
+                return pd.Series([np.nan] * len(df)), pd.Series([0] * len(df))
+            
+            # Calculate ATR with optimized period for scalping
+            atr = ta.volatility.AverageTrueRange(
+                high=df['high'],
+                low=df['low'], 
+                close=df['close'],
+                window=self.atr_period
+            ).average_true_range()
+            
+            # Calculate SuperTrend bands
+            hl2 = (df['high'] + df['low']) / 2
+            upper_band = hl2 + (self.atr_multiplier * atr)
+            lower_band = hl2 - (self.atr_multiplier * atr)
+            
+            # Initialize arrays
+            supertrend = pd.Series(index=df.index, dtype=float)
+            trend = pd.Series(index=df.index, dtype=int)
+            
+            for i in range(len(df)):
+                if i == 0:
+                    supertrend.iloc[i] = upper_band.iloc[i]
+                    trend.iloc[i] = 1
+                    continue
                 
-            signals = self.generate_single_timeframe_signals(df, symbol, timeframe)
-            if signals:
-                timeframe_signals[timeframe] = signals
-        
-        # Find confluence signals
-        confluence_signals = []
-        
-        if len(timeframe_signals) >= self.confluence_required:
-            # Check for signal agreement across timeframes
-            for tf_signals in timeframe_signals.values():
-                for signal in tf_signals:
-                    # Count how many timeframes agree on this signal type
-                    agreement_count = 0
-                    supporting_timeframes = []
+                # SuperTrend calculation logic
+                if df['close'].iloc[i] <= supertrend.iloc[i-1]:
+                    supertrend.iloc[i] = upper_band.iloc[i]
+                    trend.iloc[i] = -1
+                else:
+                    supertrend.iloc[i] = lower_band.iloc[i]
+                    trend.iloc[i] = 1
                     
-                    for tf, tf_signal_list in timeframe_signals.items():
-                        for tf_signal in tf_signal_list:
-                            if (tf_signal['type'] == signal['type'] and 
-                                abs(tf_signal['timestamp'] - signal['timestamp']) <= 300):  # 5 min tolerance
-                                agreement_count += 1
-                                supporting_timeframes.append(tf)
-                                break
+                # Adjust for trend continuity
+                if trend.iloc[i] == 1 and trend.iloc[i-1] == 1:
+                    if lower_band.iloc[i] > supertrend.iloc[i-1]:
+                        supertrend.iloc[i] = lower_band.iloc[i]
+                    else:
+                        supertrend.iloc[i] = supertrend.iloc[i-1]
+                        
+                elif trend.iloc[i] == -1 and trend.iloc[i-1] == -1:
+                    if upper_band.iloc[i] < supertrend.iloc[i-1]:
+                        supertrend.iloc[i] = upper_band.iloc[i]
+                    else:
+                        supertrend.iloc[i] = supertrend.iloc[i-1]
+            
+            return supertrend, trend
+            
+        except Exception as e:
+            safe_log('warning', f"⚠️ SuperTrend calculation error: {e}")
+            return pd.Series([np.nan] * len(df)), pd.Series([0] * len(df))
+
+    def calculate_volume_analysis(self, df: pd.DataFrame) -> Dict[str, pd.Series]:
+        """📊 Enhanced volume analysis optimized for scalping"""
+        try:
+            if len(df) < self.volume_lookback:
+                safe_log('warning', f"⚠️ Insufficient data for volume analysis: {len(df)} < {self.volume_lookback}")
+                return {
+                    'volume_ratio': pd.Series([1.0] * len(df)),
+                    'volume_burst': pd.Series([False] * len(df)),
+                    'volume_explode': pd.Series([False] * len(df))
+                }
+            
+            # Rolling volume statistics (optimized for scalping)
+            volume_sma = df['volume'].rolling(window=self.volume_lookback).mean()
+            volume_std = df['volume'].rolling(window=self.volume_lookback).std()
+            
+            # Volume ratio calculation
+            volume_ratio = df['volume'] / volume_sma
+            
+            # Enhanced volume thresholds for scalping
+            volume_threshold = volume_sma + (volume_std * self.volume_std_multiplier)
+            
+            # Volume burst detection (moderate anomaly)
+            volume_burst = (df['volume'] > volume_threshold) & (volume_ratio >= self.vol_burst_factor)
+            
+            # Volume explosion detection (extreme anomaly) 
+            volume_explode = (df['volume'] > volume_threshold * 1.5) & (volume_ratio >= self.vol_explode_factor)
+            
+            return {
+                'volume_ratio': volume_ratio,
+                'volume_burst': volume_burst,
+                'volume_explode': volume_explode
+            }
+            
+        except Exception as e:
+            safe_log('warning', f"⚠️ Volume analysis error: {e}")
+            return {
+                'volume_ratio': pd.Series([1.0] * len(df)),
+                'volume_burst': pd.Series([False] * len(df)),
+                'volume_explode': pd.Series([False] * len(df))
+            }
+
+    def calculate_ema_pullback(self, df: pd.DataFrame) -> Dict[str, pd.Series]:
+        """📈 EMA pullback analysis for trend confirmation"""
+        try:
+            # Fast EMA for scalping (optimized periods)
+            ema_fast = ta.trend.EMAIndicator(df['close'], window=8).ema_indicator()
+            ema_slow = ta.trend.EMAIndicator(df['close'], window=21).ema_indicator()
+            
+            # Trend direction
+            trend_up = ema_fast > ema_slow
+            trend_down = ema_fast < ema_slow
+            
+            # Pullback detection (price near EMA)
+            pullback_threshold = 0.002  # 0.2% for scalping
+            
+            pullback_long = trend_up & (df['close'] <= ema_fast * (1 + pullback_threshold))
+            pullback_short = trend_down & (df['close'] >= ema_fast * (1 - pullback_threshold))
+            
+            return {
+                'ema_fast': ema_fast,
+                'ema_slow': ema_slow,
+                'trend_up': trend_up,
+                'trend_down': trend_down,
+                'pullback_long': pullback_long,
+                'pullback_short': pullback_short
+            }
+            
+        except Exception as e:
+            safe_log('warning', f"⚠️ EMA pullback error: {e}")
+            return {
+                'ema_fast': pd.Series([df['close'].iloc[-1]] * len(df)),
+                'ema_slow': pd.Series([df['close'].iloc[-1]] * len(df)),
+                'trend_up': pd.Series([True] * len(df)),
+                'trend_down': pd.Series([False] * len(df)),
+                'pullback_long': pd.Series([False] * len(df)),
+                'pullback_short': pd.Series([False] * len(df))
+            }
+
+    def analyze_confluence_signals(self, timeframe_data: Dict[str, pd.DataFrame], symbol: str) -> List[Dict]:
+        """🎯 Analyze confluence signals across 1m/3m timeframes"""
+        try:
+            confluence_signals = []
+            
+            # Generate signals for each timeframe
+            timeframe_signals = {}
+            for timeframe, df in timeframe_data.items():
+                if timeframe in self.timeframes:
+                    signals = self.generate_single_timeframe_signals(df, symbol, timeframe)
+                    timeframe_signals[timeframe] = signals
+                    safe_log('debug', f"📊 {timeframe} generated {len(signals)} signals for {symbol}")
+            
+            # Find confluence signals (signals that appear in multiple timeframes)
+            if len(timeframe_signals) >= self.confluence_required:
+                # Get the most recent signals from each timeframe
+                recent_signals = {}
+                for tf, signals in timeframe_signals.items():
+                    if signals:  # Only if there are signals
+                        # Get most recent signal
+                        recent_signals[tf] = signals[-1]
+                
+                # Check for confluence (same direction signals within time window)
+                if len(recent_signals) >= self.confluence_required:
+                    signal_types = [sig['type'] for sig in recent_signals.values()]
                     
-                    # If enough timeframes agree, create confluence signal
-                    if agreement_count >= self.confluence_required:
-                        confluence_signal = signal.copy()
-                        confluence_signal['confluence_count'] = agreement_count
-                        confluence_signal['supporting_timeframes'] = supporting_timeframes
-                        confluence_signal['confidence'] = min(95, signal['confidence'] + (agreement_count * 10))
+                    # Check if signals agree on direction
+                    if len(set(signal_types)) == 1:  # All signals same direction
+                        # Create confluence signal
+                        primary_signal = recent_signals[self.primary_timeframe]
+                        
+                        # Boost confidence for confluence
+                        boosted_confidence = min(primary_signal['confidence'] + self.confluence_boost * 100, 100.0)
+                        
+                        confluence_signal = {
+                            **primary_signal,
+                            'is_confluence': True,
+                            'confluence_timeframes': list(recent_signals.keys()),
+                            'original_confidence': primary_signal['confidence'],
+                            'confidence': boosted_confidence,
+                            'confluence_boost': self.confluence_boost * 100
+                        }
+                        
                         confluence_signals.append(confluence_signal)
-        
-        return confluence_signals
-    
-    def generate_single_timeframe_signals(self, df: pd.DataFrame, symbol: str, timeframe: str) -> List[Dict]:
-        """Generate signals for a single timeframe 📈"""
-        
-        if len(df) < max(self.volume_lookback, self.atr_period, 21):
+                        self.confluence_signals_count += 1
+                        
+                        safe_log('success', f"🚀 CONFLUENCE SIGNAL: {symbol} {confluence_signal['type']} across {confluence_signal['confluence_timeframes']}")
+                        safe_log('success', f"   📈 Confidence boosted: {primary_signal['confidence']:.1f}% → {boosted_confidence:.1f}% (+{self.confluence_boost*100:.0f}%)")
+            
+            # Also include high-quality single timeframe signals
+            for tf, signals in timeframe_signals.items():
+                for signal in signals:
+                    if signal['confidence'] >= 80.0:  # High confidence threshold
+                        signal['is_confluence'] = False
+                        confluence_signals.append(signal)
+            
+            self.total_signals_count += len(confluence_signals)
+            
+            return confluence_signals
+            
+        except Exception as e:
+            safe_log('warning', f"⚠️ Confluence analysis error: {e}")
             return []
 
-        # Calculate indicators
-        supertrend, direction = self.calculate_supertrend(df)
-        volume_data = self.calculate_volume_analysis(df)
-        ema_data = self.calculate_ema_pullback(df)
-
-        signals = []
-
-        # Get the latest data points
-        latest_idx = df.index[-1]
-        current_price = df.loc[latest_idx, 'close']
-        current_volume = df.loc[latest_idx, 'volume']
-
-        # Volume anomaly detection
-        vol_ratio = volume_data['vol_multiple'].iloc[-1]
-        vol_spike = volume_data['vol_explosive'].iloc[-1]
-
-        # SuperTrend signals
-        current_supertrend = supertrend.iloc[-1]
-        current_direction = direction.iloc[-1]
-
-        # EMA signals
-        ema_fast = ema_data['ema_fast'].iloc[-1]
-        ema_slow = ema_data['ema_slow'].iloc[-1]
-
-        # Debug logging for signal analysis
-        safe_log('debug', f"🔍 {symbol} {timeframe} Analysis:")
-        safe_log('debug', f"  💰 Price: ${current_price:.4f}")
-        safe_log('debug', f"  📊 Volume Ratio: {vol_ratio:.2f}x (need >{self.config.min_volume_ratio})")
-        safe_log('debug', f"  🔥 Volume Spike: {vol_spike}")
-        safe_log('debug', f"  📈 SuperTrend: ${current_supertrend:.4f} (direction: {current_direction})")
-        safe_log('debug', f"  📊 EMA Fast: ${ema_fast:.4f}")
-        safe_log('debug', f"  📊 EMA Slow: ${ema_slow:.4f}")
-        safe_log('debug', f"  📊 EMA Bullish: {ema_fast > ema_slow} (fast > slow)")
-
-        # Signal generation logic
-        if vol_ratio > self.config.min_volume_ratio and vol_spike:  # Volume anomaly detected
-            safe_log('info', f"🔥 {symbol} {timeframe}: Volume anomaly detected! {vol_ratio:.2f}x")
+    def generate_single_timeframe_signals(self, df: pd.DataFrame, symbol: str, timeframe: str) -> List[Dict]:
+        """📊 Generate signals for a single timeframe with enhanced logic"""
+        try:
+            if len(df) < 20:  # Minimum data requirement
+                safe_log('warning', f"⚠️ Insufficient data for signal generation: {len(df)} < 20")
+                return []
+            
+            signals = []
+            
+            # Calculate all indicators
+            supertrend, trend = self.calculate_supertrend(df)
+            volume_analysis = self.calculate_volume_analysis(df)
+            ema_analysis = self.calculate_ema_pullback(df)
+            
+            # Get latest values
+            current_price = df['close'].iloc[-1]
+            current_volume_ratio = volume_analysis['volume_ratio'].iloc[-1]
+            current_supertrend = supertrend.iloc[-1]
+            current_trend = trend.iloc[-1]
+            
+            # Volume conditions
+            volume_burst = volume_analysis['volume_burst'].iloc[-1]
+            volume_explode = volume_analysis['volume_explode'].iloc[-1]
+            
+            # Trend conditions
+            trend_up = ema_analysis['trend_up'].iloc[-1]
+            trend_down = ema_analysis['trend_down'].iloc[-1]
+            pullback_long = ema_analysis['pullback_long'].iloc[-1]
+            pullback_short = ema_analysis['pullback_short'].iloc[-1]
+            
+            # Signal generation logic (optimized for scalping)
+            signal_strength = 0
+            signal_type = None
+            signal_reasons = []
             
             # LONG signal conditions
-            long_supertrend_bullish = current_direction == 1
-            long_price_above_supertrend = current_price > current_supertrend
-            long_ema_bullish = ema_fast > ema_slow
-            long_price_above_ema = current_price > ema_fast
-            
-            safe_log('debug', f"  🟢 LONG Analysis:")
-            safe_log('debug', f"    SuperTrend Bullish: {long_supertrend_bullish} (direction == 1)")
-            safe_log('debug', f"    Price > SuperTrend: {long_price_above_supertrend} ({current_price:.4f} > {current_supertrend:.4f})")
-            safe_log('debug', f"    EMA Bullish: {long_ema_bullish} ({ema_fast:.4f} > {ema_slow:.4f})")
-            safe_log('debug', f"    Price > EMA Fast: {long_price_above_ema} ({current_price:.4f} > {ema_fast:.4f})")
-            
-            if (long_supertrend_bullish and long_price_above_supertrend and 
-                long_ema_bullish and long_price_above_ema):
+            if (current_trend > 0 and trend_up and 
+                (volume_burst or volume_explode) and
+                current_price > current_supertrend):
                 
-                confidence = min(90, 60 + (vol_ratio * 10))
+                signal_type = 'LONG'
+                signal_strength += 30  # Base strength
+                signal_reasons.append("SuperTrend bullish")
+                
+                if pullback_long:
+                    signal_strength += 20
+                    signal_reasons.append("EMA pullback")
+                
+                if volume_explode:
+                    signal_strength += 25
+                    signal_reasons.append("Volume explosion")
+                elif volume_burst:
+                    signal_strength += 15
+                    signal_reasons.append("Volume burst")
+                
+                if current_volume_ratio >= self.config.min_volume_ratio:
+                    signal_strength += 10
+                    signal_reasons.append(f"High volume ({current_volume_ratio:.1f}x)")
+            
+            # SHORT signal conditions
+            elif (current_trend < 0 and trend_down and 
+                  (volume_burst or volume_explode) and
+                  current_price < current_supertrend):
+                
+                signal_type = 'SHORT'
+                signal_strength += 30  # Base strength
+                signal_reasons.append("SuperTrend bearish")
+                
+                if pullback_short:
+                    signal_strength += 20
+                    signal_reasons.append("EMA pullback")
+                
+                if volume_explode:
+                    signal_strength += 25
+                    signal_reasons.append("Volume explosion")
+                elif volume_burst:
+                    signal_strength += 15
+                    signal_reasons.append("Volume burst")
+                
+                if current_volume_ratio >= self.config.min_volume_ratio:
+                    signal_strength += 10
+                    signal_reasons.append(f"High volume ({current_volume_ratio:.1f}x)")
+            
+            # Create signal if strength meets threshold
+            if signal_type and signal_strength >= 60:  # Minimum 60% confidence for scalping
                 signal = {
                     'symbol': symbol,
-                    'type': 'LONG',
                     'timeframe': timeframe,
-                    'timestamp': latest_idx.timestamp(),
-                    'price': current_price,
-                    'volume_ratio': vol_ratio,
+                    'type': signal_type,
+                    'confidence': min(signal_strength, 100),
+                    'entry_price': current_price,
+                    'volume_ratio': current_volume_ratio,
                     'supertrend': current_supertrend,
-                    'confidence': confidence,
-                    'strength': 'HIGH' if vol_ratio > 3.0 else 'MEDIUM',
-                    'action': 'READY'  # Mark as ready for execution
+                    'trend_direction': current_trend,
+                    'reasons': signal_reasons,
+                    'timestamp': datetime.now(),
+                    'is_confluence': False  # Will be set by confluence analysis
                 }
-                signals.append(signal)
-                safe_log('success', f"✅ {symbol} {timeframe}: LONG signal generated! Confidence: {confidence:.1f}%")
-            else:
-                safe_log('warning', f"⚠️ {symbol} {timeframe}: LONG signal blocked - technical conditions not met")
-
-            # SHORT signal conditions  
-            short_supertrend_bearish = current_direction == -1
-            short_price_below_supertrend = current_price < current_supertrend
-            short_ema_bearish = ema_fast < ema_slow
-            short_price_below_ema = current_price < ema_fast
-            
-            safe_log('debug', f"  🔴 SHORT Analysis:")
-            safe_log('debug', f"    SuperTrend Bearish: {short_supertrend_bearish} (direction == -1)")
-            safe_log('debug', f"    Price < SuperTrend: {short_price_below_supertrend} ({current_price:.4f} < {current_supertrend:.4f})")
-            safe_log('debug', f"    EMA Bearish: {short_ema_bearish} ({ema_fast:.4f} < {ema_slow:.4f})")
-            safe_log('debug', f"    Price < EMA Fast: {short_price_below_ema} ({current_price:.4f} < {ema_fast:.4f})")
-            
-            if (short_supertrend_bearish and short_price_below_supertrend and
-                short_ema_bearish and short_price_below_ema):
                 
-                confidence = min(90, 60 + (vol_ratio * 10))
-                signal = {
-                    'symbol': symbol,
-                    'type': 'SHORT',
-                    'timeframe': timeframe,
-                    'timestamp': latest_idx.timestamp(),
-                    'price': current_price,
-                    'volume_ratio': vol_ratio,
-                    'supertrend': current_supertrend,
-                    'confidence': confidence,
-                    'strength': 'HIGH' if vol_ratio > 3.0 else 'MEDIUM',
-                    'action': 'READY'  # Mark as ready for execution
-                }
                 signals.append(signal)
-                safe_log('success', f"✅ {symbol} {timeframe}: SHORT signal generated! Confidence: {confidence:.1f}%")
-            else:
-                safe_log('warning', f"⚠️ {symbol} {timeframe}: SHORT signal blocked - technical conditions not met")
-        else:
-            if vol_ratio <= self.config.min_volume_ratio:
-                safe_log('debug', f"❌ {symbol} {timeframe}: Volume too low: {vol_ratio:.2f}x (need >{self.config.min_volume_ratio})")
-            if not vol_spike:
-                safe_log('debug', f"❌ {symbol} {timeframe}: No volume spike detected")
-
-        # Store signals in history
-        self.signals_history.extend(signals)
-
-        return signals
-    
-    def generate_signals(self, df: pd.DataFrame, symbol: str) -> List[Dict]:
-        """Generate Volume Anomaly signals - LEGACY METHOD FOR SINGLE TIMEFRAME 🎯"""
-        
-        if len(df) < max(self.volume_lookback, self.atr_period, 21):
+                safe_log('info', f"📊 {timeframe} Signal: {symbol} {signal_type} (Confidence: {signal_strength}%)")
+                safe_log('debug', f"   📋 Reasons: {', '.join(signal_reasons)}")
+            
+            return signals
+            
+        except Exception as e:
+            safe_log('warning', f"⚠️ Signal generation error for {timeframe}: {e}")
             return []
-        
-        # Calculate indicators
-        supertrend, direction = self.calculate_supertrend(df)
-        volume_data = self.calculate_volume_analysis(df)
-        ema_data = self.calculate_ema_pullback(df)
-        
-        signals = []
-        
-        # Get latest values
-        latest_idx = len(df) - 1
-        current_close = df['close'].iloc[latest_idx]
-        current_volume = df['volume'].iloc[latest_idx]
-        current_time = df.index[latest_idx] if hasattr(df.index[latest_idx], 'to_pydatetime') else datetime.now()
-        
-        # SuperTrend direction
-        st_uptrend = direction.iloc[latest_idx] == 1
-        st_downtrend = direction.iloc[latest_idx] == -1
-        
-        # Volume anomaly condition (main signal from PineScript)
-        vol_anomalous = volume_data['vol_anomalous'].iloc[latest_idx]
-        vol_multiple = volume_data['vol_multiple'].iloc[latest_idx]
-        
-        # Generate signals based on PineScript logic
-        if vol_anomalous and st_uptrend:
-            signal = {
-                'symbol': symbol,
-                'type': 'LONG',
-                'time': current_time,
-                'price': current_close,
-                'volume_ratio': vol_multiple,
-                'anomaly_strength': vol_multiple,
-                'supertrend_dir': 'UP',
-                'confidence': min(95.0, 70.0 + (vol_multiple * 5)),  # Higher volume = higher confidence
-                'action': 'PENDING'
-            }
-            signals.append(signal)
-            
-        elif vol_anomalous and st_downtrend:
-            signal = {
-                'symbol': symbol,
-                'type': 'SHORT',
-                'time': current_time,
-                'price': current_close,
-                'volume_ratio': vol_multiple,
-                'anomaly_strength': vol_multiple,
-                'supertrend_dir': 'DOWN',
-                'confidence': min(95.0, 70.0 + (vol_multiple * 5)),  # Higher volume = higher confidence
-                'action': 'PENDING'
-            }
-            signals.append(signal)
-        
-        # Store signals in history
-        self.signals_history.extend(signals)
-        
-        # Keep only last 100 signals
-        if len(self.signals_history) > 100:
-            self.signals_history = self.signals_history[-100:]
-        
-        return signals
-    
+
     def should_enter_trade(self, signal: Dict, account_balance: float, current_positions: List[Dict]) -> bool:
-        """Determine if we should enter a trade based on signal and risk management 🎯"""
+        """🎯 Enhanced trade entry logic with confluence consideration"""
         
         symbol = signal.get('symbol', 'Unknown')
         confidence = signal.get('confidence', 0)
         volume_ratio = signal.get('volume_ratio', 0)
+        is_confluence = signal.get('is_confluence', False)
+        
+        # Lower thresholds for confluence signals
+        min_confidence = 65.0 if is_confluence else 75.0
+        min_volume_ratio = self.config.min_volume_ratio * (0.8 if is_confluence else 1.0)
         
         safe_log('debug', f"🎯 Trade Entry Check for {symbol}:")
-        safe_log('debug', f"  📊 Signal Confidence: {confidence:.1f}% (need ≥75%)")
-        safe_log('debug', f"  📊 Volume Ratio: {volume_ratio:.2f}x (need ≥{self.config.min_volume_ratio}x)")
+        safe_log('debug', f"  📊 Signal Type: {'CONFLUENCE' if is_confluence else 'SINGLE TF'}")
+        safe_log('debug', f"  📊 Confidence: {confidence:.1f}% (need ≥{min_confidence:.1f}%)")
+        safe_log('debug', f"  📊 Volume Ratio: {volume_ratio:.2f}x (need ≥{min_volume_ratio:.1f}x)")
         safe_log('debug', f"  📊 Current Positions: {len(current_positions)}/{self.config.max_positions}")
         
         # Check position limits
@@ -394,66 +394,94 @@ class VolumeAnomalyStrategy:
                 safe_log('warning', f"🚫 {symbol}: Already have position in this symbol")
                 return False
         
-        # Check signal confidence (volume anomaly strength)
-        if confidence < 75.0:  # Minimum confidence threshold
-            safe_log('warning', f"🚫 {symbol}: Confidence too low: {confidence:.1f}% < 75%")
+        # Check signal confidence
+        if confidence < min_confidence:
+            safe_log('warning', f"🚫 {symbol}: Confidence too low: {confidence:.1f}% < {min_confidence:.1f}%")
             return False
         
         # Check volume strength
-        if volume_ratio < self.config.min_volume_ratio:  # Must be at least min_volume_ratio average volume
-            safe_log('warning', f"🚫 {symbol}: Volume too low: {volume_ratio:.2f}x < {self.config.min_volume_ratio}x")
+        if volume_ratio < min_volume_ratio:
+            safe_log('warning', f"🚫 {symbol}: Volume too low: {volume_ratio:.2f}x < {min_volume_ratio:.1f}x")
             return False
         
-        safe_log('success', f"✅ {symbol}: All trade entry conditions met! Proceeding with execution...")
-        return True
-    
-    def calculate_position_size(self, signal: Dict, account_balance: float, current_price: float) -> float:
-        """Calculate position size based on account balance and risk management 💰"""
+        if is_confluence:
+            safe_log('success', f"✅ {symbol}: CONFLUENCE SIGNAL - All conditions met! 🚀")
+        else:
+            safe_log('success', f"✅ {symbol}: High-quality signal - All conditions met!")
         
-        # Calculate position value based on percentage of account
-        position_value = account_balance * (self.config.position_size_pct / 100)
+        return True
+
+    def calculate_position_size(self, signal: Dict, account_balance: float, current_price: float) -> float:
+        """💰 Enhanced position sizing with confluence boost"""
+        
+        is_confluence = signal.get('is_confluence', False)
+        
+        # Base position value
+        base_position_pct = self.config.position_size_pct
+        
+        # Apply confluence multiplier
+        if is_confluence:
+            position_pct = base_position_pct * self.config.confluence_position_multiplier
+            safe_log('info', f"🚀 Confluence boost applied: {base_position_pct}% → {position_pct:.1f}%")
+        else:
+            position_pct = base_position_pct
+        
+        # Calculate position value
+        position_value = account_balance * (position_pct / 100)
         
         # Calculate position size in contracts/units
         position_size = position_value / current_price
         
         return position_size
-    
+
     def calculate_stop_loss_take_profit(self, signal: Dict, entry_price: float) -> Tuple[float, float]:
-        """Calculate stop loss and take profit levels 🎯"""
+        """🎯 Calculate stop loss and take profit with tighter scalping levels"""
+        
+        is_confluence = signal.get('is_confluence', False)
+        
+        # Tighter levels for scalping, slightly wider for confluence
+        stop_loss_pct = self.config.stop_loss_pct * (1.1 if is_confluence else 1.0)
+        take_profit_pct = self.config.take_profit_pct * (1.2 if is_confluence else 1.0)
         
         if signal['type'] == 'LONG':
-            stop_loss = entry_price * (1 - self.config.stop_loss_pct / 100)
-            take_profit = entry_price * (1 + self.config.take_profit_pct / 100)
+            stop_loss = entry_price * (1 - stop_loss_pct / 100)
+            take_profit = entry_price * (1 + take_profit_pct / 100)
         else:  # SHORT
-            stop_loss = entry_price * (1 + self.config.stop_loss_pct / 100)
-            take_profit = entry_price * (1 - self.config.take_profit_pct / 100)
+            stop_loss = entry_price * (1 + stop_loss_pct / 100)
+            take_profit = entry_price * (1 - take_profit_pct / 100)
         
         return stop_loss, take_profit
-    
+
     def get_recent_signals(self, limit: int = 10) -> List[Dict]:
-        """Get recent signals for display 📋"""
+        """📋 Get recent signals for display"""
         return self.signals_history[-limit:] if self.signals_history else []
-    
+
     def calculate_strategy_stats(self) -> Dict:
-        """Calculate strategy performance statistics 📊"""
+        """📊 Enhanced strategy statistics with confluence metrics"""
         
         if not self.signals_history:
             return {
                 'total_signals': 0,
+                'confluence_signals': 0,
+                'confluence_rate': 0,
                 'long_signals': 0,
                 'short_signals': 0,
                 'avg_confidence': 0,
                 'avg_volume_ratio': 0
             }
         
+        confluence_signals = [s for s in self.signals_history if s.get('is_confluence', False)]
         long_signals = [s for s in self.signals_history if s['type'] == 'LONG']
         short_signals = [s for s in self.signals_history if s['type'] == 'SHORT']
         
         avg_confidence = np.mean([s['confidence'] for s in self.signals_history])
         avg_volume_ratio = np.mean([s['volume_ratio'] for s in self.signals_history])
+        confluence_rate = len(confluence_signals) / len(self.signals_history) if self.signals_history else 0
         
         return {
             'total_signals': len(self.signals_history),
+            'confluence_signals': len(confluence_signals),
+            'confluence_rate': confluence_rate * 100,
             'long_signals': len(long_signals),
             'short_signals': len(short_signals),
             'avg_confidence': avg_confidence,

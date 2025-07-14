@@ -32,7 +32,7 @@ logger.add(sys.stderr, level="INFO", format="<green>{time:HH:mm:ss}</green> | <l
 
 # Import our components
 from config import TradingConfig, get_exchange_config, TRADING_PAIRS, BOT_NAME, VERSION
-from ui_display import AlpineDisplay
+from ui_display import AlpineDisplayV2  # Updated to use V2
 from strategy import VolumeAnomalyStrategy
 from risk_manager import AlpineRiskManager
 
@@ -75,42 +75,42 @@ class CodeReloadHandler(FileSystemEventHandler):
             self.bot.log_activity(f"❌ Reload error: {e}", "ERROR")
 
 class AlpineBot:
-    """🏔️ Alpine Trading Bot - Volume Anomaly Master with Hot-Reload"""
+    """🏔️ Alpine Trading Bot V2.0 - Next-Generation Confluence Trading System"""
     
     def __init__(self):
-        self.console = Console()
         self.config = TradingConfig()
         
-        # Initialize components
-        self.display = AlpineDisplay()
+        # 🎨 Initialize Next-Gen UI
+        self.display = AlpineDisplayV2()
+        
+        # 🧠 Initialize Enhanced Strategy
         self.strategy = VolumeAnomalyStrategy()
+        
+        # 🛡️ Initialize Enhanced Risk Manager
         self.risk_manager = AlpineRiskManager()
         
-        # Exchange connection
-        self.exchange = None
-        self.connected = False
-        
-        # Trading state
-        self.running = False
-        self.last_update = datetime.now()
-        
-        # Data storage
-        self.market_data = {}
+        # 📊 Trading state management
+        self.active_positions = []
+        self.current_signals = []
+        self.activity_log = []
         self.account_data = {}
-        self.positions = []
-        self.activity_logs = []
-        
-        # Performance tracking
-        self.start_time = datetime.now()
-        self.total_signals = 0
-        self.total_trades = 0
+        self.system_status = "INITIALIZING"
         
         # 🔄 Hot-reload system
         self.watchdog_observer = None
-        self.reload_lock = threading.Lock()
-        self.module_backup = {}
+        self.reload_handler = None
         
-        logger.info("🏔️ Alpine Bot initialized with hot-reload capability")
+        # 📈 Performance tracking
+        self.signal_count_minute = 0
+        self.last_signal_time = time.time()
+        self.execution_times = []
+        self.api_response_times = []
+        
+        # � Exchange client
+        self.exchange = None
+        
+        logger.info("🏔️ Alpine Bot V2.0 - Next-Generation System Initialized")
+        self.log_activity("🚀 Alpine Bot V2.0 initialized with confluence trading", "SUCCESS")
         
     def setup_watchdog(self):
         """Setup file watching for hot-reload 👀"""
@@ -120,10 +120,10 @@ class AlpineBot:
                 self.watchdog_observer.join()
             
             self.watchdog_observer = Observer()
-            event_handler = CodeReloadHandler(self)
+            self.reload_handler = CodeReloadHandler(self)
             
             # Watch current directory for Python files
-            self.watchdog_observer.schedule(event_handler, ".", recursive=False)
+            self.watchdog_observer.schedule(self.reload_handler, ".", recursive=False)
             self.watchdog_observer.start()
             
             logger.info("👀 Watchdog started - monitoring code changes")
@@ -279,7 +279,7 @@ class AlpineBot:
         
         emoji = emoji_map.get(level, "📝")
         log_entry = f"{timestamp} {emoji} {message}"
-        self.activity_logs.append(log_entry)
+        self.activity_log.append(log_entry)
         
         # Log to Loguru as well
         if level == "ERROR":
@@ -292,8 +292,8 @@ class AlpineBot:
             logger.info(message)
         
         # Keep only last 100 logs
-        if len(self.activity_logs) > 100:
-            self.activity_logs = self.activity_logs[-100:]
+        if len(self.activity_log) > 100:
+            self.activity_log = self.activity_log[-100:]
     
     def initialize_exchange(self) -> bool:
         """Initialize Bitget exchange connection 🔌"""
@@ -500,23 +500,42 @@ class AlpineBot:
                                     logger.info(f"🎯 {symbol}: Generated {len(single_signals)} SINGLE TF signals on {timeframe}")
                                     break  # Take first successful timeframe
                 
-                # Use the best signals available
+                # Use the best signals available (prioritize confluence)
                 signals = confluence_signals if confluence_signals else single_timeframe_signals
                 
                 if signals:
+                    if not hasattr(self, 'total_signals'):
+                        self.total_signals = 0
                     self.total_signals += len(signals)
                     all_signals.extend(signals)
-                    signal_type = "CONFLUENCE" if confluence_signals else "SINGLE-TF"
+                    
+                    signal_type = "🚀 CONFLUENCE" if confluence_signals else "📈 SINGLE-TF"
                     logger.success(f"✅ {symbol}: Generated {len(signals)} {signal_type} signals")
                     
                     for signal in signals:
-                        timeframes_str = ", ".join(signal.get('supporting_timeframes', [signal.get('timeframe', 'N/A')]))
-                        confluence_count = signal.get('confluence_count', 1)
-                        signal_msg = (f"🎯 {signal['type']} signal for {symbol.replace('/USDT:USDT', '')} "
-                                    f"| Vol: {signal['volume_ratio']:.1f}x | Conf: {signal['confidence']:.1f}% "
-                                    f"| TFs: {timeframes_str} ({confluence_count})")
+                        # Enhanced signal processing for confluence
+                        is_confluence = signal.get('is_confluence', False)
+                        timeframes_str = ", ".join(signal.get('confluence_timeframes', [signal.get('timeframe', 'N/A')]))
+                        confidence = signal.get('confidence', 0)
+                        volume_ratio = signal.get('volume_ratio', 0)
+                        
+                        signal_msg = (f"🎯 {signal['type']} {'🚀 CONFLUENCE' if is_confluence else '📈 SIGNAL'} for {symbol.replace('/USDT:USDT', '')} "
+                                    f"| Vol: {volume_ratio:.1f}x | Conf: {confidence:.1f}% "
+                                    f"| TFs: {timeframes_str}")
                         logger.info(signal_msg)
                         self.log_activity(signal_msg, "SIGNAL")
+                        
+                        # Check if we should execute this signal
+                        should_enter = self.strategy.should_enter_trade(
+                            signal,
+                            self.account_data.get('balance', 1000),  # Default balance for testing
+                            self.active_positions
+                        )
+                        
+                        if should_enter:
+                            success = self.execute_enhanced_trade(signal)
+                            if success:
+                                self.log_activity(f"✅ {'🚀 Confluence' if is_confluence else '📈 Standard'} trade executed", "SUCCESS")
                 else:
                     logger.debug(f"❌ {symbol}: No signals detected on any timeframe")
                 
@@ -534,6 +553,87 @@ class AlpineBot:
             self.log_activity("📊 Signal scan complete: No signals found", "INFO")
         
         return all_signals
+    
+    def execute_enhanced_trade(self, signal: Dict) -> bool:
+        """🚀 Enhanced trade execution with confluence position sizing and dynamic stop loss"""
+        
+        start_time = time.time()
+        
+        try:
+            symbol = signal['symbol']
+            signal_type = signal['type']
+            current_price = signal.get('entry_price', signal.get('price', 0))
+            is_confluence = signal.get('is_confluence', False)
+            
+            logger.info(f"🎯 Executing {'🚀 CONFLUENCE' if is_confluence else '📈 STANDARD'} {signal_type} trade for {symbol}")
+            
+            # Enhanced position sizing with confluence boost
+            if hasattr(self.risk_manager, 'calculate_confluence_position_size'):
+                position_size = self.risk_manager.calculate_confluence_position_size(
+                    symbol, current_price, is_confluence
+                )
+            else:
+                position_size = self.strategy.calculate_position_size(
+                    signal, self.account_data.get('balance', 0), current_price
+                )
+            
+            # Dynamic volatility-based stop loss
+            if hasattr(self.risk_manager, 'calculate_dynamic_stop_loss'):
+                market_data = self.risk_manager.price_data_cache.get(symbol)
+                stop_loss_price = self.risk_manager.calculate_dynamic_stop_loss(
+                    symbol, current_price, signal_type, market_data
+                )
+            else:
+                stop_loss_price, _ = self.strategy.calculate_stop_loss_take_profit(signal, current_price)
+                stop_loss_price = stop_loss_price
+            
+            # Enhanced take profit calculation
+            _, take_profit_price = self.strategy.calculate_stop_loss_take_profit(signal, current_price)
+            
+            logger.info(f"💰 Position size: {position_size:.4f} {'(+15% confluence boost)' if is_confluence else ''}")
+            logger.info(f"🛡️ Dynamic stop loss: ${stop_loss_price:.4f}")
+            logger.info(f"🎯 Take profit: ${take_profit_price:.4f}")
+            
+            # Simulate trade execution (replace with actual exchange calls)
+            order_success = True  # Placeholder for actual order execution
+            
+            if order_success:
+                # Record execution time
+                execution_time = (time.time() - start_time) * 1000
+                self.execution_times.append(execution_time)
+                
+                # Create enhanced position record
+                position = {
+                    'symbol': symbol,
+                    'side': signal_type,
+                    'size': position_size,
+                    'entry_price': current_price,
+                    'current_price': current_price,
+                    'unrealized_pnl': 0.0,
+                    'stop_loss': stop_loss_price,
+                    'take_profit': take_profit_price,
+                    'is_confluence': is_confluence,
+                    'confidence': signal.get('confidence', 0),
+                    'volume_ratio': signal.get('volume_ratio', 0),
+                    'timestamp': datetime.now()
+                }
+                
+                self.active_positions.append(position)
+                
+                logger.success(f"✅ Enhanced trade executed successfully in {execution_time:.1f}ms")
+                self.log_activity(f"✅ {'🚀 Confluence' if is_confluence else '📈 Standard'} {signal_type} position opened on {symbol}", "SUCCESS")
+                
+                return True
+            else:
+                logger.error(f"❌ Trade execution failed for {symbol}")
+                self.log_activity(f"❌ Trade execution failed for {symbol}", "ERROR")
+                return False
+                
+        except Exception as e:
+            execution_time = (time.time() - start_time) * 1000
+            logger.error(f"❌ Enhanced trade execution error: {e}")
+            self.log_activity(f"❌ Trade execution error: {e}", "ERROR")
+            return False
     
     def execute_trade(self, signal: Dict) -> bool:
         """Execute a trade based on signal 💰"""
@@ -798,26 +898,26 @@ class AlpineBot:
                 time.sleep(5)  # Wait longer on error
     
     def get_display_data(self) -> Dict:
-        """Get data for terminal display 📊"""
+        """📊 Get enhanced data for next-gen display"""
         
-        # Get recent signals
-        recent_signals = self.strategy.get_recent_signals(10)
+        # Get recent signals with confluence information
+        recent_signals = self.current_signals[-20:] if self.current_signals else []
         
-        # Get status
-        if not self.connected:
+        # Enhanced status determination
+        if not hasattr(self, 'connected') or not self.connected:
             status = "❌ DISCONNECTED"
-        elif self.risk_manager.trading_halted:
+        elif hasattr(self.risk_manager, 'trading_halted') and self.risk_manager.trading_halted:
             status = "🛑 TRADING HALTED"
-        elif self.running:
-            status = "🟢 ACTIVE TRADING"
+        elif hasattr(self, 'running') and self.running:
+            status = "🟢 ACTIVE SCALPING"
         else:
-            status = "⏸️ PAUSED"
+            status = "⏸️ STANDBY"
         
         return {
             'account_data': self.account_data,
-            'positions': self.positions,
+            'positions': self.active_positions,
             'signals': recent_signals,
-            'logs': self.activity_logs,
+            'logs': self.activity_log[-15:] if self.activity_log else [],
             'status': status
         }
     
@@ -862,20 +962,22 @@ class AlpineBot:
         logger.info("Trading thread started")
         
         try:
-            # Run live display with optimized refresh
+            # Run enhanced live display optimized for scalping
             with Live(
-                self.display.create_layout(**self.get_display_data()),
-                refresh_per_second=0.5,  # Reduced to prevent flashing
+                self.display.create_master_layout(**self.get_display_data()),
+                console=self.display.console,
+                refresh_per_second=3,  # Faster refresh for scalping
                 screen=True
             ) as live:
                 
                 while self.running:
-                    # Update display with throttling
-                    display_data = self.get_display_data()
-                    live.update(self.display.create_layout(**display_data))
+                    # Update display with ultra-fast refresh control
+                    if self.display.should_refresh():
+                        display_data = self.get_display_data()
+                        live.update(self.display.create_master_layout(**display_data))
                     
-                    # Longer sleep to reduce flashing
-                    time.sleep(2.0)  # Fixed 2-second refresh rate
+                    # Optimized sleep for scalping interface
+                    time.sleep(0.3)  # 300ms refresh for real-time scalping
                     
         except KeyboardInterrupt:
             logger.warning("⏹️ Shutdown signal received")

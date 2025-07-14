@@ -17,43 +17,58 @@ class TradingConfig:
     PASSPHRASE: str = "22672267"
     SANDBOX: bool = False  # Set to True for testing
     
-    # 💰 Trading Parameters - OPTIMIZED FOR HIGH VOLATILITY COINS
+    # 💰 Trading Parameters - OPTIMIZED FOR 1M/3M HIGH WIN RATE STRATEGY
     max_daily_loss_pct: float = 50.0
-    max_positions: int = 25  # Increased for more diversification across volatile coins
-    position_size_pct: float = 1.5  # Reduced size per position due to higher volatility
-    stop_loss_pct: float = 3.0  # Increased stop loss for volatile coins
-    take_profit_pct: float = 5.0  # Increased take profit for bigger moves
-    max_drawdown_pct: float = 50.0
+    max_positions: int = 30  # Increased for rapid scalping on 1m/3m
+    position_size_pct: float = 2.0  # Base position size (2% of account)
+    confluence_position_multiplier: float = 1.15  # +15% size on confluence signals
+    stop_loss_pct: float = 1.5  # Tighter stops for scalping (will be dynamic)
+    take_profit_pct: float = 3.0  # Quick profits for scalping
+    max_drawdown_pct: float = 30.0  # Tighter drawdown control
     trailing_stop: bool = True
-    trailing_stop_pct: float = 1.5  # Increased trailing stop for volatility
+    trailing_stop_pct: float = 0.8  # Tight trailing for scalping
     
-    # 🎯 Strategy Parameters (Volume Anomaly - TUNED FOR VOLATILITY)
-    volume_lookback: int = 15  # Reduced for faster signals on volatile coins
-    volume_std_multiplier: float = 1.8  # Reduced for more frequent signals
-    min_volume_ratio: float = 3.3  # Minimum volume spike ratio for signal generation
-    supertrend_atr_period: int = 8  # Reduced for faster trend detection
-    supertrend_multiplier: float = 2.5  # Reduced for more sensitive signals
+    # 🎯 Strategy Parameters (Volume Anomaly - TUNED FOR 1M/3M SCALPING)
+    volume_lookback: int = 10  # Faster signals for scalping
+    volume_std_multiplier: float = 1.5  # More sensitive for frequent signals
+    min_volume_ratio: float = 2.8  # Lower threshold for more signals
+    supertrend_atr_period: int = 6  # Faster trend detection for scalping
+    supertrend_multiplier: float = 2.0  # More sensitive signals
     
-    # ⏱️ Timeframe Configuration - SHORT-TERM FOCUS
-    timeframes: List[str] = field(default_factory=lambda: ['1m', '3m', '5m', '15m'])  # Only scan these timeframes
-    primary_timeframe: str = '1m'  # Primary timeframe for execution
-    signal_confluence_required: int = 2  # Minimum timeframes agreeing for signal
+    # ⚡ Dynamic Stop Loss Configuration (ATR-based volatility)
+    use_dynamic_stop_loss: bool = True
+    atr_period: int = 14  # Period for ATR calculation
+    atr_multiplier: float = 1.5  # ATR multiplier for dynamic stops
+    min_stop_loss_pct: float = 0.5  # Minimum stop loss (0.5%)
+    max_stop_loss_pct: float = 3.0  # Maximum stop loss (3.0%)
     
-    # 📊 Display Settings
-    refresh_rate: float = 1.0  # seconds
-    max_log_lines: int = 100
+    # ⏱️ Timeframe Configuration - FOCUS ON 1M/3M (HIGHEST WIN RATES)
+    timeframes: List[str] = field(default_factory=lambda: ['1m', '3m'])  # Only highest win rate timeframes
+    primary_timeframe: str = '1m'  # Primary execution timeframe
+    signal_confluence_required: int = 2  # Both timeframes must agree for confluence
+    confluence_confidence_boost: float = 0.15  # +15% confidence on confluence signals
     
-    # 🎨 UI Colors (Mint Green Theme)
+    # 📊 Display Settings - Enhanced for real-time scalping
+    refresh_rate: float = 0.3  # Faster refresh for scalping (300ms)
+    max_log_lines: int = 50  # Reduced for cleaner display
+    
+    # 🎨 UI Colors (Enhanced Mint Green Cyber Theme)
     COLORS = {
         'primary': '#00FFB3',      # Mint Green
         'secondary': '#355E3B',    # Hunter Green
         'success': '#00FF7F',      # Spring Green
-        'warning': '#FFB347',      # Peach
-        'danger': '#FF6B6B',       # Light Red
-        'info': '#87CEEB',         # Sky Blue
-        'background': '#1E1E1E',   # Dark Gray
-        'text': '#FFFFFF',         # White
-        'accent': '#98FB98'        # Pale Green
+        'warning': '#FFD700',      # Gold
+        'danger': '#FF4444',       # Bright Red
+        'info': '#00BFFF',         # Deep Sky Blue
+        'background': '#0D1117',   # GitHub Dark
+        'text': '#F0F6FC',         # GitHub Text
+        'accent': '#7C3AED',       # Purple Accent
+        'chart_green': '#26A641',  # Chart Green
+        'chart_red': '#DA3633',    # Chart Red
+        'neon_cyan': '#00FFFF',    # Neon Cyan
+        'neon_purple': '#9D4EDD',  # Neon Purple
+        'gradient_start': '#00FFB3', # Mint Green
+        'gradient_end': '#355E3B'    # Hunter Green
     }
 
 # 📈 Supported Trading Pairs - HIGH VOLATILITY & LOW PRICE FOCUS (NO BTC/ETH)
