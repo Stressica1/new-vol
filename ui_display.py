@@ -1,562 +1,259 @@
+#!/usr/bin/env python3
 """
-🏔️ Alpine Trading Bot - Ultra-Modern Terminal UI
-Revolutionary design with gradients, animations, real-time analytics, and professional trading interface
+🏔️ Alpine UI Display - Beautiful Trading Interface
 """
 
 import time
-import math
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
+from datetime import datetime
+from typing import Dict, List, Optional
 from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
 from rich.layout import Layout
-from rich.live import Live
+from rich.panel import Panel
 from rich.text import Text
-from rich.progress import Progress, BarColumn, TextColumn, SpinnerColumn, TimeElapsedColumn
+from rich.table import Table
+from rich.progress import Progress, BarColumn, TextColumn
 from rich.align import Align
-from rich.columns import Columns
 from rich import box
-from rich.padding import Padding
-from rich.bar import Bar
-from rich.style import Style
-from rich.spinner import Spinner
-from rich.tree import Tree
-from rich.rule import Rule
-from rich.markdown import Markdown
-from rich.syntax import Syntax
-from config import TradingConfig, BOT_NAME, VERSION
-import numpy as np
 
 class AlpineDisplayV2:
-    """🏔️ Ultra-Modern Alpine Trading Interface - Revolutionary Design with Next-Generation Features"""
+    """Beautiful Alpine Trading Bot Display"""
     
     def __init__(self):
-        # Ensure console dimensions are properly constrained - smaller for stability
-        self.console = Console(width=120, height=40, force_terminal=True, legacy_windows=False)
-        self.config = TradingConfig()
-        self.start_time = datetime.now()
+        self.console = Console(width=140, height=50, force_terminal=True)
+        self.name = "Alpine Display"
+        self.version = "2.0"
         
-        # UI layout constraints to ensure content stays in boxes - more conservative
-        self.max_table_width = 110  # Smaller width to prevent overflow
-        self.max_content_height = 35  # Reduced height for stability
-        
-        # 📊 Enhanced Trading Statistics
-        self.total_trades = 0
-        self.winning_trades = 0
-        self.losing_trades = 0
-        self.total_pnl = 0.0
-        self.daily_pnl = 0.0
-        self.max_drawdown = 0.0
-        self.best_trade = 0.0
-        self.worst_trade = 0.0
-        self.current_streak = 0
-        self.max_streak = 0
-        
-        # 🌈 Revolutionary color palette with gradients
-        self.neon_cyan = "#00FFFF"
-        self.electric_blue = "#0080FF"
-        self.matrix_green = "#39FF14"
-        self.cyber_lime = "#32CD32"
-        self.neon_purple = "#9D00FF"
-        self.hot_pink = "#FF1493"
-        self.gold_accent = "#FFD700"
-        self.silver_accent = "#C0C0C0"
-        self.deep_space = "#0B0C10"
-        self.dark_slate = "#1F2937"
-        self.midnight_blue = "#1E3A8A"
-        
-        # 🎨 Gradient styles
-        self.primary_gradient = "bright_cyan to bright_blue"
-        self.success_gradient = "bright_green to green"
-        self.danger_gradient = "bright_red to red"
-        self.accent_gradient = "bright_magenta to magenta"
-        self.gold_gradient = "yellow to bright_yellow"
-        
-        # ✨ Animation states
-        self.animation_frame = 0
-        self.pulse_state = 0
-        self.last_refresh = time.time()
-        self.refresh_throttle = self.config.display_update_throttle  # Use config throttle
-        
-        # 📱 Advanced display features
-        self.sparkline_data = {}
-        self.trend_arrows = {"up": "▲", "down": "▼", "flat": "◆"}
-        self.status_dots = {"active": "●", "idle": "○", "error": "⚠"}
-        
-        # 🎯 Display optimization
-        self.layout_cache = None
-        self.last_layout_data = None
-        self.data_hash = None
-        
-    def get_animated_spinner(self) -> str:
-        """Create animated spinner effect ✨"""
-        spinners = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-        return spinners[self.animation_frame % len(spinners)]
+        # Display colors
+        self.colors = {
+            'primary': '#00FFB3',      # Mint green
+            'secondary': '#228B22',    # Forest green
+            'success': '#32CD32',      # Lime green
+            'warning': '#FFD700',      # Gold
+            'error': '#FF4500',        # Red-orange
+            'info': '#87CEEB',         # Sky blue
+            'neutral': '#D3D3D3'       # Light gray
+        }
     
-    def get_pulse_effect(self, text: str, style: str) -> Text:
-        """Create pulsing text effect 💫"""
-        pulse_intensity = abs(math.sin(self.pulse_state))
-        if pulse_intensity > 0.7:
-            return Text(text, style=f"bold {style}")
-        else:
-            return Text(text, style=style)
-    
-    def create_glowing_border(self, content, title: str, color: str = "cyan") -> Panel:
-        """Create glowing border effect 🌟"""
-        return Panel(
-            content,
-            title=f"✨ {title} ✨",
-            title_align="center",
-            border_style=f"bold {color}",
-            box=box.DOUBLE_EDGE,
-            padding=(1, 2),
-            width=self.max_table_width  # Constrain width to prevent overflow
-        )
-    
-    def create_ultra_modern_header(self) -> Panel:
-        """Create revolutionary header with gradients and animations 🌈"""
-        
-        # Animated title with gradient effect
-        title_text = Text()
-        title_text.append("🏔️ ", style="bold white")
-        title_text.append("A", style=f"bold {self.neon_cyan}")
-        title_text.append("L", style=f"bold {self.electric_blue}")
-        title_text.append("P", style=f"bold {self.matrix_green}")
-        title_text.append("I", style=f"bold {self.cyber_lime}")
-        title_text.append("N", style=f"bold {self.neon_purple}")
-        title_text.append("E", style=f"bold {self.hot_pink}")
-        title_text.append(" TRADING BOT ", style="bold white")
-        title_text.append(self.get_animated_spinner(), style=f"bold {self.gold_accent}")
-        
-        # Subtitle with live updates
-        current_time = datetime.now().strftime("%H:%M:%S")
-        subtitle = Text()
-        subtitle.append("🚀 VOLUME ANOMALY STRATEGY ", style=f"bold {self.matrix_green}")
-        subtitle.append("| ", style="white")
-        subtitle.append("90% SUCCESS RATE ", style=f"bold {self.gold_accent}")
-        subtitle.append("| ", style="white")
-        subtitle.append(f"v{VERSION} ", style=f"bold {self.silver_accent}")
-        subtitle.append("| ", style="white")
-        subtitle.append(f"⏰ {current_time}", style=f"bold {self.neon_cyan}")
-        
-        # Status indicator line
-        status_line = Text()
-        status_line.append("● ", style=f"bold {self.matrix_green}")
-        status_line.append("SYSTEM ACTIVE ", style=f"bold {self.matrix_green}")
-        status_line.append("● ", style=f"bold {self.gold_accent}")
-        status_line.append("AI POWERED ", style=f"bold {self.gold_accent}")
-        status_line.append("● ", style=f"bold {self.hot_pink}")
-        status_line.append("REAL-TIME TRADING", style=f"bold {self.hot_pink}")
-        
-        header_content = Align.center(
-            Text.assemble(title_text, "\n", subtitle, "\n", status_line)
-        )
+    def create_header_panel(self, status: str = "RUNNING") -> Panel:
+        """Create header panel"""
+        header_text = Text()
+        header_text.append("🏔️ ", style="bold white")
+        header_text.append("ALPINE TRADING BOT", style=f"bold {self.colors['primary']}")
+        header_text.append(" V2.0 ", style="bold white")
+        header_text.append(f"[{status}]", style=f"bold {self.colors['success']}")
         
         return Panel(
-            header_content,
-            style=f"bold {self.midnight_blue}",
-            box=box.DOUBLE_EDGE,
-            border_style=f"bold {self.neon_cyan}",
-            width=self.max_table_width
+            Align.center(header_text),
+            style=self.colors['primary'],
+            border_style=self.colors['secondary']
         )
     
-    def _create_startup_banner(self) -> Panel:
-        """🎆 Epic startup banner with ASCII art"""
-        banner_text = f"""
-[bold cyan]╔═══════════════════════════════════════════════════════════════════════════════════════════════╗[/]
-                [bold cyan]║[/]                          [bold bright_cyan]🏔️  ALPINE TRADING BOT V2.0  🏔️[/]                            [bold cyan]║[/]
-[bold cyan]║[/]                      [italic]Next-Generation AI-Powered Trading Interface[/]                       [bold cyan]║[/]
-[bold cyan]╚═══════════════════════════════════════════════════════════════════════════════════════════════╝[/]
-
-[bold green]🚀 INITIALIZED FEATURES:[/]
-├─ [cyan]⚡ 1m/3m Confluence Signal Detection[/]
-├─ [cyan]🎯 Dynamic ATR-Based Stop Loss[/]
-├─ [cyan]📈 +15% Position Size Boost on Confluence[/]
-├─ [cyan]🔥 Real-time Volume Anomaly Analysis[/]
-├─ [cyan]💎 Enhanced Risk Management[/]
-└─ [cyan]🌈 Ultra-Modern UI Design[/]
-
-[bold yellow]⚡ SYSTEM STATUS: [bold green]OPERATIONAL[/][/]
-"""
-        return Panel(
-            Padding(banner_text, (1, 2)),
-            style=f"bold {self.midnight_blue}",
-            box=box.DOUBLE_EDGE,
-            title="🌟 ALPINE FINANCIAL INTELLIGENCE 🌟",
-            title_align="center",
-            border_style=f"bold {self.neon_cyan}",
-            width=self.max_table_width
-        )
-    
-    def create_premium_account_panel(self, balance: float, equity: float, margin: float, free_margin: float) -> Panel:
-        """Create simplified account panel 💎"""
+    def create_account_panel(self, account_data: Dict) -> Panel:
+        """Create account information panel"""
+        table = Table(show_header=False, box=box.SIMPLE, expand=True)
+        table.add_column("Label", style="bold")
+        table.add_column("Value", justify="right")
         
-        # Simplified account info
-        account_info = Text()
-        account_info.append("💎 BALANCE: ", style="bold cyan")
-        account_info.append(f"${balance:,.2f}\n", style="bold green")
+        balance = account_data.get('balance', 0.0)
+        equity = account_data.get('equity', 0.0)
+        free_margin = account_data.get('free_margin', 0.0)
         
-        account_info.append("⚡ EQUITY: ", style="bold cyan") 
-        account_info.append(f"${equity:,.2f}\n", style="bold blue")
-        
-        account_info.append("🔒 MARGIN: ", style="bold cyan")
-        account_info.append(f"${margin:,.2f}\n", style="bold yellow")
-        
-        account_info.append("💰 FREE: ", style="bold cyan")
-        account_info.append(f"${free_margin:,.2f}", style="bold green")
+        table.add_row("💰 Balance:", f"${balance:,.2f}")
+        table.add_row("📊 Equity:", f"${equity:,.2f}")
+        table.add_row("🆓 Free Margin:", f"${free_margin:,.2f}")
         
         return Panel(
-            account_info,
-            title="💎 ACCOUNT STATUS 💎",
-            border_style="cyan",
-            width=self.max_table_width
+            table,
+            title="💼 Account Info",
+            border_style=self.colors['info']
         )
     
-    def create_performance_dashboard(self) -> Panel:
-        """Create simplified performance dashboard 📈"""
-        
-        # Simple performance info
-        perf_info = Text()
-        
-        win_rate = (self.winning_trades / self.total_trades * 100) if self.total_trades > 0 else 0
-        
-        perf_info.append("🎯 TRADES: ", style="bold cyan")
-        perf_info.append(f"{self.total_trades}\n", style="bold white")
-        
-        perf_info.append("🏆 WIN RATE: ", style="bold cyan")
-        perf_info.append(f"{win_rate:.1f}%\n", style="bold green" if win_rate >= 60 else "bold yellow")
-        
-        perf_info.append("💰 TOTAL P&L: ", style="bold cyan")
-        perf_info.append(f"${self.total_pnl:,.2f}\n", style="bold green" if self.total_pnl >= 0 else "bold red")
-        
-        perf_info.append("📊 DAILY P&L: ", style="bold cyan")
-        perf_info.append(f"${self.daily_pnl:,.2f}", style="bold green" if self.daily_pnl >= 0 else "bold red")
-        
-        return Panel(
-            perf_info,
-            title="📈 PERFORMANCE 📈",
-            border_style="green",
-            width=self.max_table_width
-        )
-    
-    def create_elite_positions_panel(self, positions: List[Dict]) -> Panel:
-        """Create elite positions panel with advanced styling 🚀"""
-        
+    def create_positions_panel(self, positions: List[Dict]) -> Panel:
+        """Create positions panel"""
         if not positions:
-            empty_content = Align.center(
-                Text.assemble(
-                    Text("🌟 READY FOR ACTION 🌟\n", style=f"bold {self.gold_accent}"),
-                    Text("No active positions\n", style=f"italic {self.silver_accent}"),
-                    Text("⚡ Scanning for opportunities...", style=f"bold {self.neon_cyan}")
-                )
-            )
-            return self.create_glowing_border(
-                Padding(empty_content, (3, 2)),
-                f"ACTIVE POSITIONS (0)",
-                self.neon_purple
+            return Panel(
+                Align.center("No open positions"),
+                title="📈 Positions (0)",
+                border_style=self.colors['neutral']
             )
         
-        pos_table = Table(box=None, padding=(0, 1), width=self.max_table_width - 10)
-        pos_table.add_column("🎯", style="bold", width=4, no_wrap=True)
-        pos_table.add_column("SYMBOL", style="bold white", width=10, no_wrap=True)
-        pos_table.add_column("SIDE", style="bold", width=6, no_wrap=True)
-        pos_table.add_column("SIZE", style="white", width=10, no_wrap=True)
-        pos_table.add_column("ENTRY", style="white", width=10, no_wrap=True)
-        pos_table.add_column("CURRENT", style="white", width=10, no_wrap=True)
-        pos_table.add_column("P&L", style="bold", width=14, no_wrap=True)
-        pos_table.add_column("📊", style="bold", width=4, no_wrap=True)
+        table = Table(show_header=True, box=box.SIMPLE, expand=True)
+        table.add_column("Symbol", style="bold")
+        table.add_column("Type", justify="center")
+        table.add_column("Size", justify="right")
+        table.add_column("P&L", justify="right")
         
-        for i, pos in enumerate(positions[:8]):  # Show max 8 positions with elite styling
-            symbol = pos.get('symbol', 'N/A').replace('/USDT:USDT', '')
-            side = pos.get('side', 'N/A').upper()
-            size = pos.get('contracts', 0)
-            entry_price = pos.get('entryPrice', 0)
-            mark_price = pos.get('markPrice', 0)
-            unrealized_pnl = pos.get('unrealizedPnl', 0)
+        for pos in positions[:5]:  # Show first 5 positions
+            symbol = pos.get('symbol', 'N/A')
+            side = pos.get('side', 'N/A')
+            size = pos.get('size', 0.0)
+            pnl = pos.get('pnl', 0.0)
             
-            # Enhanced styling
-            position_emoji = "🚀" if side == 'LONG' else "🎯"
-            side_color = self.matrix_green if side == 'LONG' else self.hot_pink
-            side_style = f"[{side_color}]● {side}[/]"
+            pnl_color = self.colors['success'] if pnl >= 0 else self.colors['error']
             
-            # P&L with dramatic effects
-            pnl_color = self.matrix_green if unrealized_pnl >= 0 else self.danger_gradient
-            pnl_emoji = "💎" if unrealized_pnl > 100 else "💰" if unrealized_pnl > 0 else "⚡" if unrealized_pnl > -50 else "🔥"
-            
-            # Performance indicator
-            pnl_percent = ((mark_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
-            if side == 'SHORT':
-                pnl_percent = -pnl_percent
-                
-            status_emoji = "🏆" if pnl_percent > 5 else "📈" if pnl_percent > 0 else "📊" if pnl_percent > -5 else "⚠️"
-            
-            pos_table.add_row(
-                position_emoji,
-                f"[bold {self.neon_cyan}]{symbol}[/]",
-                side_style,
-                f"{size:.4f}",
-                f"${entry_price:.4f}",
-                f"[bold]{mark_price:.4f}[/]",
-                f"[{pnl_color}]{pnl_emoji} ${unrealized_pnl:.2f}[/]",
-                status_emoji
+            table.add_row(
+                symbol,
+                side,
+                f"{size:,.2f}",
+                f"[{pnl_color}]${pnl:,.2f}[/]"
             )
         
-        return self.create_glowing_border(
-            Padding(pos_table, (1, 1)),
-            f"ACTIVE POSITIONS ({len(positions)})",
-            self.hot_pink
+        return Panel(
+            table,
+            title=f"📈 Positions ({len(positions)})",
+            border_style=self.colors['primary']
         )
     
-    def create_neural_signals_panel(self, signals: List[Dict]) -> Panel:
-        """Create neural-style signals panel with AI aesthetics 🧠"""
-        
+    def create_signals_panel(self, signals: List[Dict]) -> Panel:
+        """Create signals panel"""
         if not signals:
-            empty_content = Align.center(
-                Text.assemble(
-                    Text("🧠 AI NEURAL NETWORK 🧠\n", style=f"bold {self.neon_purple}"),
-                    Text("Scanning market patterns...\n", style=f"italic {self.silver_accent}"),
-                    Text(f"{self.get_animated_spinner()} Processing data streams", style=f"bold {self.electric_blue}")
-                )
-            )
-            return self.create_glowing_border(
-                Padding(empty_content, (3, 2)),
-                "NEURAL SIGNALS (0)",
-                self.neon_purple
+            return Panel(
+                Align.center("Scanning for signals..."),
+                title="🎯 Signals",
+                border_style=self.colors['warning']
             )
         
-        sig_table = Table(box=None, padding=(0, 1), width=self.max_table_width - 10)
-        sig_table.add_column("🕐", style="white", width=8, no_wrap=True)
-        sig_table.add_column("🎯", style="bold white", width=8, no_wrap=True)
-        sig_table.add_column("SIGNAL", style="bold", width=10, no_wrap=True)
-        sig_table.add_column("VOLUME", style="white", width=8, no_wrap=True)
-        sig_table.add_column("PRICE", style="white", width=10, no_wrap=True)
-        sig_table.add_column("STRENGTH", style="bold", width=10, no_wrap=True)
-        sig_table.add_column("STATUS", style="bold", width=10, no_wrap=True)
-        sig_table.add_column("🚀", style="bold", width=4, no_wrap=True)
+        table = Table(show_header=True, box=box.SIMPLE, expand=True)
+        table.add_column("Symbol", style="bold")
+        table.add_column("Type", justify="center")
+        table.add_column("Confidence", justify="center")
+        table.add_column("Price", justify="right")
         
-        for signal in signals[:6]:  # Show max 6 signals with neural styling
-            # Signal type with neural aesthetics
-            signal_type = signal.get('type', 'UNKNOWN')
-            signal_emoji = "⬆️" if signal_type == 'LONG' else "⬇️"
-            signal_color = self.matrix_green if signal_type == 'LONG' else self.hot_pink
+        for signal in signals[:5]:  # Show first 5 signals
+            symbol = signal.get('symbol', 'N/A')
+            signal_type = signal.get('signal', 'N/A')
+            confidence = signal.get('confidence', 0)
+            price = signal.get('price', 0.0)
             
-            # Volume analysis
-            volume_ratio = signal.get('volume_ratio', 0)
-            volume_emoji = "🔥" if volume_ratio > 5.0 else "⚡" if volume_ratio > 3.0 else "💧"
-            volume_color = self.danger_gradient if volume_ratio > 5.0 else self.gold_accent if volume_ratio > 2.0 else self.neon_cyan
-            
-            # Signal strength calculation
-            confluence_count = signal.get('confluence_count', 1)
-            tf_str = signal.get('timeframe', 'N/A')
-            strength = min(100, confluence_count * volume_ratio * 20)
-            strength_color = self.matrix_green if strength > 80 else self.gold_accent if strength > 60 else self.neon_cyan
-            
-            # Neural network confidence
-            confidence_emoji = "🧠" if strength > 90 else "🎯" if strength > 70 else "📊"
-            
-            # Time formatting
-            try:
-                if 'time' in signal and signal['time'] is not None:
-                    time_str = signal['time'].strftime("%H:%M:%S")
-                elif 'timestamp' in signal and signal['timestamp'] is not None:
-                    time_str = datetime.fromtimestamp(signal['timestamp']).strftime("%H:%M:%S")
-                else:
-                    time_str = "N/A"
-            except (KeyError, ValueError, OSError, TypeError):
-                time_str = "N/A"
-            
-            sig_table.add_row(
-                time_str,
-                f"[bold {self.neon_cyan}]{signal['symbol'].replace('/USDT:USDT', '')}[/]",
-                f"[{signal_color}]{signal_emoji} {signal['type']}[/]",
-                f"[{volume_color}]{volume_emoji} {volume_ratio:.1f}x[/]",
-                f"${signal['price']:.4f}",
-                f"[{strength_color}]{strength:.0f}%[/]",
-                f"[bold]{signal.get('action', 'SCANNING')}[/]",
-                confidence_emoji
-            )
-        
-        return self.create_glowing_border(
-            Padding(sig_table, (1, 1)),
-            f"NEURAL SIGNALS ({len(signals)})",
-            self.neon_purple
-        )
-    
-    def create_cyber_log_panel(self, logs: List[str]) -> Panel:
-        """Create cyber-style activity log with matrix aesthetics 🖥️"""
-        
-        if not logs:
-            empty_content = Align.center(
-                Text.assemble(
-                    Text("🖥️ SYSTEM MONITOR 🖥️\n", style=f"bold {self.matrix_green}"),
-                    Text("All systems operational\n", style=f"italic {self.silver_accent}"),
-                    Text("⚡ Awaiting events...", style=f"bold {self.neon_cyan}")
-                )
-            )
-            return self.create_glowing_border(
-                Padding(empty_content, (2, 2)),
-                "ACTIVITY LOG",
-                self.matrix_green
-            )
-        
-        log_content = Text()
-        for log in logs[-5:]:  # Show only last 5 logs to prevent overflow
-            if "❌" in log:
-                log_content.append(f"🔥 {log}\n", style="bold red")
-            elif "✅" in log:
-                log_content.append(f"✨ {log}\n", style="bold green")
-            elif "⚠️" in log:
-                log_content.append(f"⚡ {log}\n", style="bold yellow")
+            # Color based on signal type
+            if signal_type == 'BUY':
+                type_color = self.colors['success']
+            elif signal_type == 'SELL':
+                type_color = self.colors['error']
             else:
-                log_content.append(f"💫 {log}\n", style="cyan")
+                type_color = self.colors['neutral']
+            
+            # Color based on confidence
+            if confidence >= 80:
+                conf_color = self.colors['success']
+            elif confidence >= 60:
+                conf_color = self.colors['warning']
+            else:
+                conf_color = self.colors['error']
+            
+            table.add_row(
+                symbol,
+                f"[{type_color}]{signal_type}[/]",
+                f"[{conf_color}]{confidence:.1f}%[/]",
+                f"${price:,.4f}"
+            )
         
         return Panel(
-            log_content,
-            title="📝 SYSTEM LOG 📝",
-            border_style="blue",
-            width=self.max_table_width
+            table,
+            title=f"🎯 Signals ({len(signals)})",
+            border_style=self.colors['primary']
         )
     
-    def create_error_panel(self, errors: List[str]) -> Panel:
-        """Create error panel for system errors and exceptions 🚨"""
+    def create_activity_panel(self, activity_log: List[Dict]) -> Panel:
+        """Create activity log panel"""
+        if not activity_log:
+            return Panel(
+                Align.center("No recent activity"),
+                title="📝 Activity Log",
+                border_style=self.colors['neutral']
+            )
         
-        if not errors:
-            error_content = Text("✅ No system errors detected", style="bold green")
-        else:
-            error_content = Text()
-            for error in errors[-3:]:  # Show last 3 errors only
-                if "ccxt" in error.lower() or "exchange" in error.lower():
-                    error_content.append(f"🔗 API: {error[:80]}...\n", style="bold yellow")
-                elif "market symbol" in error.lower():
-                    error_content.append(f"📊 Market: {error[:80]}...\n", style="bold orange")
-                elif "error" in error.lower():
-                    error_content.append(f"⚠️ System: {error[:80]}...\n", style="bold red")
-                else:
-                    error_content.append(f"🐛 Debug: {error[:80]}...\n", style="dim white")
+        text = Text()
+        
+        for entry in activity_log[-8:]:  # Show last 8 entries
+            timestamp = entry.get('timestamp', datetime.now())
+            message = entry.get('message', '')
+            level = entry.get('level', 'INFO')
+            
+            # Format timestamp
+            time_str = timestamp.strftime("%H:%M:%S")
+            
+            # Color based on level
+            if level == 'ERROR':
+                color = self.colors['error']
+            elif level == 'WARNING':
+                color = self.colors['warning']
+            elif level == 'SUCCESS':
+                color = self.colors['success']
+            else:
+                color = self.colors['info']
+            
+            text.append(f"[{time_str}] ", style="dim")
+            text.append(f"{message}\n", style=color)
         
         return Panel(
-            error_content,
-            title="🚨 ERROR MONITOR 🚨",
-            border_style="red",
-            width=self.max_table_width
+            text,
+            title="📝 Activity Log",
+            border_style=self.colors['info']
         )
     
-    def create_quantum_status_bar(self, status: str, last_update: datetime) -> Panel:
-        """Create quantum-style status bar with advanced effects ⚡"""
-        
-        # Calculate uptime with precision
-        uptime = datetime.now() - self.start_time
-        uptime_str = f"{int(uptime.total_seconds() // 3600):02d}:{int((uptime.total_seconds() % 3600) // 60):02d}:{int(uptime.total_seconds() % 60):02d}"
-        
-        # Advanced status styling
-        if "ACTIVE" in status:
-            status_color = self.matrix_green
-            status_emoji = "🟢"
-            pulse_text = self.get_pulse_effect(status, status_color)
-        elif "HALTED" in status:
-            status_color = self.danger_gradient
-            status_emoji = "🔴"
-            pulse_text = Text(status, style=f"bold {status_color}")
-        elif "DISCONNECTED" in status:
-            status_color = self.danger_gradient
-            status_emoji = "⚠️"
-            pulse_text = Text(status, style=f"bold {status_color}")
-        else:
-            status_color = self.gold_accent
-            status_emoji = "🟡"
-            pulse_text = Text(status, style=f"bold {status_color}")
-        
-        # Create quantum status display
-        status_text = Text()
-        status_text.append(f"{status_emoji} STATUS: ", style="bold white")
-        status_text.append(pulse_text)
-        status_text.append(" | ", style=f"bold {self.silver_accent}")
-        status_text.append("⏰ UPTIME: ", style="bold white")
-        status_text.append(uptime_str, style=f"bold {self.neon_cyan}")
-        status_text.append(" | ", style=f"bold {self.silver_accent}")
-        status_text.append("🔄 LAST UPDATE: ", style="bold white")
-        status_text.append(last_update.strftime("%H:%M:%S.%f")[:-3], style=f"bold {self.matrix_green}")
-        status_text.append(" | ", style=f"bold {self.silver_accent}")
-        status_text.append(f"{self.get_animated_spinner()} ", style=f"bold {self.hot_pink}")
-        status_text.append("QUANTUM CORE ACTIVE", style=f"bold {self.neon_purple}")
-        
-        return Panel(
-            Padding(Align.center(status_text), (0, 1)),
-            style=f"bold {self.midnight_blue}",
-            box=box.ROUNDED,
-            border_style=f"bold {self.electric_blue}",
-            width=self.max_table_width
-        )
-    
-    def create_revolutionary_layout(self, account_data: Dict, positions: List[Dict], 
-                                  signals: List[Dict], logs: List[str], status: str, errors: Optional[List[str]] = None) -> Layout:
-        """Create revolutionary layout with stable design principles 🌌"""
-        
-        # Stabilized animation states - minimal updates
-        current_time = time.time()
-        if current_time - self.last_refresh >= self.refresh_throttle:
-            self.animation_frame += 1
-            self.pulse_state += 0.1  # Slower pulse for stability
-            self.last_refresh = current_time
-        
-        # Quantum layout structure
+    def create_revolutionary_layout(self, **kwargs) -> Layout:
+        """Create the main layout"""
         layout = Layout()
         
-        # Simplified layout structure - prevent overlapping
+        # Split into header and body
         layout.split_column(
-            Layout(self.create_ultra_modern_header(), size=6, name="header"),
-            Layout(name="main_content", ratio=1),
-            Layout(self.create_quantum_status_bar(status, datetime.now()), size=3, name="status")
+            Layout(name="header", size=3),
+            Layout(name="body")
         )
         
-        # Main content with controlled proportions
-        layout["main_content"].split_row(
-            Layout(name="left_panel", ratio=1),
-            Layout(name="right_panel", ratio=1)
+        # Header
+        layout["header"].update(self.create_header_panel(kwargs.get('status', 'RUNNING')))
+        
+        # Body - split into left and right
+        layout["body"].split_row(
+            Layout(name="left", ratio=1),
+            Layout(name="right", ratio=1)
         )
         
-        # Left panel - Account & Performance (simplified)
-        layout["left_panel"].split_column(
-            Layout(self.create_premium_account_panel(
-                account_data.get('balance', 0),
-                account_data.get('equity', 0),
-                account_data.get('margin', 0),
-                account_data.get('free_margin', 0)
-            ), size=8, name="account"),
-            Layout(self.create_performance_dashboard(), size=8, name="performance"),
-            Layout(self.create_cyber_log_panel(logs[:10]), name="logs")  # Limit logs to prevent overflow
+        # Left side - account and positions
+        layout["left"].split_column(
+            Layout(name="account", size=8),
+            Layout(name="positions")
         )
         
-        # Right panel - Positions, Signals & Errors (simplified)
-        layout["right_panel"].split_column(
-            Layout(self.create_elite_positions_panel(positions[:5]), size=10, name="positions"),  # Limit positions
-            Layout(self.create_neural_signals_panel(signals), size=8, name="neural_signals"),
-            Layout(self.create_error_panel(errors or []), name="errors")  # New error panel
+        # Right side - signals and activity
+        layout["right"].split_column(
+            Layout(name="signals"),
+            Layout(name="activity")
         )
+        
+        # Fill the panels
+        layout["account"].update(self.create_account_panel(kwargs.get('account_data', {})))
+        layout["positions"].update(self.create_positions_panel(kwargs.get('positions', [])))
+        layout["signals"].update(self.create_signals_panel(kwargs.get('signals', [])))
+        layout["activity"].update(self.create_activity_panel(kwargs.get('activity_log', [])))
         
         return layout
+
+def main():
+    """Test the display"""
+    display = AlpineDisplayV2()
+    print(f"✅ {display.name} v{display.version} initialized")
     
-    def update_stats(self, trade_result: Dict):
-        """Update trading statistics with quantum precision 🎯"""
-        self.total_trades += 1
-        pnl = trade_result.get('pnl', 0)
-        
-        if pnl > 0:
-            self.winning_trades += 1
-        else:
-            self.losing_trades += 1
-        
-        self.total_pnl += pnl
-        self.daily_pnl += pnl
-        
-        # Advanced drawdown calculation
-        if pnl < 0:
-            current_dd = abs(pnl / self.total_pnl * 100) if self.total_pnl != 0 else 0
-            self.max_drawdown = min(self.max_drawdown, -current_dd)
+    # Test layout
+    test_data = {
+        'account_data': {'balance': 1000.0, 'equity': 1050.0, 'free_margin': 950.0},
+        'positions': [
+            {'symbol': 'BTC/USDT', 'side': 'BUY', 'size': 0.01, 'pnl': 25.50},
+            {'symbol': 'ETH/USDT', 'side': 'SELL', 'size': 0.5, 'pnl': -15.25}
+        ],
+        'signals': [
+            {'symbol': 'SOL/USDT', 'signal': 'BUY', 'confidence': 85.0, 'price': 150.25}
+        ],
+        'activity_log': [
+            {'timestamp': datetime.now(), 'message': 'Bot started', 'level': 'INFO'},
+            {'timestamp': datetime.now(), 'message': 'Signal detected', 'level': 'SUCCESS'}
+        ]
+    }
     
-    # Legacy method compatibility
-    def create_layout(self, account_data: Dict, positions: List[Dict], 
-                     signals: List[Dict], logs: List[str], status: str) -> Layout:
-        """Legacy compatibility method - redirects to revolutionary layout"""
-        return self.create_revolutionary_layout(account_data, positions, signals, logs, status)
+    layout = display.create_revolutionary_layout(**test_data)
+    display.console.print(layout)
+
+if __name__ == "__main__":
+    main()

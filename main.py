@@ -1,176 +1,97 @@
 #!/usr/bin/env python3
 """
 🏔️ Alpine Trading Bot - Main Entry Point
-========================================
-
-Professional volume anomaly trading system with real-time monitoring.
-Single entry point for all bot operations.
+Enhanced entry point with comprehensive logging and error handling
 """
 
+import os
 import sys
-import argparse
+import time
 from pathlib import Path
+
+# Add project root to Python path
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+
+# Import enhanced logging system
+from enhanced_logging import (
+    alpine_logger, 
+    EnhancedErrorHandler, 
+    log_function_calls,
+    log_startup_banner,
+    log_shutdown
+)
 from loguru import logger
 
-# Add alpine_bot to path
-sys.path.insert(0, str(Path(__file__).parent))
-
-from alpine_bot import AlpineBot, TradingConfig, __version__
-
-def create_parser():
-    """Create command line argument parser"""
-    parser = argparse.ArgumentParser(
-        description="Alpine Trading Bot - Professional Volume Anomaly Trading System",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python main.py                    # Start bot with default settings
-  python main.py --test             # Run connectivity tests
-  python main.py --status           # Show bot status
-  python main.py --config custom.py # Use custom configuration
-        """
-    )
-    
-    parser.add_argument(
-        "--version", action="version",
-        version=f"Alpine Trading Bot v{__version__}"
-    )
-    
-    parser.add_argument(
-        "--test", action="store_true",
-        help="Run connectivity and system tests"
-    )
-    
-    parser.add_argument(
-        "--status", action="store_true", 
-        help="Show current bot status"
-    )
-    
-    parser.add_argument(
-        "--config", type=str,
-        help="Path to custom configuration file"
-    )
-    
-    parser.add_argument(
-        "--verbose", "-v", action="store_true",
-        help="Enable verbose logging"
-    )
-    
-    parser.add_argument(
-        "--quiet", "-q", action="store_true",
-        help="Reduce logging output"
-    )
-    
-    return parser
-
-
-def setup_logging(verbose: bool = False, quiet: bool = False):
-    """Setup logging configuration"""
-    logger.remove()
-    
-    if quiet:
-        level = "WARNING"
-    elif verbose:
-        level = "DEBUG"
-    else:
-        level = "INFO"
-    
-    logger.add(
-        sys.stdout,
-        format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>",
-        level=level
-    )
-    
-    logger.add(
-        "logs/alpine_bot_{time:YYYY-MM-DD}.log",
-        rotation="1 day",
-        retention="30 days",
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}",
-        level="DEBUG"
-    )
-
-
-def load_config(config_path: str = None) -> TradingConfig:
-    """Load trading configuration"""
-    if config_path:
-        # Load custom configuration
-        # This would implement custom config loading
-        logger.info(f"Loading custom configuration from: {config_path}")
-        return TradingConfig()
-    else:
-        return TradingConfig()
-
-
-def run_tests():
-    """Run connectivity and system tests"""
-    logger.info("🧪 Running Alpine Trading Bot tests...")
-    
-    try:
-        config = TradingConfig()
-        bot = AlpineBot(config)
-        
-        # Test exchange connectivity
-        if not bot.exchange_client.test_connection():
-            logger.error("❌ Exchange connectivity test failed")
-            return False
-        
-        logger.success("✅ All tests passed")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Test failed: {e}")
-        return False
-
-
-def show_status():
-    """Show current bot status"""
-    logger.info("📊 Alpine Trading Bot Status")
-    logger.info("=" * 50)
-    
-    # This would show actual status
-    logger.info("Status: Not implemented yet")
-    logger.info("=" * 50)
-
-
+@log_function_calls
 def main():
-    """Main entry point"""
-    parser = create_parser()
-    args = parser.parse_args()
+    """Main entry point for Alpine Trading Bot with enhanced logging"""
     
-    # Setup logging
-    setup_logging(args.verbose, args.quiet)
+    # Initialize logging system
+    log_startup_banner()
     
-    # Show version and header
-    logger.info(f"🏔️ Alpine Trading Bot v{__version__}")
-    logger.info("=" * 60)
-    
-    try:
-        # Load configuration
-        config = load_config(args.config)
+    with EnhancedErrorHandler("Alpine Bot Startup"):
+        logger.info("🏔️ Alpine Trading Bot - Starting with Enhanced Logging...")
+        logger.info("=" * 80)
         
-        # Handle different modes
-        if args.test:
-            success = run_tests()
-            sys.exit(0 if success else 1)
-        
-        elif args.status:
-            show_status()
-            sys.exit(0)
-        
-        else:
-            # Start the bot
-            logger.info("🚀 Starting Alpine Trading Bot...")
-            bot = AlpineBot(config)
+        try:
+            # Import from the new structure
+            logger.info("📦 Importing Alpine Trading Bot components...")
+            from src.core.bot import AlpineBot
+            from src.core.config import get_exchange_config
+            
+            logger.success("✅ Successfully imported Alpine Trading Bot components")
+            
+            # Get and log configuration
+            config = get_exchange_config()
+            alpine_logger.log_config(config)
+            
+            # Create and run the bot
+            logger.info("🚀 Initializing Alpine Trading Bot...")
+            bot = AlpineBot()
+            
+            logger.info("▶️ Starting Alpine Trading Bot...")
             bot.run()
+            
+        except ImportError as e:
+            logger.error(f"❌ Import Error: {e}")
+            alpine_logger.log_exception(e, "Import Error")
+            logger.warning("\n🔧 Trying to run with legacy structure...")
+            
+            with EnhancedErrorHandler("Legacy Bot Startup"):
+                try:
+                    # Try legacy imports if available
+                    logger.info("📦 Attempting legacy imports...")
+                    from archives.old_versions.alpine_bot import AlpineTradingBot as LegacyBot
+                    
+                    logger.success("✅ Legacy imports successful - Running with legacy bot...")
+                    bot = LegacyBot()
+                    bot.run()
+                    
+                except Exception as legacy_error:
+                    logger.error(f"❌ Legacy import also failed: {legacy_error}")
+                    alpine_logger.log_exception(legacy_error, "Legacy Import Failure")
+                    
+                    logger.info("\n📋 Available options:")
+                    logger.info("  1. Use the launcher: python scripts/deployment/launch_alpine.py")
+                    logger.info("  2. Run individual components from src/ directory")
+                    logger.info("  3. Check the documentation in docs/")
+                    logger.info("  4. Check the log files in logs/ directory for detailed error information")
+                    return 1
+                    
+        except Exception as e:
+            logger.error(f"❌ Critical error starting bot: {e}")
+            alpine_logger.log_exception(e, "Critical Bot Startup Error")
+            
+            logger.info("\n🔧 Troubleshooting suggestions:")
+            logger.info("  1. Check the error logs in logs/alpine_errors_*.log")
+            logger.info("  2. Try running with the launcher: python scripts/deployment/launch_alpine.py")
+            logger.info("  3. Verify all dependencies are installed: pip install -r requirements.txt")
+            logger.info("  4. Check the configuration in src/core/config.py")
+            return 1
     
-    except KeyboardInterrupt:
-        logger.info("⏹️ Bot stopped by user")
-        sys.exit(0)
-    
-    except Exception as e:
-        logger.error(f"❌ Error: {e}")
-        sys.exit(1)
-
+    logger.success("🎉 Alpine Trading Bot session completed successfully!")
+    return 0
 
 if __name__ == "__main__":
-    main()
+    exit(main())
