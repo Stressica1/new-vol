@@ -260,7 +260,7 @@ class TradingSystem:
             
             logger.info(f"Found {len(positions)} positions")
             
-            active_positions = [p for p in positions if float(p.get('total', 0)) != 0]
+            active_positions = [p for p in positions if float(p.get('contracts', 0)) > 0]
             
             if active_positions:
                 logger.info("\n" + "="*50)
@@ -270,17 +270,18 @@ class TradingSystem:
                 for pos in active_positions:
                     symbol = pos.get('symbol', '')
                     side = pos.get('side', '')
-                    size = float(pos.get('total', 0))
-                    entry_price = float(pos.get('averageOpenPrice', 0))
+                    contracts = float(pos.get('contracts', 0))
+                    entry_price = float(pos.get('averagePrice', 0))
                     current_price = float(pos.get('markPrice', 0))
-                    unrealized_pnl = float(pos.get('unrealizedPL', 0))
+                    unrealized_pnl = float(pos.get('unrealizedPnl', 0))
+                    percentage = float(pos.get('percentage', 0))
                     
                     logger.info(f"🏷️  {symbol}")
                     logger.info(f"  📊 Side: {side}")
-                    logger.info(f"  📏 Size: {size}")
+                    logger.info(f"  📏 Contracts: {contracts}")
                     logger.info(f"  💰 Entry Price: {entry_price}")
                     logger.info(f"  💹 Current Price: {current_price}")
-                    logger.info(f"  📈 Unrealized PnL: {unrealized_pnl:.2f} USDT")
+                    logger.info(f"  📈 Unrealized PnL: {unrealized_pnl:.2f} USDT ({percentage:.2f}%)")
                     logger.info("  " + "-"*30)
                 
                 logger.info("="*50)

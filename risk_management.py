@@ -267,6 +267,12 @@ class RiskManager:
             # Get positions
             positions = bitget_client.get_positions()
             
+            # Filter for active positions only (non-zero contracts)
+            active_positions = [
+                pos for pos in positions 
+                if pos.get('contracts', 0) > 0 or pos.get('contractSize', 0) > 0
+            ]
+            
             # Extract key metrics
             total_equity = float(account_info.get('usdtEquity', 0))
             available_balance = float(account_info.get('available', 0))
@@ -279,17 +285,17 @@ class RiskManager:
             # Calculate daily PnL
             daily_pnl = total_equity - self.daily_start_balance if self.daily_start_balance > 0 else 0
             
-            # Calculate total exposure
-            total_exposure = sum(float(pos.get('total', 0)) for pos in positions)
+            # Calculate total exposure (using active positions)
+            total_exposure = sum(float(pos.get('total', 0)) for pos in active_positions)
             
             # Calculate max drawdown
             max_drawdown = 0
             if self.daily_high_balance > 0:
                 max_drawdown = (self.daily_high_balance - total_equity) / self.daily_high_balance
             
-            # Determine risk level
+            # Determine risk level (using active positions count)
             risk_level = self._determine_risk_level(
-                daily_pnl, max_drawdown, total_exposure, total_equity, len(positions)
+                daily_pnl, max_drawdown, total_exposure, total_equity, len(active_positions)
             )
             
             self.risk_metrics = RiskMetrics(
@@ -298,7 +304,7 @@ class RiskManager:
                 total_margin_used=total_margin_used,
                 unrealized_pnl=unrealized_pnl,
                 daily_pnl=daily_pnl,
-                open_positions=len(positions),
+                open_positions=len(active_positions),
                 total_exposure=total_exposure,
                 max_drawdown=max_drawdown,
                 risk_level=risk_level

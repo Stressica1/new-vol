@@ -1,0 +1,219 @@
+2025-07-15 03:02:06 | INFO     | bitget_client:initialize:18 - Bitget client initialized successfully
+2025-07-15 03:02:06 | INFO     | risk_management:__init__:81 - 🛡️ Enhanced Risk Manager with Dynamic Volatility Analysis initialized
+2025-07-15 03:02:06 | INFO     | trading_engine:__init__:80 - Trading Engine initialized
+2025-07-15 03:02:06 | INFO     | __main__:__init__:41 - Trading System initialized
+2025-07-15 03:02:06 | INFO     | __main__:run_comprehensive_test:301 - 🚀 Starting comprehensive Bitget trading system test...
+2025-07-15 03:02:06 | INFO     | __main__:run_comprehensive_test:302 - ============================================================
+2025-07-15 03:02:06 | INFO     | __main__:run_comprehensive_test:315 - 
+🔍 Running Connectivity Test...
+2025-07-15 03:02:06 | INFO     | __main__:test_connectivity:55 - Testing Bitget API connectivity...
+2025-07-15 03:02:08 | INFO     | bitget_client:test_connection:33 - Markets loaded: 1390 pairs available
+2025-07-15 03:02:08 | INFO     | bitget_client:test_connection:37 - Account balance retrieved successfully
+2025-07-15 03:02:08 | SUCCESS  | __main__:test_connectivity:75 - ✅ Bitget API connectivity test passed
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:89 - 
+==================================================
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:90 - ACCOUNT SUMMARY
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:91 - ==================================================
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:94 - 💰 Total Equity: 44.69 USDT
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:95 - 💳 Available Balance: 25.16 USDT
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:96 - 🔒 Margin Used: 19.53 USDT
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:97 - 📊 Unrealized PnL: 0.00 USDT
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:98 - 🎯 Margin Coin: USDT
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:99 - ⚖️ Leverage: 1
+2025-07-15 03:02:08 | INFO     | __main__:display_account_summary:101 - ==================================================
+2025-07-15 03:02:08 | SUCCESS  | __main__:run_comprehensive_test:319 - ✅ Connectivity Test PASSED
+2025-07-15 03:02:09 | INFO     | __main__:run_comprehensive_test:315 - 
+🔍 Running Risk Management Test...
+2025-07-15 03:02:09 | INFO     | __main__:test_risk_management:215 - Testing risk management system...
+2025-07-15 03:02:10 | INFO     | risk_management:calculate_risk_metrics:313 - Risk metrics updated: critical risk level
+2025-07-15 03:02:10 | INFO     | risk_management:calculate_risk_metrics:313 - Risk metrics updated: critical risk level
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:224 - 
+==================================================
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:225 - RISK MANAGEMENT SUMMARY
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:226 - ==================================================
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:228 - 🚨 Risk Level: CRITICAL
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:229 - 📊 Open Positions: 21
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:230 - 💰 Daily PnL: 0.00 USDT
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:231 - 📉 Max Drawdown: 0.01%
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:232 - 🛑 Emergency Stop: INACTIVE
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:235 - 
+📋 Risk Limits:
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:237 -   • Max Position Size: 200.0 USDT
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:238 -   • Max Daily Loss: 1000.0 USDT
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:239 -   • Max Drawdown: 50.00%
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:240 -   • Max Open Positions: 20
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:241 -   • Risk Per Trade: 2.00%
+2025-07-15 03:02:10 | INFO     | __main__:test_risk_management:243 - ==================================================
+2025-07-15 03:02:10 | SUCCESS  | __main__:test_risk_management:245 - ✅ Risk management test passed
+2025-07-15 03:02:10 | SUCCESS  | __main__:run_comprehensive_test:319 - ✅ Risk Management Test PASSED
+2025-07-15 03:02:11 | INFO     | __main__:run_comprehensive_test:315 - 
+🔍 Running Position Monitoring Test...
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:255 - Testing position monitoring...
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:261 - Found 21 positions
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:266 - 
+==================================================
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:267 - CURRENT POSITIONS
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:268 - ==================================================
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  ACE/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 13.62
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.536
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: -0.00 USDT (-1.96%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  COW/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 22.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.3572
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.07 USDT (33.00%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  BNB/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 0.01
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 682.84
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.09 USDT (46.62%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  BB/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 89.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.09662
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.09 USDT (35.14%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  B2/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 23.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.3525
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: -0.07 USDT (-29.03%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  CYBER/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 114.1
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 1.5147
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.81 USDT (16.29%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  AI16Z/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 7.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.1787
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.04 USDT (108.18%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  1000XEC/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 345.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.02065
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.25 USDT (117.92%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  AEVO/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 67.7
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.1022
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.09 USDT (43.96%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  A/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 16.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.53761
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.00 USDT (0.52%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  OBOL/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 1122.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.1114
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.31 USDT (4.98%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  CAKE/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 3.8
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 2.3362
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.26 USDT (100.97%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  BAT/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 45.6
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.1479
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.11 USDT (58.17%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  BID/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: long
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 60.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.10863
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.04 USDT (21.39%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  BNT/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 13.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.6897
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.20 USDT (74.98%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  ACT/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 195.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.04179
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.15 USDT (45.80%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  10000000AIDOGE/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: long
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 6000.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.001253
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: -0.08 USDT (-22.09%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  AVAX/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 0.3
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 20.805
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.06 USDT (32.99%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  ACH/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: long
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 424.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.020732
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: -0.04 USDT (-9.88%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  AXS/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 10.7
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 2.397
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.77 USDT (102.64%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:279 - 🏷️  1000CAT/USDT:USDT
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:280 -   📊 Side: short
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:281 -   📏 Contracts: 989.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:282 -   💰 Entry Price: 0.0
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:283 -   💹 Current Price: 0.007267
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:284 -   📈 Unrealized PnL: 0.11 USDT (53.12%)
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:285 -   ------------------------------
+2025-07-15 03:02:11 | INFO     | __main__:test_position_monitoring:287 - ==================================================
+2025-07-15 03:02:11 | SUCCESS  | __main__:test_position_monitoring:291 - ✅ Position monitoring test passed
+2025-07-15 03:02:11 | SUCCESS  | __main__:run_comprehensive_test:319 - ✅ Position Monitoring Test PASSED
+2025-07-15 03:02:12 | INFO     | __main__:run_comprehensive_test:315 - 
+🔍 Running Trade Execution Test...
+2025-07-15 03:02:12 | INFO     | __main__:test_trade_execution:106 - Testing trade execution for BTC/USDT:USDT with 10.0 USDT...
+2025-07-15 03:02:12 | INFO     | __main__:test_trade_execution:116 - Current price for BTC/USDT:USDT: 118063.1
+2025-07-15 03:02:12 | INFO     | __main__:test_trade_execution:121 - Test position size: 0.000085
+2025-07-15 03:02:13 | INFO     | risk_management:calculate_risk_metrics:313 - Risk metrics updated: critical risk level
+2025-07-15 03:02:13 | WARNING  | __main__:test_trade_execution:127 - Cannot open test position: Critical risk level - no new positions allowed
+2025-07-15 03:02:13 | ERROR    | __main__:run_comprehensive_test:321 - ❌ Trade Execution Test FAILED
+2025-07-15 03:02:14 | INFO     | __main__:run_comprehensive_test:327 - 
+============================================================
+2025-07-15 03:02:14 | INFO     | __main__:run_comprehensive_test:328 - TEST RESULTS: 3/4 tests passed
+2025-07-15 03:02:14 | ERROR    | __main__:run_comprehensive_test:333 - ⚠️  Some tests failed. Please check the issues above.
+2025-07-15 03:02:14 | INFO     | __main__:run_comprehensive_test:335 - ============================================================
