@@ -213,7 +213,7 @@ class RiskManager:
             volatility_metrics = self.get_volatility_metrics(symbol)
             
             # Adjust position size based on volatility (higher volatility = smaller position)
-            volatility_adjustment = 1.0 / volatility_metrics.risk_adjustment
+            volatility_adjustment = 1.0 / max(volatility_metrics.risk_adjustment, 0.1)  # Prevent division by zero
             adjusted_position_value = position_value * volatility_adjustment
             
             # Calculate position size in contracts/units

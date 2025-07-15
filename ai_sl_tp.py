@@ -128,7 +128,10 @@ class AIStopLossTakeProfit:
         if _HAS_CAT:
             preds_cat = self.cat_model.predict(X_scaled)
             errs.append(np.mean(np.abs(preds_cat - target)))
-        inv_errs = 1 / np.array(errs)
+        # Prevent division by zero by adding small epsilon
+        errs = np.array(errs)
+        errs = np.maximum(errs, 1e-8)  # Ensure no zero errors
+        inv_errs = 1 / errs
         self.model_weights = inv_errs / inv_errs.sum()
         logger.success("✅ AI SL/TP model trained on %d samples", len(target))
 
@@ -188,6 +191,10 @@ class AIStopLossTakeProfit:
         sl_price: float,
     ) -> float:
         """Conventional position sizing based on fixed risk-per-trade."""
+        if entry_price <= 0:
+            logger.warning("Entry price is zero or negative. Returning size 0.")
+            return 0.0
+            
         risk_amount = account_equity * self.config.risk_per_trade
         price_diff = abs(entry_price - sl_price)
         if price_diff <= 0:

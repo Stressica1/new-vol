@@ -305,10 +305,24 @@ class OptimizedTradeExecutor:
         total_orders = len(self.order_history)
         successful_orders = sum(1 for o in self.order_history if o['order']['status'] == 'closed')
         
+        # Calculate actual fill times
+        fill_times = []
+        for o in self.order_history:
+            if o['order']['status'] == 'closed' and 'created_at' in o and 'filled_at' in o:
+                try:
+                    created_at = datetime.fromisoformat(o['created_at'].replace('Z', '+00:00'))
+                    filled_at = datetime.fromisoformat(o['filled_at'].replace('Z', '+00:00'))
+                    fill_time = (filled_at - created_at).total_seconds()
+                    fill_times.append(fill_time)
+                except (ValueError, TypeError):
+                    continue
+        
+        avg_fill_time = sum(fill_times) / len(fill_times) if fill_times else 0
+        
         return {
             'total_orders': total_orders,
             'success_rate': (successful_orders / total_orders) * 100 if total_orders > 0 else 0,
-            'avg_fill_time': 0  # TODO: Calculate actual fill times
+            'avg_fill_time': avg_fill_time
         }
 
 class TradingOrchestrator:
