@@ -50,11 +50,14 @@ class VolumeAnomalyStrategy:
             # Enhanced SuperTrend Calculation (REPLACES RSI)
             df = self.calculate_supertrend(df)
             
-            # MACD (Keep for confluence)
-            macd_line, macd_signal, macd_histogram = ta.trend.MACD(df['close']).macd(), ta.trend.MACD(df['close']).macd_signal(), ta.trend.MACD(df['close']).macd_diff()
-            df['macd'] = macd_line
-            df['macd_signal'] = macd_signal
-            df['macd_histogram'] = macd_histogram
+            # VHMA - Volume Weighted Hull Moving Average (REPLACES MACD)
+            df = self.calculate_vhma(df)
+            
+            # MFI - Money Flow Index (REPLACES MACD Signal)
+            df = self.calculate_mfi(df)
+            
+            # Bollinger Bands (REPLACES MACD Histogram)
+            df = self.calculate_bollinger_bands(df)
             
             # Moving averages
             df['ema_20'] = ta.trend.ema_indicator(df['close'], window=20)
@@ -161,6 +164,174 @@ class VolumeAnomalyStrategy:
             df['supertrend_quality'] = 'WEAK'
             return df
 
+    def calculate_vhma(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate Volume Weighted Hull Moving Average (VHMA) - REPLACES MACD
+        
+        VHMA combines Hull Moving Average with volume weighting for more accurate
+        trend detection with volume consideration.
+        """
+        try:
+            if len(df) < 20:
+                df['vhma'] = df['close']
+                df['vhma_signal'] = 0
+                return df
+            
+            # Calculate Hull Moving Average components
+            period = 14
+            half_period = period // 2
+            sqrt_period = int(np.sqrt(period))
+            
+            # Volume weighted prices
+            df['vwap'] = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
+            
+            # Hull MA calculation with volume weighting
+            wma_half = df['vwap'].rolling(window=half_period).mean()
+            wma_full = df['vwap'].rolling(window=period).mean()
+            
+            # Hull calculation
+            hull_raw = 2 * wma_half - wma_full
+            df['vhma'] = hull_raw.rolling(window=sqrt_period).mean()
+            
+            # VHMA signal (momentum)
+            df['vhma_signal'] = df['vhma'].diff()
+            df['vhma_momentum'] = df['vhma_signal'].rolling(window=3).mean()
+            
+            # VHMA trend strength
+            df['vhma_strength'] = np.where(
+                df['vhma_signal'] > 0, 
+                abs(df['vhma_signal']), 
+                -abs(df['vhma_signal'])
+            )
+            
+            return df
+            
+        except Exception as e:
+            print(f"❌ Error calculating VHMA: {e}")
+            df['vhma'] = df['close']
+            df['vhma_signal'] = 0
+            df['vhma_momentum'] = 0
+            df['vhma_strength'] = 0
+            return df
+    
+    def calculate_mfi(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate Money Flow Index (MFI) - REPLACES MACD Signal
+        
+        MFI is a momentum oscillator that uses price and volume to identify
+        overbought/oversold conditions and money flow direction.
+        """
+        try:
+            if len(df) < 15:
+                df['mfi'] = 50
+                df['mfi_signal'] = 0
+                return df
+            
+            # Calculate typical price
+            df['typical_price'] = (df['high'] + df['low'] + df['close']) / 3
+            
+            # Calculate raw money flow
+            df['raw_money_flow'] = df['typical_price'] * df['volume']
+            
+            # Calculate positive and negative money flow
+            df['price_change'] = df['typical_price'].diff()
+            
+            positive_flow = np.where(df['price_change'] > 0, df['raw_money_flow'], 0)
+            negative_flow = np.where(df['price_change'] < 0, df['raw_money_flow'], 0)
+            
+            # 14-period money flow
+            period = 14
+            positive_mf = pd.Series(positive_flow).rolling(window=period).sum()
+            negative_mf = pd.Series(negative_flow).rolling(window=period).sum()
+            
+            # Calculate MFI
+            money_flow_ratio = positive_mf / (negative_mf + 1e-10)  # Avoid division by zero
+            df['mfi'] = 100 - (100 / (1 + money_flow_ratio))
+            
+            # MFI signal (momentum and divergence)
+            df['mfi_signal'] = df['mfi'].diff()
+            df['mfi_momentum'] = df['mfi_signal'].rolling(window=3).mean()
+            
+            # MFI conditions
+            df['mfi_overbought'] = df['mfi'] > 80
+            df['mfi_oversold'] = df['mfi'] < 20
+            df['mfi_bullish'] = (df['mfi'] > 50) & (df['mfi_signal'] > 0)
+            df['mfi_bearish'] = (df['mfi'] < 50) & (df['mfi_signal'] < 0)
+            
+            return df
+            
+        except Exception as e:
+            print(f"❌ Error calculating MFI: {e}")
+            df['mfi'] = 50
+            df['mfi_signal'] = 0
+            df['mfi_momentum'] = 0
+            df['mfi_overbought'] = False
+            df['mfi_oversold'] = False
+            df['mfi_bullish'] = False
+            df['mfi_bearish'] = False
+            return df
+    
+    def calculate_bollinger_bands(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate Bollinger Bands (BB) - REPLACES MACD Histogram
+        
+        Bollinger Bands provide dynamic support and resistance levels
+        and help identify volatility and potential reversal points.
+        """
+        try:
+            if len(df) < 20:
+                df['bb_upper'] = df['close'] * 1.02
+                df['bb_middle'] = df['close']
+                df['bb_lower'] = df['close'] * 0.98
+                df['bb_width'] = 0.04
+                df['bb_position'] = 0.5
+                return df
+            
+            # Standard Bollinger Bands
+            period = 20
+            std_dev = 2.0
+            
+            # Calculate middle band (SMA)
+            df['bb_middle'] = df['close'].rolling(window=period).mean()
+            
+            # Calculate standard deviation
+            rolling_std = df['close'].rolling(window=period).std()
+            
+            # Calculate upper and lower bands
+            df['bb_upper'] = df['bb_middle'] + (rolling_std * std_dev)
+            df['bb_lower'] = df['bb_middle'] - (rolling_std * std_dev)
+            
+            # Calculate band width (volatility measure)
+            df['bb_width'] = (df['bb_upper'] - df['bb_lower']) / df['bb_middle']
+            
+            # Calculate position within bands (0 = lower band, 1 = upper band)
+            df['bb_position'] = (df['close'] - df['bb_lower']) / (df['bb_upper'] - df['bb_lower'])
+            
+            # Bollinger Band signals
+            df['bb_squeeze'] = df['bb_width'] < df['bb_width'].rolling(window=20).mean() * 0.8
+            df['bb_expansion'] = df['bb_width'] > df['bb_width'].rolling(window=20).mean() * 1.2
+            df['bb_breakout_upper'] = df['close'] > df['bb_upper']
+            df['bb_breakout_lower'] = df['close'] < df['bb_lower']
+            
+            # BB momentum
+            df['bb_momentum'] = df['bb_position'].diff()
+            
+            return df
+            
+        except Exception as e:
+            print(f"❌ Error calculating Bollinger Bands: {e}")
+            df['bb_upper'] = df['close'] * 1.02
+            df['bb_middle'] = df['close']
+            df['bb_lower'] = df['close'] * 0.98
+            df['bb_width'] = 0.04
+            df['bb_position'] = 0.5
+            df['bb_squeeze'] = False
+            df['bb_expansion'] = False
+            df['bb_breakout_upper'] = False
+            df['bb_breakout_lower'] = False
+            df['bb_momentum'] = 0
+            return df
+
     def detect_volume_anomaly(self, df: pd.DataFrame, max_leverage: float = 1.0) -> Dict:
         """Detect volume anomaly signals using SuperTrend (REPLACES RSI)"""
         try:
@@ -237,13 +408,34 @@ class VolumeAnomalyStrategy:
                 if latest['volume_ratio'] > 3.0:
                     confidence += 8
                 
-                # MACD confluence (keep for additional confirmation)
-                macd_bullish = latest.get('macd', 0) > latest.get('macd_signal', 0)
-                macd_bearish = latest.get('macd', 0) < latest.get('macd_signal', 0)
+                # New indicator confluence (replaces MACD)
+                vhma_bullish = latest.get('vhma_signal', 0) > 0
+                vhma_bearish = latest.get('vhma_signal', 0) < 0
                 
-                if signal_type == 'BUY' and macd_bullish:
+                mfi_bullish = latest.get('mfi_bullish', False)
+                mfi_bearish = latest.get('mfi_bearish', False)
+                mfi_oversold = latest.get('mfi_oversold', False)
+                mfi_overbought = latest.get('mfi_overbought', False)
+                
+                bb_bullish = latest.get('bb_position', 0.5) < 0.2 and latest.get('bb_momentum', 0) > 0
+                bb_bearish = latest.get('bb_position', 0.5) > 0.8 and latest.get('bb_momentum', 0) < 0
+                
+                # VHMA confluence
+                if signal_type == 'BUY' and vhma_bullish:
+                    confidence += 6
+                elif signal_type == 'SELL' and vhma_bearish:
+                    confidence += 6
+                
+                # MFI confluence
+                if signal_type == 'BUY' and (mfi_bullish or mfi_oversold):
+                    confidence += 7
+                elif signal_type == 'SELL' and (mfi_bearish or mfi_overbought):
+                    confidence += 7
+                
+                # Bollinger Bands confluence
+                if signal_type == 'BUY' and bb_bullish:
                     confidence += 5
-                elif signal_type == 'SELL' and macd_bearish:
+                elif signal_type == 'SELL' and bb_bearish:
                     confidence += 5
                 
                 # LEVERAGE BOOST - Higher leverage = higher confidence
@@ -265,6 +457,15 @@ class VolumeAnomalyStrategy:
                 'supertrend_direction': supertrend_direction,
                 'supertrend_strength': supertrend_strength,
                 'supertrend_quality': supertrend_quality,
+                'vhma_signal': latest.get('vhma_signal', 0),
+                'vhma_momentum': latest.get('vhma_momentum', 0),
+                'mfi': latest.get('mfi', 50),
+                'mfi_bullish': latest.get('mfi_bullish', False),
+                'mfi_bearish': latest.get('mfi_bearish', False),
+                'bb_position': latest.get('bb_position', 0.5),
+                'bb_width': latest.get('bb_width', 0.04),
+                'bb_squeeze': latest.get('bb_squeeze', False),
+                'bb_expansion': latest.get('bb_expansion', False),
                 'max_leverage': max_leverage,
                 'notional_multiplier': max_leverage,  # For position sizing
                 'timestamp': datetime.now()
