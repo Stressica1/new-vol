@@ -332,9 +332,21 @@ class VolumeAnomalyStrategy:
             df['bb_momentum'] = 0
             return df
 
-    def detect_volume_anomaly(self, df: pd.DataFrame, max_leverage: float = 1.0) -> Dict:
-        """Detect volume anomaly signals using SuperTrend (REPLACES RSI)"""
+    def detect_volume_anomaly(self, market_data: Dict, symbol: str, max_leverage: float = 1.0) -> Dict:
+        """Detect volume anomaly signals using SuperTrend with MTF analysis"""
         try:
+            # Get primary timeframe data (5M default)
+            primary_data = market_data.get(symbol, [])
+            if not primary_data or len(primary_data) < self.volume_lookback:
+                return {'signal': None, 'confidence': 0}
+            
+            # Calculate MTF signals for enhanced confidence
+            mtf_analysis = self.calculate_mtf_signals(symbol, market_data)
+            
+            # Convert to DataFrame and calculate indicators
+            df = pd.DataFrame(primary_data)
+            df = self.calculate_indicators(df)
+            
             if len(df) < self.volume_lookback:
                 return {'signal': None, 'confidence': 0}
 
@@ -438,6 +450,12 @@ class VolumeAnomalyStrategy:
                 elif signal_type == 'SELL' and bb_bearish:
                     confidence += 5
                 
+                # MTF Analysis Bonus
+                mtf_bonus = mtf_analysis.get('mtf_bonus', 0)
+                if mtf_bonus > 0:
+                    confidence += min(mtf_bonus, 25)  # Cap MTF bonus at 25 points
+                    print(f"🎯 MTF Bonus: +{min(mtf_bonus, 25):.1f} ({mtf_analysis.get('total_aligned', 0)} aligned timeframes)")
+                
                 # LEVERAGE BOOST - Higher leverage = higher confidence
                 if max_leverage >= 100:
                     confidence += 5  # 100x+ leverage boost
@@ -466,6 +484,10 @@ class VolumeAnomalyStrategy:
                 'bb_width': latest.get('bb_width', 0.04),
                 'bb_squeeze': latest.get('bb_squeeze', False),
                 'bb_expansion': latest.get('bb_expansion', False),
+                'mtf_bonus': mtf_analysis.get('mtf_bonus', 0),
+                'mtf_aligned': mtf_analysis.get('total_aligned', 0),
+                'mtf_signals': mtf_analysis.get('mtf_signals', {}),
+                'alignment_bonus': mtf_analysis.get('alignment_bonus', 0),
                 'max_leverage': max_leverage,
                 'notional_multiplier': max_leverage,  # For position sizing
                 'timestamp': datetime.now()
@@ -501,6 +523,192 @@ class VolumeAnomalyStrategy:
         # Sort by confidence
         signals.sort(key=lambda x: x['confidence'], reverse=True)
         return signals[:5]  # Return top 5 signals
+
+    def calculate_mtf_signals(self, symbol: str, market_data: Dict) -> Dict:
+        """
+        Calculate Multi-Timeframe (MTF) signals for 1M, 3M, 5M, 10M, 15M
+        Each aligned timeframe provides a score bonus for signal confidence
+        """
+        try:
+            mtf_timeframes = ['1m', '3m', '5m', '10m', '15m']
+            mtf_scores = {
+                '1m': 3,   # Immediate trend
+                '3m': 5,   # Short-term momentum
+                '5m': 8,   # Primary scalping timeframe
+                '10m': 6,  # Medium-term confirmation
+                '15m': 4   # Longer-term context
+            }
+            
+            mtf_signals = {}
+            total_mtf_bonus = 0
+            aligned_timeframes = []
+            
+            print(f"🔍 Analyzing MTF signals for {symbol}")
+            
+            for timeframe in mtf_timeframes:
+                try:
+                    # Get timeframe data
+                    tf_data = market_data.get(f"{symbol}_{timeframe}", market_data.get(symbol, []))
+                    
+                    if not tf_data or len(tf_data) < 20:
+                        print(f"⚠️ Insufficient data for {timeframe}")
+                        continue
+                    
+                    # Convert to DataFrame
+                    df = pd.DataFrame(tf_data)
+                    
+                    # Calculate indicators for this timeframe
+                    df = self.calculate_indicators(df)
+                    
+                    if len(df) == 0:
+                        continue
+                    
+                    latest = df.iloc[-1]
+                    
+                    # MTF Signal Analysis
+                    mtf_signal = self.analyze_mtf_signal(latest, timeframe)
+                    mtf_signals[timeframe] = mtf_signal
+                    
+                    # Calculate MTF score bonus
+                    if mtf_signal['signal'] in ['BUY', 'SELL']:
+                        signal_strength = mtf_signal['strength']
+                        base_score = mtf_scores[timeframe]
+                        
+                        # Adjust score based on signal strength
+                        if signal_strength >= 0.8:
+                            bonus = base_score * 1.2  # Strong signal bonus
+                        elif signal_strength >= 0.6:
+                            bonus = base_score * 1.0  # Normal signal
+                        else:
+                            bonus = base_score * 0.7  # Weak signal penalty
+                        
+                        total_mtf_bonus += bonus
+                        aligned_timeframes.append(timeframe)
+                        
+                        print(f"✅ {timeframe}: {mtf_signal['signal']} (strength: {signal_strength:.2f}, bonus: +{bonus:.1f})")
+                    else:
+                        print(f"⚪ {timeframe}: NEUTRAL")
+                
+                except Exception as e:
+                    print(f"❌ Error analyzing {timeframe}: {e}")
+                    continue
+            
+            # Calculate alignment bonus
+            alignment_bonus = 0
+            if len(aligned_timeframes) >= 3:
+                # Check if signals are mostly aligned
+                buy_signals = sum(1 for tf in aligned_timeframes if mtf_signals[tf]['signal'] == 'BUY')
+                sell_signals = sum(1 for tf in aligned_timeframes if mtf_signals[tf]['signal'] == 'SELL')
+                
+                if buy_signals >= len(aligned_timeframes) * 0.7:
+                    alignment_bonus = 10 + (buy_signals - 3) * 3  # Extra bonus for more aligned TFs
+                elif sell_signals >= len(aligned_timeframes) * 0.7:
+                    alignment_bonus = 10 + (sell_signals - 3) * 3
+                
+                if alignment_bonus > 0:
+                    print(f"🎯 MTF Alignment Bonus: +{alignment_bonus:.1f} ({len(aligned_timeframes)} aligned timeframes)")
+            
+            # Total MTF bonus
+            total_mtf_bonus += alignment_bonus
+            
+            return {
+                'mtf_signals': mtf_signals,
+                'mtf_bonus': total_mtf_bonus,
+                'aligned_timeframes': aligned_timeframes,
+                'alignment_bonus': alignment_bonus,
+                'total_aligned': len(aligned_timeframes)
+            }
+            
+        except Exception as e:
+            print(f"❌ Error calculating MTF signals: {e}")
+            return {
+                'mtf_signals': {},
+                'mtf_bonus': 0,
+                'aligned_timeframes': [],
+                'alignment_bonus': 0,
+                'total_aligned': 0
+            }
+    
+    def analyze_mtf_signal(self, latest: pd.Series, timeframe: str) -> Dict:
+        """
+        Analyze individual timeframe signal
+        Returns signal type and strength for MTF analysis
+        """
+        try:
+            # SuperTrend analysis
+            supertrend_direction = latest.get('supertrend_direction', 0)
+            supertrend_strength = latest.get('supertrend_strength', 0)
+            
+            # Volume analysis
+            volume_ratio = latest.get('volume_ratio', 1.0)
+            volume_anomaly = latest.get('volume_anomaly', False)
+            
+            # New indicator analysis
+            vhma_signal = latest.get('vhma_signal', 0)
+            mfi = latest.get('mfi', 50)
+            bb_position = latest.get('bb_position', 0.5)
+            
+            # Determine signal
+            signal = 'NEUTRAL'
+            strength = 0.0
+            
+            # Primary signal from SuperTrend
+            if supertrend_direction == 1:
+                signal = 'BUY'
+                strength = min(supertrend_strength / 3.0, 1.0)  # Normalize to 0-1
+            elif supertrend_direction == -1:
+                signal = 'SELL'
+                strength = min(supertrend_strength / 3.0, 1.0)
+            
+            # Enhance strength with other indicators
+            if signal == 'BUY':
+                if vhma_signal > 0:
+                    strength += 0.1
+                if mfi > 50:
+                    strength += 0.1
+                if bb_position < 0.3:  # Near lower band
+                    strength += 0.1
+            elif signal == 'SELL':
+                if vhma_signal < 0:
+                    strength += 0.1
+                if mfi < 50:
+                    strength += 0.1
+                if bb_position > 0.7:  # Near upper band
+                    strength += 0.1
+            
+            # Volume boost
+            if volume_anomaly:
+                strength += 0.15
+            elif volume_ratio > 1.5:
+                strength += 0.1
+            
+            # Timeframe-specific adjustments
+            if timeframe == '1m':
+                strength *= 0.9  # Slightly reduce for noise
+            elif timeframe == '5m':
+                strength *= 1.1  # Boost primary timeframe
+            elif timeframe == '15m':
+                strength *= 1.05  # Boost for trend confirmation
+            
+            # Cap strength at 1.0
+            strength = min(strength, 1.0)
+            
+            return {
+                'signal': signal,
+                'strength': strength,
+                'supertrend_direction': supertrend_direction,
+                'volume_ratio': volume_ratio,
+                'volume_anomaly': volume_anomaly,
+                'timeframe': timeframe
+            }
+            
+        except Exception as e:
+            print(f"❌ Error analyzing {timeframe} signal: {e}")
+            return {
+                'signal': 'NEUTRAL',
+                'strength': 0.0,
+                'timeframe': timeframe
+            }
 
 def main():
     """Test the strategy"""
