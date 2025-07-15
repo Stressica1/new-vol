@@ -297,8 +297,8 @@ class BotVerifier:
             
             self.log_test_result(
                 "Risk Session Setup",
-                risk_manager.starting_balance == 1000.0,
-                f"Risk session initialized with ${risk_manager.starting_balance}"
+                risk_manager.daily_start_balance == 1000.0,
+                f"Risk session initialized with ${risk_manager.daily_start_balance}"
             )
             
             return True

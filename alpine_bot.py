@@ -377,21 +377,102 @@ class AlpineBot:
                 'password': exchange_config.get('password', ''),
                 'sandbox': exchange_config.get('sandbox', False),
                 'enableRateLimit': exchange_config.get('enableRateLimit', True),
+                'timeout': 10000,  # 10 second timeout
                 'options': {
                     'defaultType': 'swap',  # For futures trading
                     'marginMode': 'cross'  # Use cross margin
                 }
             })
             
-            # Test connection
+            # Test connection with timeout
             logger.info("📡 Testing connection with load_markets()...")
             self.log_activity("📡 Testing connection with load_markets()...", "INFO")
-            markets = self.exchange.load_markets()
-            logger.debug(f"Loaded {len(markets)} markets")
             
+            # Add timeout for load_markets
+            import threading
+            import time
+            
+            markets = None
+            error_occurred = None
+            
+            def load_markets_with_timeout():
+                nonlocal markets, error_occurred
+                try:
+                    if self.exchange:
+                        markets = self.exchange.load_markets()
+                    else:
+                        error_occurred = Exception("Exchange not initialized")
+                except Exception as e:
+                    error_occurred = e
+            
+            # Start the load_markets in a separate thread
+            thread = threading.Thread(target=load_markets_with_timeout)
+            thread.daemon = True
+            thread.start()
+            
+            # Wait for up to 15 seconds
+            thread.join(timeout=15)
+            
+            if thread.is_alive():
+                # Thread is still running, means it's hanging
+                self.log_activity("❌ load_markets() timed out after 15 seconds", "ERROR")
+                logger.error("load_markets() timed out after 15 seconds")
+                self.connected = False
+                return False
+            
+            if error_occurred:
+                raise error_occurred
+            
+            if not markets:
+                self.log_activity("❌ Failed to load markets", "ERROR")
+                logger.error("Failed to load markets")
+                self.connected = False
+                return False
+            
+            logger.debug(f"Loaded {len(markets)} markets")
+            self.log_activity(f"✅ Loaded {len(markets)} markets", "SUCCESS")
+            
+            # Test balance fetch with timeout
             logger.info("💰 Fetching futures account balance...")
             self.log_activity("💰 Fetching futures account balance...", "INFO")
-            balance = self.exchange.fetch_balance({'type': 'swap'})
+            
+            balance = None
+            error_occurred = None
+            
+            def fetch_balance_with_timeout():
+                nonlocal balance, error_occurred
+                try:
+                    if self.exchange:
+                        balance = self.exchange.fetch_balance({'type': 'swap'})
+                    else:
+                        error_occurred = Exception("Exchange not initialized")
+                except Exception as e:
+                    error_occurred = e
+            
+            # Start the fetch_balance in a separate thread
+            thread = threading.Thread(target=fetch_balance_with_timeout)
+            thread.daemon = True
+            thread.start()
+            
+            # Wait for up to 10 seconds
+            thread.join(timeout=10)
+            
+            if thread.is_alive():
+                # Thread is still running, means it's hanging
+                self.log_activity("❌ fetch_balance() timed out after 10 seconds", "ERROR")
+                logger.error("fetch_balance() timed out after 10 seconds")
+                self.connected = False
+                return False
+            
+            if error_occurred:
+                raise error_occurred
+            
+            if not balance:
+                self.log_activity("❌ Failed to fetch balance", "ERROR")
+                logger.error("Failed to fetch balance")
+                self.connected = False
+                return False
+            
             logger.debug(f"Futures balance response: {balance}")
             
             self.connected = True
@@ -400,23 +481,24 @@ class AlpineBot:
             
             # Get futures balance info from the raw response
             usdt_futures_info = None
-            info_list = balance.get('info', [])
-            if isinstance(info_list, list):
-                for info in info_list:
-                    if isinstance(info, dict) and info.get('marginCoin') == 'USDT':
-                        usdt_futures_info = info
-                        break
-            
-            if usdt_futures_info:
-                available = float(usdt_futures_info.get('available', 0))
-                equity = float(usdt_futures_info.get('equity', 0))
-                unrealized_pnl = float(usdt_futures_info.get('unrealizedPL', 0))
-                logger.info(f"💰 Futures Account - Available: ${available:,.2f} | Equity: ${equity:,.2f} | Unrealized P&L: ${unrealized_pnl:,.2f}")
-                self.log_activity(f"💰 Futures balance loaded - Available: ${available:,.2f} | Equity: ${equity:,.2f}", "INFO")
-            else:
-                usdt_balance = balance.get('USDT', {}).get('total', 0)
-                logger.info(f"💰 Account balance: ${usdt_balance:,.2f} USDT")
-                self.log_activity(f"💰 Account balance loaded: ${usdt_balance:,.2f}", "INFO")
+            if balance:
+                info_list = balance.get('info', [])
+                if isinstance(info_list, list):
+                    for info in info_list:
+                        if isinstance(info, dict) and info.get('marginCoin') == 'USDT':
+                            usdt_futures_info = info
+                            break
+                
+                if usdt_futures_info:
+                    available = float(usdt_futures_info.get('available', 0))
+                    equity = float(usdt_futures_info.get('equity', 0))
+                    unrealized_pnl = float(usdt_futures_info.get('unrealizedPL', 0))
+                    logger.info(f"💰 Futures Account - Available: ${available:,.2f} | Equity: ${equity:,.2f} | Unrealized P&L: ${unrealized_pnl:,.2f}")
+                    self.log_activity(f"💰 Futures balance loaded - Available: ${available:,.2f} | Equity: ${equity:,.2f}", "INFO")
+                else:
+                    usdt_balance = balance.get('USDT', {}).get('total', 0)
+                    logger.info(f"💰 Account balance: ${usdt_balance:,.2f} USDT")
+                    self.log_activity(f"💰 Account balance loaded: ${usdt_balance:,.2f}", "INFO")
             
             return True
             

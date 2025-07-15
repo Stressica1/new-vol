@@ -5,7 +5,7 @@ Optimized for 1m/3m confluence signals with dynamic position sizing
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Union
 from datetime import datetime
 import ta
 from config import TradingConfig
@@ -542,28 +542,74 @@ class VolumeAnomalyStrategy:
         
         return True
 
-    def calculate_position_size(self, signal: Dict, account_balance: float, current_price: float) -> float:
-        """💰 Enhanced position sizing with confluence boost"""
+    def calculate_position_size(self, signal: Dict, account_balance: float, current_price: float) -> Dict[str, Union[float, int, bool, str, None]]:
+        """💰 Enhanced position sizing with leverage and budget constraints"""
         
-        is_confluence = signal.get('is_confluence', False)
-        
-        # Base position value
-        base_position_pct = self.config.position_size_pct
-        
-        # Apply confluence multiplier
-        if is_confluence:
-            position_pct = base_position_pct * self.config.confluence_position_multiplier
-            safe_log('info', f"🚀 Confluence boost applied: {base_position_pct}% → {position_pct:.1f}%")
-        else:
-            position_pct = base_position_pct
-        
-        # Calculate position value
-        position_value = account_balance * (position_pct / 100)
-        
-        # Calculate position size in contracts/units
-        position_size = position_value / current_price
-        
-        return position_size
+        try:
+            from position_sizing import create_position_sizer
+            
+            # Create position sizer with current account balance
+            sizer = create_position_sizer(account_balance)
+            
+            # Get signal details
+            confidence = signal.get('confidence', 0)
+            is_confluence = signal.get('is_confluence', False)
+            
+            # Calculate stop loss price
+            stop_loss_price = None
+            if signal.get('type') == 'LONG':
+                stop_loss_price = current_price * (1 - self.config.stop_loss_pct / 100)
+            elif signal.get('type') == 'SHORT':
+                stop_loss_price = current_price * (1 + self.config.stop_loss_pct / 100)
+            
+            # Calculate position size with all constraints
+            position_details = sizer.calculate_position_size_with_constraints(
+                signal_confidence=confidence,
+                entry_price=current_price,
+                stop_loss_price=stop_loss_price,
+                is_confluence=is_confluence
+            )
+            
+            # Validate position viability
+            is_viable, reason = sizer.validate_position_viability(position_details)
+            
+            if not is_viable:
+                safe_log('warning', f"⚠️ Position not viable: {reason}")
+                # Return minimum viable position
+                return {
+                    'position_size_usdt': self.config.min_order_size,
+                    'position_size_units': self.config.min_order_size / current_price,
+                    'required_capital': self.config.min_order_size / self.config.leverage,
+                    'leverage_used': self.config.leverage,
+                    'risk_amount': account_balance * (self.config.risk_per_trade / 100),
+                    'entry_price': current_price,
+                    'stop_loss_price': stop_loss_price,
+                    'is_viable': False,
+                    'reason': reason
+                }
+            
+            # Add validation info to result
+            position_details['is_viable'] = True
+            position_details['reason'] = "Position is viable"
+            
+            safe_log('info', f"💰 Position sizing complete: {position_details['position_size_usdt']:.2f} USDT with {position_details['leverage_used']}x leverage")
+            
+            return position_details
+            
+        except Exception as e:
+            safe_log('error', f"❌ Error in position sizing: {e}")
+            # Return minimum viable position as fallback
+            return {
+                'position_size_usdt': self.config.min_order_size,
+                'position_size_units': self.config.min_order_size / current_price,
+                'required_capital': self.config.min_order_size / self.config.leverage,
+                'leverage_used': self.config.leverage,
+                'risk_amount': account_balance * (self.config.risk_per_trade / 100),
+                'entry_price': current_price,
+                'stop_loss_price': None,
+                'is_viable': False,
+                'reason': f"Error: {str(e)}"
+            }
 
     def calculate_stop_loss_take_profit(self, signal: Dict, entry_price: float) -> Tuple[float, float]:
         """🎯 Calculate stop loss and take profit with tighter scalping levels"""

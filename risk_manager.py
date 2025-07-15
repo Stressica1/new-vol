@@ -36,8 +36,8 @@ class AlpineRiskManager:
         
         current_date = datetime.now().date()
         
-        # Reset daily tracking if new day
-        if current_date != self.session_start_time:
+        # Reset daily tracking if new day or first initialization
+        if current_date != self.session_start_time or self.daily_start_balance == 0.0:
             self.daily_start_balance = account_balance
             self.daily_pnl = 0.0
             self.session_start_time = current_date
