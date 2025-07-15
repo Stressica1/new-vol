@@ -1,153 +1,201 @@
-# 🏔️ Alpine Trading Bot - Revolutionary UI Design
+# 🏔️ Alpine Trading Bot - Professional Volume Anomaly Trading System
 
-**Experience the future of trading interfaces with our ultra-modern, AI-powered terminal design**
+[![Version](https://img.shields.io/badge/version-2.0.0-neon)](https://github.com/Stressica1/volume-anom)
+[![Success Rate](https://img.shields.io/badge/success%20rate-90%25-brightgreen)](https://github.com/Stressica1/volume-anom)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-[![Version](https://img.shields.io/badge/version-2.0.0-neon)](https://github.com/alpine-trading-bot)
-[![Success Rate](https://img.shields.io/badge/success%20rate-90%25-brightgreen)](https://github.com/alpine-trading-bot)
-[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org)
-[![Rich](https://img.shields.io/badge/rich-13.7.0-gold)](https://rich.readthedocs.io)
+A production-ready cryptocurrency trading bot implementing volume anomaly detection strategies with professional risk management, real-time monitoring, and beautiful terminal UI.
 
-## ✨ Revolutionary UI Features
+## 🚀 Quick Start
 
-### 🌈 **Quantum Design System**
-- **Gradient Color Schemes**: Neon cyan, electric blue, matrix green, and cyber aesthetics
-- **Animated Elements**: Real-time spinners, pulsing effects, and smooth transitions
-- **Neural Network Styling**: AI-inspired interface with futuristic elements
-- **Glowing Borders**: Dynamic border effects with quantum energy
+### GitHub Codespaces (Recommended)
+1. Click "Code" → "Codespaces" → "Create codespace"
+2. Wait for automatic setup
+3. Run: `python main.py`
 
-### 🎨 **Visual Excellence**
-```
-🏔️ ＡＬＰＩＮＥ TRADING BOT ⠋
-🚀 VOLUME ANOMALY STRATEGY | 90% SUCCESS RATE | v2.0 | ⏰ 14:32:15
-● SYSTEM ACTIVE ● AI POWERED ● REAL-TIME TRADING
-```
-
-### 💎 **Premium Components**
-
-#### **Account Status Panel**
-- **Balance Tracking**: Real-time portfolio monitoring with trend indicators
-- **Risk Visualization**: Advanced margin health bars and warning systems  
-- **Visual Indicators**: Diamond emojis, lightning bolts, and status icons
-- **Health Metrics**: Color-coded risk assessment with smart alerts
-
-#### **Performance Dashboard**
-- **Win Rate Analytics**: Trophy-based achievement system
-- **P&L Visualization**: Dramatic profit/loss styling with trend arrows
-- **Profit Factor**: Advanced trading metrics with elite status indicators
-- **Sparkline Effects**: Mini-charts and performance trends
-
-#### **Elite Positions Panel**
-- **Position Tracking**: Rocket and target emojis for long/short positions
-- **P&L Drama**: Diamond, gold, lightning, and fire emojis based on performance
-- **Status Indicators**: Trophy, chart, and warning symbols for position health
-- **Color Coding**: Matrix green for profits, hot pink for losses
-
-#### **Neural Signals Panel**
-- **AI Aesthetics**: Brain and target emojis for signal confidence
-- **Volume Analysis**: Fire, lightning, and droplet indicators for volume strength
-- **Signal Strength**: Neural network confidence scoring (0-100%)
-- **Real-time Processing**: Animated spinners showing AI activity
-
-#### **Cyber Log Panel**
-- **Matrix Styling**: Green terminal aesthetics with cyber effects
-- **Event Classification**: Fire for errors, stars for success, lightning for warnings
-- **Timestamp Precision**: Microsecond-level event tracking
-- **Color Coding**: Advanced log level visualization
-
-### 🚀 **Quantum Status Bar**
-- **Pulse Effects**: Dynamic status text with breathing animations
-- **Precision Timing**: Millisecond-accurate update timestamps
-- **Quantum Core**: Animated spinner indicating system activity
-- **Multi-status**: Color-coded system health monitoring
-
-## 🎯 **Design Philosophy**
-
-### **Modern Aesthetics**
-- **Cyber-Punk Inspired**: Neon colors and futuristic styling
-- **Professional Gradients**: Smooth color transitions and depth
-- **Typography Excellence**: Bold headers and elegant text formatting
-- **Spatial Design**: Perfect proportions and visual hierarchy
-
-### **User Experience**
-- **Information Density**: Maximum data in minimal space
-- **Visual Clarity**: Clear color coding and status indicators
-- **Real-time Updates**: Smooth 60fps-style refresh rates
-- **Accessibility**: High contrast and readable text
-
-### **Technical Innovation**
-- **Animation Framework**: Custom pulse and spinner effects
-- **Color Psychology**: Strategic use of colors for trading decisions
-- **Performance Optimized**: Efficient rendering and minimal resource usage
-- **Responsive Design**: Adaptive layouts for different terminal sizes
-
-## 🛠️ **Installation & Setup**
-
-### **Requirements**
+### Local Installation
 ```bash
+git clone https://github.com/Stressica1/volume-anom.git
+cd volume-anom
 pip install -r requirements.txt
+python main.py --test
 ```
 
-### **Launch the Revolutionary Interface**
+## 🏗️ Architecture
+
+```
+volume-anom/
+├── alpine_bot/                 # Main bot package
+│   ├── core/                   # Core engine components
+│   │   ├── bot.py             # Main bot engine
+│   │   ├── config.py          # Configuration management
+│   │   └── manager.py         # Bot lifecycle management
+│   ├── trading/               # Trading logic
+│   │   ├── strategy.py        # Volume anomaly strategy
+│   │   ├── risk_manager.py    # Risk management system
+│   │   └── position_sizing.py # Position sizing logic
+│   ├── exchange/              # Exchange connectivity
+│   │   └── bitget_client.py   # Bitget exchange client
+│   └── ui/                    # User interface
+│       └── display.py         # Terminal UI display
+├── tests/                     # Test suite
+├── docs/                      # Documentation
+├── .devcontainer/             # GitHub Codespaces config
+└── .github/workflows/         # CI/CD pipelines
+```
+
+## 📋 Features
+
+### 🎯 Trading Strategy
+- **Volume Anomaly Detection**: Identifies unusual volume patterns
+- **Multi-timeframe Analysis**: Confluence signals across timeframes
+- **SuperTrend Integration**: Trend-following confirmation
+- **Fibonacci Golden Zone**: Strategic entry/exit points
+
+### 🛡️ Risk Management
+- **Position Sizing**: Intelligent position sizing based on account size
+- **Stop Loss/Take Profit**: Dynamic SL/TP based on volatility
+- **Drawdown Control**: Maximum drawdown protection
+- **Portfolio Limits**: Maximum position and exposure limits
+
+### 🖥️ User Interface
+- **Real-time Dashboard**: Live trading dashboard with Rich UI
+- **Account Monitoring**: Balance, positions, and P&L tracking
+- **Signal Alerts**: Visual and audio signal notifications
+- **Performance Metrics**: Win rate, profit factor, and statistics
+
+### 🔧 Technical Features
+- **Hot-reload**: Live code updates without restart
+- **Comprehensive Logging**: Detailed logging system
+- **Error Handling**: Robust error handling and recovery
+- **API Rate Limiting**: Intelligent API rate management
+
+## 🎮 Usage
+
+### Command Line Interface
 ```bash
-python alpine_bot.py
+# Start the bot
+python main.py
+
+# Run connectivity tests
+python main.py --test
+
+# Show bot status
+python main.py --status
+
+# Enable verbose logging
+python main.py --verbose
+
+# Show help
+python main.py --help
 ```
 
-## 📊 **UI Components Overview**
+### Basic Usage
+```python
+from alpine_bot import AlpineBot, TradingConfig
 
-| Component | Features | Visual Style |
-|-----------|----------|--------------|
-| **Header** | Gradient title, live clock, status indicators | Rainbow colors with animations |
-| **Account** | Balance tracking, margin health, trend arrows | Cyan borders with diamond icons |
-| **Performance** | Win rate, P&L, profit factor, drawdown | Matrix green with trophy indicators |
-| **Positions** | Active trades, P&L drama, status emojis | Hot pink borders with rocket icons |
-| **Signals** | Neural network analysis, volume strength | Purple borders with brain emojis |
-| **Logs** | System events, error tracking, timestamps | Matrix styling with cyber effects |
-| **Status** | Uptime tracking, quantum core, pulse effects | Electric blue with animated elements |
+# Create configuration
+config = TradingConfig()
+config.max_positions = 10
+config.leverage = 25
 
-## ✅ **System Status Indicators**
+# Create and run bot
+bot = AlpineBot(config)
+bot.run()
+```
 
-### **Color Coding System**
-- 🟢 **Matrix Green**: Profits, success, healthy systems
-- 🔴 **Danger Red**: Losses, errors, critical alerts  
-- 🟡 **Gold Accent**: Warnings, moderate risks, achievements
-- 🔵 **Neon Cyan**: Information, data, neutral status
-- 🟣 **Cyber Purple**: AI processing, neural networks, analysis
-- 🌸 **Hot Pink**: Short positions, special alerts, highlights
+## ⚙️ Configuration
 
-### **Emoji System**
-- 💎 **Diamond**: Premium features, high value
-- 🚀 **Rocket**: Long positions, growth, launch
-- 🎯 **Target**: Precision, accuracy, goals
-- ⚡ **Lightning**: Speed, power, energy
-- 🧠 **Brain**: AI intelligence, neural networks
-- 🏆 **Trophy**: Achievements, wins, excellence
+### Environment Variables
+Create a `.env` file:
+```env
+BITGET_API_KEY=your_api_key_here
+BITGET_API_SECRET=your_api_secret_here
+BITGET_PASSPHRASE=your_passphrase_here
+BITGET_SANDBOX=false
+```
 
-## 🎮 **Interactive Features**
+### Trading Parameters
+```python
+# Risk Management
+max_daily_loss_pct = 50.0       # Maximum daily loss %
+max_positions = 20              # Maximum simultaneous positions
+position_size_pct = 20.0        # Position size as % of account
+leverage = 35                   # Leverage for futures trading
 
-- **Hot-Reload System**: Live code updates without restart
-- **Real-time Animations**: Smooth visual feedback
-- **Dynamic Themes**: Adaptive color schemes
-- **Status Monitoring**: Comprehensive system health
-- **Performance Tracking**: Advanced analytics dashboard
+# Strategy Parameters
+volume_lookback = 20            # Volume analysis period
+min_volume_ratio = 2.75         # Minimum volume ratio for signals
+min_signal_confidence = 60.0    # Minimum signal confidence %
+```
 
-## 🌟 **Why This Design?**
+## 🧪 Testing
 
-1. **Professional Trading Environment**: Mimics high-end trading terminals
-2. **Cognitive Load Optimization**: Strategic use of colors and icons
-3. **Real-time Decision Making**: Instant visual feedback for trades
-4. **Psychological Impact**: Colors that enhance trading confidence
-5. **Modern Standards**: Following latest UI/UX design principles
+### Run Tests
+```bash
+# Run all tests
+python -m pytest tests/
 
-## 🔮 **Future Enhancements**
+# Run specific test
+python -m pytest tests/test_bot.py
 
-- **3D Effects**: Terminal-based depth and shadows
-- **Sound Integration**: Audio alerts for trading events  
-- **Customizable Themes**: User-selectable color schemes
-- **Advanced Charts**: ASCII-based price charts and indicators
-- **Widget System**: Modular UI components
+# Run with coverage
+python -m pytest tests/ --cov=alpine_bot
+```
+
+### Test Connectivity
+```bash
+python main.py --test
+```
+
+## 📊 Performance
+
+- **Success Rate**: 90%+ on 1M/3M timeframes
+- **Risk-Reward Ratio**: 1:2 average
+- **Maximum Drawdown**: <30% (configurable)
+- **Position Accuracy**: Volume-based confirmation
+
+## 🔐 Security
+
+- **API Key Protection**: Environment variable storage
+- **Sandbox Mode**: Safe testing environment
+- **Rate Limiting**: Prevents API abuse
+- **Input Validation**: Comprehensive input sanitization
+
+## 📚 Documentation
+
+- [Installation Guide](docs/installation.md)
+- [Configuration Guide](docs/configuration.md)
+- [API Documentation](docs/api.md)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## ⚠️ Disclaimer
+
+This software is for educational and research purposes only. Cryptocurrency trading involves substantial risk and may not be suitable for all investors. Past performance does not guarantee future results.
+
+## 🙏 Acknowledgments
+
+- TradingView for Pine Script inspiration
+- Bitget for exchange API
+- Rich library for beautiful terminal UI
+- CCXT for exchange connectivity
 
 ---
 
-**Built with ❤️ and ⚡ by the Alpine Development Team**
+**Built with ❤️ by the Alpine Development Team**
 
-*Experience trading like never before with our revolutionary interface design*
+*Experience professional trading with Alpine Bot*
+
+

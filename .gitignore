@@ -147,3 +147,17 @@ trading_system.log
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Alpine Bot specific
+logs/
+alpine.log
+*.json
+models/
+simulation_*.png
+backtest_*.json
+bot_verification_results_*.json
+ccxt_integration_test_results_*.json
+demo_output.json
+mock_results.json
+results*.json
+system_diagnostic_report.txt
