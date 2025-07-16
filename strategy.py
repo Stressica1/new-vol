@@ -37,6 +37,13 @@ class VolumeAnomalyStrategy:
     def calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate technical indicators"""
         try:
+            # Validate required columns exist
+            required_columns = ['open', 'high', 'low', 'close', 'volume']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                raise ValueError(f"Missing required columns: {missing_columns}. Available columns: {list(df.columns)}")
+            
             # Volume indicators
             df['volume_sma'] = df['volume'].rolling(window=self.volume_lookback).mean()
             df['volume_std'] = df['volume'].rolling(window=self.volume_lookback).std()
@@ -337,6 +344,10 @@ class VolumeAnomalyStrategy:
         try:
             # Get primary timeframe data (5M default)
             primary_data = market_data.get(symbol, [])
+            
+            # Validate and clean the data structure
+            primary_data = self.validate_market_data_structure(primary_data)
+            
             if not primary_data or len(primary_data) < self.volume_lookback:
                 return {'signal': None, 'confidence': 0}
             
@@ -524,6 +535,36 @@ class VolumeAnomalyStrategy:
         signals.sort(key=lambda x: x['confidence'], reverse=True)
         return signals[:5]  # Return top 5 signals
 
+    def validate_market_data_structure(self, data: List) -> List:
+        """
+        Validate and clean market data structure to ensure proper OHLCV format
+        """
+        if not data or not isinstance(data, list):
+            return []
+        
+        cleaned_data = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+                
+            # Check if item has required OHLCV fields
+            required_fields = ['open', 'high', 'low', 'close', 'volume']
+            if all(field in item for field in required_fields):
+                # Ensure numeric values
+                try:
+                    cleaned_item = {
+                        'open': float(item['open']),
+                        'high': float(item['high']),
+                        'low': float(item['low']),
+                        'close': float(item['close']),
+                        'volume': float(item['volume'])
+                    }
+                    cleaned_data.append(cleaned_item)
+                except (ValueError, TypeError):
+                    continue
+        
+        return cleaned_data
+
     def calculate_mtf_signals(self, symbol: str, market_data: Dict) -> Dict:
         """
         Calculate Multi-Timeframe (MTF) signals for 1M, 3M, 5M, 10M, 15M
@@ -550,12 +591,35 @@ class VolumeAnomalyStrategy:
                     # Get timeframe data
                     tf_data = market_data.get(f"{symbol}_{timeframe}", market_data.get(symbol, []))
                     
+                    # Validate and clean the data structure
+                    tf_data = self.validate_market_data_structure(tf_data)
+                    
                     if not tf_data or len(tf_data) < 20:
                         print(f"⚠️ Insufficient data for {timeframe}")
                         continue
                     
                     # Convert to DataFrame
                     df = pd.DataFrame(tf_data)
+                    
+                    # Validate required columns exist
+                    required_columns = ['open', 'high', 'low', 'close', 'volume']
+                    missing_columns = [col for col in required_columns if col not in df.columns]
+                    
+                    if missing_columns:
+                        print(f"⚠️ Missing columns for {timeframe}: {missing_columns}")
+                        continue
+                    
+                    # Ensure data types are correct
+                    for col in ['open', 'high', 'low', 'close', 'volume']:
+                        if col in df.columns:
+                            df[col] = pd.to_numeric(df[col], errors='coerce')
+                    
+                    # Remove rows with NaN values
+                    df = df.dropna(subset=['open', 'high', 'low', 'close', 'volume'])
+                    
+                    if len(df) < 20:
+                        print(f"⚠️ Insufficient valid data for {timeframe} after cleaning")
+                        continue
                     
                     # Calculate indicators for this timeframe
                     df = self.calculate_indicators(df)
@@ -635,6 +699,19 @@ class VolumeAnomalyStrategy:
         Returns signal type and strength for MTF analysis
         """
         try:
+            # Validate that we have the required indicator columns
+            required_indicators = ['supertrend_direction', 'supertrend_strength', 'volume_ratio', 'volume_anomaly']
+            missing_indicators = [ind for ind in required_indicators if ind not in latest.index]
+            
+            if missing_indicators:
+                print(f"⚠️ Missing indicators for {timeframe}: {missing_indicators}")
+                return {
+                    'signal': 'NEUTRAL',
+                    'strength': 0.0,
+                    'timeframe': timeframe,
+                    'error': f"Missing indicators: {missing_indicators}"
+                }
+            
             # SuperTrend analysis
             supertrend_direction = latest.get('supertrend_direction', 0)
             supertrend_strength = latest.get('supertrend_strength', 0)
