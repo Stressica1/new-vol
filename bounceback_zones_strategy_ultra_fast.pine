@@ -1,0 +1,169 @@
+//@version=5
+strategy("Bounceback Zones - OPTIMIZED", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=10)
+
+// ============================================================================
+// INPUT PARAMETERS
+// ============================================================================
+pivot_length = input.int(10, "Pivot Length")
+volume_threshold = input.float(1.5, "Volume Threshold")
+rsi_oversold = input.int(30, "RSI Oversold")
+rsi_overbought = input.int(70, "RSI Overbought")
+confirmation_bars = input.int(2, "Confirmation Bars", minval=1, maxval=5)
+
+// ============================================================================
+// CALCULATIONS - SINGLE LINE STATEMENTS
+// ============================================================================
+
+// Pivot detection
+pivot_high = ta.pivothigh(high, pivot_length, pivot_length)
+pivot_low = ta.pivotlow(low, pivot_length, pivot_length)
+
+// Volume analysis
+volume_ma = ta.sma(volume, 20)
+volume_spike = volume > volume_ma * volume_threshold
+
+// Technical indicators
+rsi = ta.rsi(close, 14)
+ma_fast = ta.sma(close, 20)
+ma_slow = ta.sma(close, 50)
+
+// ============================================================================
+// SUPPORT/RESISTANCE MANAGEMENT
+// ============================================================================
+
+// Level confirmation variables
+var float confirmed_resistance = na
+var float confirmed_support = na
+var int resistance_confirmed_bars = 0
+var int support_confirmed_bars = 0
+
+// Update resistance with confirmation
+if not na(pivot_high)
+    confirmed_resistance := pivot_high
+    resistance_confirmed_bars := 0
+else
+    resistance_confirmed_bars := resistance_confirmed_bars + 1
+
+// Update support with confirmation
+if not na(pivot_low)
+    confirmed_support := pivot_low
+    support_confirmed_bars := 0
+else
+    support_confirmed_bars := support_confirmed_bars + 1
+
+// Active level management
+var float active_resistance = na
+var float active_support = na
+
+// Set active levels after confirmation
+if resistance_confirmed_bars >= confirmation_bars and not na(confirmed_resistance)
+    active_resistance := confirmed_resistance
+
+if support_confirmed_bars >= confirmation_bars and not na(confirmed_support)
+    active_support := confirmed_support
+
+// ============================================================================
+// SIGNAL DETECTION - OPTIMIZED METHODS
+// ============================================================================
+
+// Level proximity check
+is_near_support = not na(active_support) and math.abs(low - active_support) / active_support * 100 <= 0.5
+is_near_resistance = not na(active_resistance) and math.abs(high - active_resistance) / active_resistance * 100 <= 0.5
+
+// Signal confirmation variables
+var bool support_bounce_signal = false
+var bool resistance_bounce_signal = false
+
+// Support bounce detection
+if is_near_support and rsi < rsi_oversold and volume_spike
+    support_bounce_signal := true
+else
+    support_bounce_signal := false
+
+// Resistance bounce detection
+if is_near_resistance and rsi > rsi_overbought and volume_spike
+    resistance_bounce_signal := true
+else
+    resistance_bounce_signal := false
+
+// Trend analysis
+bullish_trend = ma_fast > ma_slow
+bearish_trend = ma_fast < ma_slow
+
+// Price confirmation
+price_above_ma = close > ma_fast
+price_below_ma = close < ma_fast
+
+// Final signal conditions
+long_condition = support_bounce_signal and bullish_trend and price_above_ma
+short_condition = resistance_bounce_signal and bearish_trend and price_below_ma
+
+// ============================================================================
+// TRADE EXECUTION
+// ============================================================================
+
+// Long position management
+if long_condition
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", stop=close * 0.98, limit=close * 1.03)
+
+// Short position management
+if short_condition
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", stop=close * 1.02, limit=close * 0.97)
+
+// ============================================================================
+// VISUAL PLOTTING
+// ============================================================================
+
+// Plot confirmed levels
+plot(active_support, "CONFIRMED SUPPORT - GO LONG", color=color.green, linewidth=2)
+plot(active_resistance, "CONFIRMED RESISTANCE - GO SHORT", color=color.red, linewidth=2)
+
+// Signal labels
+if long_condition
+    label.new(bar_index, active_support, "LONG", color=color.green, textcolor=color.white, style=label.style_label_up)
+
+if short_condition
+    label.new(bar_index, active_resistance, "SHORT", color=color.red, textcolor=color.white, style=label.style_label_down)
+
+// ============================================================================
+// ALERT SYSTEM
+// ============================================================================
+
+alertcondition(long_condition, "Confirmed Long Signal", "CONFIRMED LONG at {{close}}")
+alertcondition(short_condition, "Confirmed Short Signal", "CONFIRMED SHORT at {{close}}")
+
+// ============================================================================
+// STATUS DISPLAY
+// ============================================================================
+
+if barstate.islast
+    // Create status table
+    var table info_table = table.new(position.top_right, 2, 5, bgcolor=color.white)
+    
+    // Support level display
+    table.cell(info_table, 0, 0, "Support", text_color=color.black)
+    support_text = not na(active_support) ? str.tostring(active_support, "#.##") : "None"
+    table.cell(info_table, 1, 0, support_text, text_color=color.green)
+    
+    // Resistance level display
+    table.cell(info_table, 0, 1, "Resistance", text_color=color.black)
+    resistance_text = not na(active_resistance) ? str.tostring(active_resistance, "#.##") : "None"
+    table.cell(info_table, 1, 1, resistance_text, text_color=color.red)
+    
+    // RSI display
+    table.cell(info_table, 0, 2, "RSI", text_color=color.black)
+    table.cell(info_table, 1, 2, str.tostring(math.round(rsi, 0)), text_color=color.blue)
+    
+    // Trend display
+    table.cell(info_table, 0, 3, "Trend", text_color=color.black)
+    trend_text = bullish_trend ? "BULLISH" : "BEARISH"
+    trend_color = bullish_trend ? color.green : color.red
+    table.cell(info_table, 1, 3, trend_text, text_color=trend_color)
+    
+    // Signal display
+    table.cell(info_table, 0, 4, "Signal", text_color=color.black)
+    signal_text = long_condition ? "LONG" : short_condition ? "SHORT" : "NONE"
+    signal_color = long_condition ? color.green : short_condition ? color.red : color.gray
+    table.cell(info_table, 1, 4, signal_text, text_color=signal_color) 
