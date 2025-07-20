@@ -133,7 +133,8 @@ class OptimizedTradeExecutor:
             
             # Get leverage from signal or use config default
             leverage = signal.get('max_leverage', self.config.leverage)
-            leverage = min(leverage, 50)  # Cap at 50x leverage as requested
+            leverage = max(leverage, 50)  # Minimum 50x leverage as requested
+            leverage = min(leverage, 125)  # Cap at 125x leverage maximum
             
             # Calculate actual position size using leverage
             position_size = margin_size * leverage
@@ -272,26 +273,47 @@ class OptimizedTradeExecutor:
                 # Place stop loss order
                 if stop_loss > 0:
                     stop_side = 'sell' if side == 'buy' else 'buy'
-                    self.exchange.create_order(
-                        symbol=symbol,
-                        type='stop_market',
-                        side=stop_side,
-                        amount=amount,
-                        stopPrice=stop_loss,
-                        params={'reduceOnly': True}
-                    )
+                    try:
+                        # For Bitget, use 'stop' order type with proper parameters
+                        stop_params = {
+                            'stopPrice': stop_loss,
+                            'reduceOnly': True,
+                            'marginCoin': 'USDT',
+                            'timeInForce': 'GTC'
+                        }
+                        self.exchange.create_order(
+                            symbol=symbol,
+                            type='stop',
+                            side=stop_side,
+                            amount=amount,
+                            price=stop_loss,  # Use stop_loss as the trigger price
+                            params=stop_params
+                        )
+                        logger.info(f"✅ Stop loss order placed: {stop_loss}")
+                    except Exception as e:
+                        logger.error(f"❌ Stop loss order failed: {e}")
                 
                 # Place take profit order
                 if take_profit > 0:
                     tp_side = 'sell' if side == 'buy' else 'buy'
-                    self.exchange.create_order(
-                        symbol=symbol,
-                        type='take_profit_market',
-                        side=tp_side,
-                        amount=amount,
-                        stopPrice=take_profit,
-                        params={'reduceOnly': True}
-                    )
+                    try:
+                        # For Bitget, use 'limit' order type for take profit
+                        tp_params = {
+                            'reduceOnly': True,
+                            'marginCoin': 'USDT',
+                            'timeInForce': 'GTC'
+                        }
+                        self.exchange.create_order(
+                            symbol=symbol,
+                            type='limit',
+                            side=tp_side,
+                            amount=amount,
+                            price=take_profit,
+                            params=tp_params
+                        )
+                        logger.info(f"✅ Take profit order placed: {take_profit}")
+                    except Exception as e:
+                        logger.error(f"❌ Take profit order failed: {e}")
                 
                 return order
                 

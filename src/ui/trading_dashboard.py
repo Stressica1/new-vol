@@ -93,21 +93,21 @@ class BitgetConnection:
                 logger.warning(f"❌ Keep alive failed: {str(e)}")
                 self.connected = False
 
-class MintGreenDisplay:
-    """🌿 Beautiful Mint Green & Black Terminal Display"""
+class SteampunkDisplay:
+    """⚙️ Steampunk Trading Display with Mint Green, Dark Purple, Pink & Orange"""
     
-    # Mint Green & Black Color Scheme
+    # Steampunk Color Scheme
     COLORS = {
-        'primary': 'bright_green',
-        'secondary': 'green',
-        'accent': 'cyan',
-        'background': 'black',
-        'text': 'white',
-        'success': 'bright_green',
-        'warning': 'yellow',
-        'danger': 'red',
-        'profit': 'bright_green',
-        'loss': 'bright_red'
+        'primary': '#00FFB3',      # Mint green (main accent)
+        'secondary': '#4A148C',    # Dark purple (steampunk elegance)
+        'accent': '#9D4EDD',       # Purple accent
+        'background': '#1A1A2E',   # Dark navy (steampunk background)
+        'text': '#E0E0E0',         # Light gray (readable text)
+        'success': '#FF69B4',      # Hot pink (bull signals)
+        'warning': '#FF8C00',      # Dark orange (bear signals)
+        'danger': '#FF4444',       # Bright red (critical alerts)
+        'profit': '#FF69B4',       # Hot pink for profits
+        'loss': '#FF8C00'          # Dark orange for losses
     }
     
     def __init__(self):
@@ -117,20 +117,20 @@ class MintGreenDisplay:
         self.update_throttle = 0.5  # Minimum time between layout updates
         
     def create_header(self, account_data: Dict) -> Panel:
-        """Create dashboard header"""
+        """Create steampunk dashboard header"""
         balance = account_data.get('balance', 0)
         equity = account_data.get('equity', 0)
         free_margin = account_data.get('free_margin', 0)
         
         header_text = Text()
-        header_text.append("🌿 ALPINE TRADING SYSTEM | BITGET PERPETUAL | v2.0", style="bold bright_green")
+        header_text.append("⚙️ STEAMPUNK ALPINE TRADING ENGINE ⚙️", style="bold #00FFB3")
         
         balance_info = Text()
-        balance_info.append(f"💰 Balance:     ${balance:.2f}", style="bright_green")
+        balance_info.append(f"💰 Balance:     ${balance:.2f}", style="#00FFB3")
         balance_info.append("  ")
-        balance_info.append(f"📊 Equity:      ${equity:.2f}", style="bright_cyan")
+        balance_info.append(f"📊 Equity:      ${equity:.2f}", style="#9D4EDD")
         balance_info.append("  ")
-        balance_info.append(f"🎯 Free Margin: ${free_margin:.2f}", style="bright_yellow")
+        balance_info.append(f"🎯 Free Margin: ${free_margin:.2f}", style="#FF69B4")
         
         # Create table for header
         table = Table.grid(padding=1)
@@ -141,14 +141,14 @@ class MintGreenDisplay:
         return Panel(
             table,
             box=box.DOUBLE,
-            style="bright_green",
-            border_style="bright_green"
+            style="#00FFB3",
+            border_style="#4A148C"
         )
     
     def create_pnl_panel(self, pnl_data: Dict) -> Panel:
         """Create PnL performance panel"""
-        table = Table(show_header=True, header_style="bold bright_green", box=box.SIMPLE)
-        table.add_column("Metric", style="bright_cyan", width=12)
+        table = Table(show_header=True, header_style="bold #00FFB3", box=box.SIMPLE)
+        table.add_column("Metric", style="#9D4EDD", width=12)
         table.add_column("Today", justify="center", width=8)
         table.add_column("Week", justify="center", width=8)
         table.add_column("Month", justify="center", width=8)
@@ -156,19 +156,19 @@ class MintGreenDisplay:
         
         def format_pnl(value):
             if value > 0:
-                return f"[bright_green]+${value:.2f}[/bright_green]"
+                return f"[#FF69B4]+${value:.2f}[/#FF69B4]"  # Hot pink for profits
             elif value < 0:
-                return f"[bright_red]-${abs(value):.2f}[/bright_red]"
+                return f"[#FF8C00]-${abs(value):.2f}[/#FF8C00]"  # Dark orange for losses
             else:
-                return f"[white]+${value:.2f}[/white]"
+                return f"[#E0E0E0]+${value:.2f}[/#E0E0E0]"
         
         def format_percentage(value):
             if value > 0:
-                return f"[bright_green]{value:.1f}%[/bright_green]"
+                return f"[#FF69B4]{value:.1f}%[/#FF69B4]"  # Hot pink for positive
             elif value < 0:
-                return f"[bright_red]{value:.1f}%[/bright_red]"
+                return f"[#FF8C00]{value:.1f}%[/#FF8C00]"  # Dark orange for negative
             else:
-                return f"[white]{value:.1f}%[/white]"
+                return f"[#E0E0E0]{value:.1f}%[/#E0E0E0]"
         
         # PnL row
         table.add_row(
@@ -368,7 +368,7 @@ class AlpineTradingDashboard:
         self.exchange_config = get_exchange_config()
         
         # Initialize components
-        self.display = MintGreenDisplay()
+        self.display = SteampunkDisplay()
         self.connection = BitgetConnection(self.exchange_config)
         
         # Trading state

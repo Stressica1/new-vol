@@ -73,25 +73,24 @@ class AlpineDisplay:
         self.current_streak = 0
         self.max_streak = 0
         
-        # 🌈 Revolutionary color palette with gradients
-        self.neon_cyan = "#00FFFF"
-        self.electric_blue = "#0080FF"
-        self.matrix_green = "#39FF14"
-        self.cyber_lime = "#32CD32"
-        self.neon_purple = "#9D00FF"
-        self.hot_pink = "#FF1493"
-        self.gold_accent = "#FFD700"
-        self.silver_accent = "#C0C0C0"
-        self.deep_space = "#0B0C10"
-        self.dark_slate = "#1F2937"
-        self.midnight_blue = "#1E3A8A"
+        # 🌈 Steampunk color palette with mechanical elegance
+        self.mint_green = "#00FFB3"      # Mint green (main accent)
+        self.dark_purple = "#4A148C"     # Dark purple (steampunk elegance)
+        self.hot_pink = "#FF69B4"        # Hot pink (bull signals)
+        self.dark_orange = "#FF8C00"     # Dark orange (bear signals)
+        self.neon_cyan = "#00FFFF"       # Neon cyan (steampunk glow)
+        self.neon_purple = "#9D4EDD"     # Neon purple (steampunk accent)
+        self.bright_red = "#FF4444"      # Bright red (critical alerts)
+        self.deep_sky_blue = "#00BFFF"   # Deep sky blue (info messages)
+        self.dark_navy = "#1A1A2E"       # Dark navy (steampunk background)
+        self.light_gray = "#E0E0E0"      # Light gray (readable text)
         
-        # 🎨 Gradient styles
-        self.primary_gradient = "bright_cyan to bright_blue"
-        self.success_gradient = "bright_green to green"
-        self.danger_gradient = "bright_red to red"
-        self.accent_gradient = "bright_magenta to magenta"
-        self.gold_gradient = "yellow to bright_yellow"
+        # 🎨 Steampunk gradient styles
+        self.primary_gradient = f"{self.mint_green} to {self.dark_purple}"
+        self.success_gradient = f"{self.hot_pink} to {self.neon_purple}"
+        self.danger_gradient = f"{self.dark_orange} to {self.bright_red}"
+        self.accent_gradient = f"{self.neon_cyan} to {self.neon_purple}"
+        self.steampunk_gradient = f"{self.mint_green} to {self.dark_purple}"
         
         # ✨ Animation states
         self.animation_frame = 0
@@ -332,50 +331,34 @@ class AlpineDisplay:
         )
     
     def create_ultra_modern_header(self) -> Panel:
-        """Create revolutionary header with gradients and animations 🌈"""
+        """Create steampunk ultra-modern header with mechanical elegance"""
+        header_text = Text()
+        header_text.append("⚙️ ", style=f"bold {self.mint_green}")
+        header_text.append("STEAMPUNK", style=f"bold {self.mint_green}")
+        header_text.append(" ALPINE ", style=f"bold {self.light_gray}")
+        header_text.append("TRADING ENGINE", style=f"bold {self.dark_purple}")
+        header_text.append(" ⚙️", style=f"bold {self.mint_green}")
         
-        # Animated title with gradient effect
-        title_text = Text()
-        title_text.append("🏔️ ", style="bold white")
-        title_text.append("A", style=f"bold {self.neon_cyan}")
-        title_text.append("L", style=f"bold {self.electric_blue}")
-        title_text.append("P", style=f"bold {self.matrix_green}")
-        title_text.append("I", style=f"bold {self.cyber_lime}")
-        title_text.append("N", style=f"bold {self.neon_purple}")
-        title_text.append("E", style=f"bold {self.hot_pink}")
-        title_text.append(" TRADING BOT ", style="bold white")
-        title_text.append(self.get_animated_spinner(), style=f"bold {self.gold_accent}")
+        # Add mechanical status indicators
+        status_text = Text()
+        status_text.append("🔧 ", style=f"{self.neon_cyan}")
+        status_text.append("ENGINE ACTIVE", style=f"bold {self.hot_pink}")
+        status_text.append(" | ", style=f"{self.light_gray}")
+        status_text.append("⚡", style=f"{self.neon_cyan}")
+        status_text.append(" MAXIMUM LEVERAGE", style=f"bold {self.dark_orange}")
         
-        # Subtitle with live updates
-        current_time = datetime.now().strftime("%H:%M:%S")
-        subtitle = Text()
-        subtitle.append("🚀 VOLUME ANOMALY STRATEGY ", style=f"bold {self.matrix_green}")
-        subtitle.append("| ", style="white")
-        subtitle.append("90% SUCCESS RATE ", style=f"bold {self.gold_accent}")
-        subtitle.append("| ", style="white")
-        subtitle.append(f"v{VERSION} ", style=f"bold {self.silver_accent}")
-        subtitle.append("| ", style="white")
-        subtitle.append(f"⏰ {current_time}", style=f"bold {self.neon_cyan}")
-        
-        # Status indicator line
-        status_line = Text()
-        status_line.append("● ", style=f"bold {self.matrix_green}")
-        status_line.append("SYSTEM ACTIVE ", style=f"bold {self.matrix_green}")
-        status_line.append("● ", style=f"bold {self.gold_accent}")
-        status_line.append("AI POWERED ", style=f"bold {self.gold_accent}")
-        status_line.append("● ", style=f"bold {self.hot_pink}")
-        status_line.append("REAL-TIME TRADING", style=f"bold {self.hot_pink}")
-        
-        header_content = Align.center(
-            Text.assemble(title_text, "\n", subtitle, "\n", status_line)
-        )
+        # Create mechanical layout
+        table = Table.grid(padding=1)
+        table.add_column(justify="left")
+        table.add_column(justify="right")
+        table.add_row(header_text, status_text)
         
         return Panel(
-            header_content,
-            style=f"bold {self.midnight_blue}",
-            box=box.DOUBLE_EDGE,
-            border_style=f"bold {self.neon_cyan}",
-            width=self.max_table_width
+            table,
+            box=box.DOUBLE,
+            style=f"{self.mint_green}",
+            border_style=f"{self.dark_purple}",
+            title="⚙️ MECHANICAL TRADING SYSTEM ⚙️"
         )
     
     def _create_startup_banner(self) -> Panel:
@@ -458,146 +441,129 @@ class AlpineDisplay:
         )
     
     def create_elite_positions_panel(self, positions: List[Dict]) -> Panel:
-        """Create elite positions panel with advanced styling 🚀"""
-        
+        """Create steampunk elite positions panel with mechanical precision"""
         if not positions:
-            empty_content = Align.center(
-                Text.assemble(
-                    Text("🌟 READY FOR ACTION 🌟\n", style=f"bold {self.gold_accent}"),
-                    Text("No active positions\n", style=f"italic {self.silver_accent}"),
-                    Text("⚡ Scanning for opportunities...", style=f"bold {self.neon_cyan}")
-                )
-            )
-            return self.create_glowing_border(
-                Padding(empty_content, (3, 2)),
-                f"ACTIVE POSITIONS (0)",
-                self.neon_purple
+            return Panel(
+                Align.center("🔧 No active positions - Engine scanning for opportunities..."),
+                title="⚙️ MECHANICAL POSITIONS ⚙️",
+                border_style=f"{self.dark_purple}",
+                style=f"{self.mint_green}"
             )
         
-        pos_table = Table(box=None, padding=(0, 1), width=self.max_table_width - 10)
-        pos_table.add_column("🎯", style="bold", width=4, no_wrap=True)
-        pos_table.add_column("SYMBOL", style="bold white", width=10, no_wrap=True)
-        pos_table.add_column("SIDE", style="bold", width=6, no_wrap=True)
-        pos_table.add_column("SIZE", style="white", width=10, no_wrap=True)
-        pos_table.add_column("ENTRY", style="white", width=10, no_wrap=True)
-        pos_table.add_column("CURRENT", style="white", width=10, no_wrap=True)
-        pos_table.add_column("P&L", style="bold", width=14, no_wrap=True)
-        pos_table.add_column("📊", style="bold", width=4, no_wrap=True)
+        table = Table(show_header=True, header_style=f"bold {self.mint_green}", box=box.SIMPLE)
+        table.add_column("Symbol", style=f"bold {self.neon_purple}", width=12)
+        table.add_column("Type", justify="center", width=8)
+        table.add_column("Size", justify="right", width=10)
+        table.add_column("Entry", justify="right", width=10)
+        table.add_column("Current", justify="right", width=10)
+        table.add_column("P&L", justify="right", width=12)
+        table.add_column("ROI%", justify="center", width=8)
         
-        for i, pos in enumerate(positions[:8]):  # Show max 8 positions with elite styling
-            symbol = pos.get('symbol', 'N/A').replace('/USDT:USDT', '')
-            side = pos.get('side', 'N/A').upper()
-            size = pos.get('contracts', 0)
-            entry_price = pos.get('entryPrice', 0)
-            mark_price = pos.get('markPrice', 0)
-            unrealized_pnl = pos.get('unrealizedPnl', 0)
+        for pos in positions[:8]:  # Show first 8 positions
+            symbol = pos.get('symbol', 'N/A')
+            side = pos.get('side', 'N/A')
+            size = pos.get('size', 0.0)
+            entry_price = pos.get('entry_price', 0.0)
+            current_price = pos.get('current_price', 0.0)
+            pnl = pos.get('pnl', 0.0)
+            roi = pos.get('roi', 0.0)
             
-            # Enhanced styling
-            position_emoji = "🚀" if side == 'LONG' else "🎯"
-            side_color = self.matrix_green if side == 'LONG' else self.hot_pink
-            side_style = f"[{side_color}]● {side}[/]"
+            # Steampunk color coding
+            if side.upper() in ['LONG', 'BUY']:
+                side_color = f"{self.hot_pink}"  # Hot pink for bulls
+            else:
+                side_color = f"{self.dark_orange}"  # Dark orange for bears
             
-            # P&L with dramatic effects
-            pnl_color = self.matrix_green if unrealized_pnl >= 0 else self.danger_gradient
-            pnl_emoji = "💎" if unrealized_pnl > 100 else "💰" if unrealized_pnl > 0 else "⚡" if unrealized_pnl > -50 else "🔥"
+            # P&L color coding
+            if pnl > 0:
+                pnl_color = f"{self.hot_pink}"  # Hot pink for profits
+                roi_color = f"{self.hot_pink}"
+            elif pnl < 0:
+                pnl_color = f"{self.dark_orange}"  # Dark orange for losses
+                roi_color = f"{self.dark_orange}"
+            else:
+                pnl_color = f"{self.light_gray}"
+                roi_color = f"{self.light_gray}"
             
-            # Performance indicator
-            pnl_percent = ((mark_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
-            if side == 'SHORT':
-                pnl_percent = -pnl_percent
-                
-            status_emoji = "🏆" if pnl_percent > 5 else "📈" if pnl_percent > 0 else "📊" if pnl_percent > -5 else "⚠️"
-            
-            pos_table.add_row(
-                position_emoji,
-                f"[bold {self.neon_cyan}]{symbol}[/]",
-                side_style,
-                f"{size:.4f}",
-                f"${entry_price:.4f}",
-                f"[bold]{mark_price:.4f}[/]",
-                f"[{pnl_color}]{pnl_emoji} ${unrealized_pnl:.2f}[/]",
-                status_emoji
+            table.add_row(
+                symbol,
+                f"[{side_color}]{side}[/{side_color}]",
+                f"{size:,.2f}",
+                f"${entry_price:,.4f}",
+                f"${current_price:,.4f}",
+                f"[{pnl_color}]${pnl:,.2f}[/{pnl_color}]",
+                f"[{roi_color}]{roi:+.2f}%[/{roi_color}]"
             )
         
-        return self.create_glowing_border(
-            Padding(pos_table, (1, 1)),
-            f"ACTIVE POSITIONS ({len(positions)})",
-            self.hot_pink
+        return Panel(
+            table,
+            title=f"⚙️ MECHANICAL POSITIONS ({len(positions)}) ⚙️",
+            border_style=f"{self.dark_purple}",
+            style=f"{self.mint_green}"
         )
     
     def create_neural_signals_panel(self, signals: List[Dict]) -> Panel:
-        """Create neural-style signals panel with AI aesthetics 🧠"""
-        
+        """Create steampunk neural signals panel with mechanical precision"""
         if not signals:
-            empty_content = Align.center(
-                Text.assemble(
-                    Text("🧠 AI NEURAL NETWORK 🧠\n", style=f"bold {self.neon_purple}"),
-                    Text("Scanning market patterns...\n", style=f"italic {self.silver_accent}"),
-                    Text(f"{self.get_animated_spinner()} Processing data streams", style=f"bold {self.electric_blue}")
-                )
-            )
-            return self.create_glowing_border(
-                Padding(empty_content, (3, 2)),
-                "NEURAL SIGNALS (0)",
-                self.neon_purple
+            return Panel(
+                Align.center("🔧 Scanning for mechanical signals..."),
+                title="⚙️ MECHANICAL SIGNALS ⚙️",
+                border_style=f"{self.dark_purple}",
+                style=f"{self.mint_green}"
             )
         
-        sig_table = Table(box=None, padding=(0, 1), width=self.max_table_width - 10)
-        sig_table.add_column("🕐", style="white", width=8, no_wrap=True)
-        sig_table.add_column("🎯", style="bold white", width=8, no_wrap=True)
-        sig_table.add_column("SIGNAL", style="bold", width=10, no_wrap=True)
-        sig_table.add_column("VOLUME", style="white", width=8, no_wrap=True)
-        sig_table.add_column("PRICE", style="white", width=10, no_wrap=True)
-        sig_table.add_column("STRENGTH", style="bold", width=10, no_wrap=True)
-        sig_table.add_column("STATUS", style="bold", width=10, no_wrap=True)
-        sig_table.add_column("🚀", style="bold", width=4, no_wrap=True)
+        table = Table(show_header=True, header_style=f"bold {self.mint_green}", box=box.SIMPLE)
+        table.add_column("Symbol", style=f"bold {self.neon_purple}", width=12)
+        table.add_column("Signal", justify="center", width=8)
+        table.add_column("Confidence", justify="center", width=10)
+        table.add_column("Volume", justify="center", width=10)
+        table.add_column("Price", justify="right", width=10)
+        table.add_column("Time", justify="center", width=8)
         
-        for signal in signals[:6]:  # Show max 6 signals with neural styling
-            # Signal type with neural aesthetics
-            signal_type = signal.get('type', 'UNKNOWN')
-            signal_emoji = "⬆️" if signal_type == 'LONG' else "⬇️"
-            signal_color = self.matrix_green if signal_type == 'LONG' else self.hot_pink
-            
-            # Volume analysis
+        for signal in signals[:6]:  # Show first 6 signals
+            symbol = signal.get('symbol', 'N/A')
+            signal_type = signal.get('signal', 'N/A')
+            confidence = signal.get('confidence', 0)
             volume_ratio = signal.get('volume_ratio', 0)
-            volume_emoji = "🔥" if volume_ratio > 5.0 else "⚡" if volume_ratio > 3.0 else "💧"
-            volume_color = self.danger_gradient if volume_ratio > 5.0 else self.gold_accent if volume_ratio > 2.0 else self.neon_cyan
+            price = signal.get('price', 0.0)
+            timestamp = signal.get('timestamp', datetime.now())
             
-            # Signal strength calculation
-            confluence_count = signal.get('confluence_count', 1)
-            tf_str = signal.get('timeframe', 'N/A')
-            strength = min(100, confluence_count * volume_ratio * 20)
-            strength_color = self.matrix_green if strength > 80 else self.gold_accent if strength > 60 else self.neon_cyan
+            # Steampunk color coding for signals
+            if signal_type.upper() in ['BUY', 'LONG']:
+                signal_color = f"{self.hot_pink}"  # Hot pink for bulls
+                signal_icon = "🔧"
+            elif signal_type.upper() in ['SELL', 'SHORT']:
+                signal_color = f"{self.dark_orange}"  # Dark orange for bears
+                signal_icon = "⚙️"
+            else:
+                signal_color = f"{self.light_gray}"
+                signal_icon = "🔩"
             
-            # Neural network confidence
-            confidence_emoji = "🧠" if strength > 90 else "🎯" if strength > 70 else "📊"
+            # Confidence color coding
+            if confidence >= 80:
+                conf_color = f"{self.hot_pink}"  # Hot pink for high confidence
+            elif confidence >= 60:
+                conf_color = f"{self.neon_cyan}"  # Neon cyan for medium confidence
+            else:
+                conf_color = f"{self.dark_orange}"  # Dark orange for low confidence
             
-            # Time formatting
-            try:
-                if 'time' in signal and signal['time'] is not None:
-                    time_str = signal['time'].strftime("%H:%M:%S")
-                elif 'timestamp' in signal and signal['timestamp'] is not None:
-                    time_str = datetime.fromtimestamp(signal['timestamp']).strftime("%H:%M:%S")
-                else:
-                    time_str = "N/A"
-            except (KeyError, ValueError, OSError, TypeError):
-                time_str = "N/A"
+            # Format time
+            time_str = timestamp.strftime("%H:%M") if isinstance(timestamp, datetime) else "N/A"
             
-            sig_table.add_row(
-                time_str,
-                f"[bold {self.neon_cyan}]{signal['symbol'].replace('/USDT:USDT', '')}[/]",
-                f"[{signal_color}]{signal_emoji} {signal['type']}[/]",
-                f"[{volume_color}]{volume_emoji} {volume_ratio:.1f}x[/]",
-                f"${signal['price']:.4f}",
-                f"[{strength_color}]{strength:.0f}%[/]",
-                f"[bold]{signal.get('action', 'SCANNING')}[/]",
-                confidence_emoji
+            table.add_row(
+                symbol,
+                f"[{signal_color}]{signal_icon} {signal_type}[/{signal_color}]",
+                f"[{conf_color}]{confidence:.1f}%[/{conf_color}]",
+                f"{volume_ratio:.1f}x",
+                f"${price:,.4f}",
+                time_str
             )
         
-        return self.create_glowing_border(
-            Padding(sig_table, (1, 1)),
-            f"NEURAL SIGNALS ({len(signals)})",
-            self.neon_purple
+        return Panel(
+            table,
+            title=f"⚙️ MECHANICAL SIGNALS ({len(signals)}) ⚙️",
+            border_style=f"{self.dark_purple}",
+            style=f"{self.mint_green}"
         )
     
     def create_cyber_log_panel(self, logs: List[str]) -> Panel:

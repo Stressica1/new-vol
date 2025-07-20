@@ -1,0 +1,6 @@
+ALPINE TRADING BOT - 24 HOUR BACKTEST RESULTS
+==================================================
+Win Rate: 0.00%
+Total P&L: 0.00%
+Valid Signals: 0
+Execution Time: 8.38s

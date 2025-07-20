@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class PositionSizingConfig:
     """Position sizing configuration with leverage and budget constraints"""
     min_order_size_usdt: float = 10.0  # Minimum order size in USDT
-    max_leverage: int = 35  # Maximum leverage allowed
+    max_leverage: int = 125  # Maximum leverage allowed (125x on Bitget)
     risk_per_trade_pct: float = 2.0  # Risk per trade as percentage of account
     max_position_size_usdt: float = 200.0  # Maximum position size in USDT
     account_balance: float = 1000.0  # Current account balance
@@ -199,7 +199,7 @@ def create_position_sizer(account_balance: float, available_margin: Optional[flo
     
     config = PositionSizingConfig(
         min_order_size_usdt=10.0,
-        max_leverage=35,
+        max_leverage=125,
         risk_per_trade_pct=2.0,
         max_position_size_usdt=200.0,
         account_balance=account_balance,

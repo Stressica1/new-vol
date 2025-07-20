@@ -1,0 +1,9 @@
+ALPINE TRADING BOT - PARAMETER VALIDATION RESULTS
+==================================================
+Confidence: 75% | Win Rate: 0.00% | Signals: 0
+Confidence: 72% | Win Rate: 0.00% | Signals: 0
+Confidence: 70% | Win Rate: 0.00% | Signals: 1
+Confidence: 65% | Win Rate: 0.00% | Signals: 1
+Confidence: 60% | Win Rate: 50.00% | Signals: 4
+Confidence: 55% | Win Rate: 31.25% | Signals: 16
+Confidence: 50% | Win Rate: 29.17% | Signals: 24

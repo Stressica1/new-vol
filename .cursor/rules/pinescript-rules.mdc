@@ -1,0 +1,231 @@
+# Pine Script Development Rules
+
+## Plot Function Rules
+
+### Plot Scope Requirements
+- **NEVER use `plot()` inside loops, conditionals, or functions**
+- **ALWAYS place `plot()` functions at the top level of the script**
+- **Use `plot()` for series values, `hline()` only for constant inputs**
+
+### Correct Plot Usage
+```pinescript
+// ✅ CORRECT - Top level plotting
+plot(ma_fast_line, "Fast MA", color=color.blue)
+
+// ✅ CORRECT - Conditional plotting with na fallback
+plot(use_fibonacci ? fib_236 : na, "Fib 23.6%", color=color.yellow)
+
+// ❌ WRONG - Plot inside conditional
+if condition
+    plot(value, "Label", color=color.red)
+
+// ❌ WRONG - Plot inside loop
+for i = 0 to array.size(levels) - 1
+    plot(array.get(levels, i), "Level", color=color.green)
+```
+
+### Alternative Plotting Methods
+```pinescript
+// ✅ For dynamic levels, use variables updated in logic
+var float current_support = na
+if array.size(active_support_zones) > 0
+    current_support := array.get(active_support_zones, array.size(active_support_zones) - 1)
+plot(current_support, "Support", color=color.green)
+
+// ✅ For multiple levels, use individual plot statements
+plot(level1, "Level 1", color=color.green)
+plot(level2, "Level 2", color=color.red)
+```
+
+## Array and Variable Rules
+
+### Array Access Safety
+- **ALWAYS check array size before accessing elements**
+- **Use `array.size() > 0` before loops**
+- **Provide fallback values for empty arrays**
+
+```pinescript
+// ✅ CORRECT - Safe array access
+if array.size(active_zones) > 0
+    for i = 0 to array.size(active_zones) - 1
+        level = array.get(active_zones, i)
+        // Process level
+
+// ✅ CORRECT - With fallback
+var float current_level = na
+if array.size(levels) > 0
+    current_level := array.get(levels, array.size(levels) - 1)
+else
+    current_level := na
+```
+
+### Variable Declaration
+- **Use `var` for persistent variables**
+- **Initialize arrays with `array.new<float>()`**
+- **Use proper type declarations**
+
+```pinescript
+// ✅ CORRECT - Variable declarations
+var array<float> support_levels = array.new<float>()
+var float last_signal = na
+var int signal_count = 0
+```
+
+## Function and Logic Rules
+
+### Function Definitions
+- **Keep functions simple and focused**
+- **Use descriptive parameter names**
+- **Return values explicitly**
+
+```pinescript
+// ✅ CORRECT - Function definition
+is_near_level(price, level, tolerance) =>
+    math.abs(price - level) / level * 100 <= tolerance
+
+// ✅ CORRECT - Complex function
+count_touches(level, levels_array, tolerance) =>
+    touches = 0
+    for i = 0 to array.size(levels_array) - 1
+        if is_near_level(level, array.get(levels_array, i), tolerance)
+            touches += 1
+    touches
+```
+
+### Conditional Logic
+- **Use clear boolean expressions**
+- **Group related conditions**
+- **Use parentheses for complex logic**
+
+```pinescript
+// ✅ CORRECT - Clear conditionals
+long_condition = support_bounce and bullish_trend and close > ma_fast_line
+
+// ✅ CORRECT - Complex conditions
+if (is_near_level(low, level, zone_tolerance) and 
+    rsi < rsi_oversold and 
+    volume_spike)
+    // Action
+```
+
+## Strategy and Execution Rules
+
+### Strategy Entry/Exit
+- **Use descriptive strategy names**
+- **Include stop loss and take profit**
+- **Use proper position sizing**
+
+```pinescript
+// ✅ CORRECT - Strategy execution
+if long_condition
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", stop=close * 0.98, limit=close * 1.03)
+```
+
+### Alert Conditions
+- **Use descriptive alert messages**
+- **Include relevant variables in alerts**
+- **Test alerts thoroughly**
+
+```pinescript
+// ✅ CORRECT - Alert conditions
+alertcondition(long_condition, "Support Bounceback Long", "LONG signal at {{close}}")
+```
+
+## Debug and Testing Rules
+
+### Debug Implementation
+- **Use debug tables for real-time monitoring**
+- **Include comprehensive variable tracking**
+- **Use conditional debug display**
+
+```pinescript
+// ✅ CORRECT - Debug table
+if barstate.islast and show_debug
+    var table debug_table = table.new(position.top_left, 2, 6)
+    table.cell(debug_table, 0, 1, "Support Levels", text_color=color.white)
+    table.cell(debug_table, 1, 1, str.tostring(array.size(support_levels)), text_color=color.green)
+```
+
+### Error Prevention
+- **Test array access before loops**
+- **Validate input parameters**
+- **Use proper error handling patterns**
+
+## File Organization Rules
+
+### Script Structure
+1. **Input parameters at top**
+2. **Calculations and indicators**
+3. **Logic and signal generation**
+4. **Strategy execution**
+5. **Plotting (top level only)**
+6. **Alerts and tables**
+
+### Comments and Documentation
+- **Use clear section headers**
+- **Document complex logic**
+- **Include usage instructions**
+
+```pinescript
+// ============================================================================
+// SECTION HEADER
+// ============================================================================
+// Brief description of what this section does
+```
+
+## Common Error Prevention
+
+### Plot Scope Errors
+- **Move all plotting outside loops and conditionals**
+- **Use variables to store dynamic values**
+- **Plot variables instead of direct calculations**
+
+### Array Bounds Errors
+- **Always check array size before access**
+- **Use safe array iteration patterns**
+- **Provide fallback values**
+
+### Type Mismatch Errors
+- **Use proper type declarations**
+- **Convert types explicitly when needed**
+- **Validate input parameters**
+
+## Performance Optimization
+
+### Efficient Loops
+- **Limit loop iterations**
+- **Use break statements when possible**
+- **Avoid nested loops when possible**
+
+### Memory Management
+- **Limit array sizes**
+- **Use array.shift() to remove old elements**
+- **Clean up unused variables**
+
+## Testing and Validation
+
+### Backtesting
+- **Test on multiple timeframes**
+- **Validate on different instruments**
+- **Check for repainting issues**
+
+### Parameter Optimization
+- **Use reasonable parameter ranges**
+- **Test edge cases**
+- **Document parameter effects**
+
+## Best Practices Summary
+
+1. **Plot functions ONLY at top level**
+2. **Always check array sizes before access**
+3. **Use descriptive variable names**
+4. **Include comprehensive debugging**
+5. **Test thoroughly before deployment**
+6. **Document complex logic**
+7. **Use proper error handling**
+8. **Optimize for performance**
+9. **Validate all inputs**
+10. **Follow Pine Script version requirements**
+globs: *.pine
+---

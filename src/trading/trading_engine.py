@@ -24,7 +24,7 @@ class OrderStatus(Enum):
 class OrderType(Enum):
     MARKET = "market"
     LIMIT = "limit"
-    STOP_MARKET = "stop_market"
+    STOP = "stop"
     STOP_LIMIT = "stop_limit"
     TAKE_PROFIT = "take_profit"
 
@@ -197,7 +197,7 @@ class TradingEngine:
             client_order_id=client_order_id,
             symbol=symbol,
             side=side,
-            order_type=OrderType.STOP_MARKET,
+            order_type=OrderType.STOP,
             size=size,
             stop_price=stop_price
         )

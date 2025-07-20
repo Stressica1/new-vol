@@ -151,6 +151,38 @@ class BitgetClient:
         except Exception as e:
             logger.error(f"Failed to get order status for {order_id}: {e}")
             return None
+    
+    def place_stop_order(self, symbol: str, side: str, size: float, stop_price: float,
+                        order_type: str = "market") -> Optional[Dict]:
+        """Place a stop order for Bitget futures"""
+        try:
+            if not self.client:
+                return None
+            
+            # For Bitget, stop orders are created with specific parameters
+            params = {
+                'stopPrice': stop_price,
+                'reduceOnly': True,
+                'marginCoin': 'USDT',
+                'timeInForce': 'GTC'
+            }
+            
+            # Create the stop order
+            order = self.client.create_order(
+                symbol=symbol,
+                type='stop',
+                side=side,
+                amount=size,
+                price=stop_price,  # Use stop_price as the trigger price
+                params=params
+            )
+            
+            logger.info(f"Stop order placed: {order.get('id', 'Unknown')} - {side} {size} {symbol} at {stop_price}")
+            return order
+            
+        except Exception as e:
+            logger.error(f"Failed to place stop order: {e}")
+            return None
 
 # Global instance
 bitget_client = BitgetClient()

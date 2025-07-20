@@ -1,0 +1,174 @@
+# Pine Script Plot Scope Error Prevention
+
+## The Error
+```
+Cannot use 'plot' in local scope
+```
+
+## Root Cause
+- `plot()` functions must be at the **top level** of the script
+- Cannot be used inside loops, conditionals, or functions
+- Pine Script requires all plotting to be done at script level
+
+## Common Scenarios That Cause This Error
+
+### ❌ WRONG - Plot Inside Loop
+```pinescript
+for i = 0 to array.size(levels) - 1
+    level = array.get(levels, i)
+    plot(level, "Level", color=color.green)  // ERROR!
+```
+
+### ❌ WRONG - Plot Inside Conditional
+```pinescript
+if array.size(active_zones) > 0
+    plot(current_level, "Level", color=color.red)  // ERROR!
+```
+
+### ❌ WRONG - Plot Inside Function
+```pinescript
+plot_level(level) =>
+    plot(level, "Level", color=color.blue)  // ERROR!
+```
+
+## ✅ CORRECT Solutions
+
+### Solution 1: Use Variables for Dynamic Values
+```pinescript
+// ✅ CORRECT - Store dynamic values in variables
+var float current_support = na
+var float current_resistance = na
+
+// Update variables in logic
+if array.size(active_support_zones) > 0
+    current_support := array.get(active_support_zones, array.size(active_support_zones) - 1)
+else
+    current_support := na
+
+// Plot at top level
+plot(current_support, "Support", color=color.green)
+plot(current_resistance, "Resistance", color=color.red)
+```
+
+### Solution 2: Use Conditional Plotting with na
+```pinescript
+// ✅ CORRECT - Conditional plotting with na fallback
+plot(use_fibonacci ? fib_236 : na, "Fib 23.6%", color=color.yellow)
+plot(use_fibonacci ? fib_382 : na, "Fib 38.2%", color=color.orange)
+```
+
+### Solution 3: Individual Plot Statements
+```pinescript
+// ✅ CORRECT - Plot each level individually at top level
+plot(level1, "Level 1", color=color.green)
+plot(level2, "Level 2", color=color.red)
+plot(level3, "Level 3", color=color.blue)
+```
+
+## For Multiple Dynamic Levels
+
+### ❌ WRONG Approach
+```pinescript
+// This will cause scope error
+if array.size(levels) > 0
+    for i = 0 to array.size(levels) - 1
+        level = array.get(levels, i)
+        plot(level, "Level " + str.tostring(i), color=color.green)
+```
+
+### ✅ CORRECT Approach
+```pinescript
+// Store levels in individual variables
+var float level1 = na
+var float level2 = na
+var float level3 = na
+
+// Update in logic
+if array.size(levels) > 0
+    if array.size(levels) >= 1
+        level1 := array.get(levels, 0)
+    if array.size(levels) >= 2
+        level2 := array.get(levels, 1)
+    if array.size(levels) >= 3
+        level3 := array.get(levels, 2)
+
+// Plot at top level
+plot(level1, "Level 1", color=color.green)
+plot(level2, "Level 2", color=color.red)
+plot(level3, "Level 3", color=color.blue)
+```
+
+## Alternative Plotting Methods
+
+### Using Labels Instead of Plot
+```pinescript
+// ✅ For single points, use labels
+if array.size(levels) > 0
+    for i = 0 to array.size(levels) - 1
+        level = array.get(levels, i)
+        label.new(bar_index, level, "Level " + str.tostring(level, "#.##"), 
+                 color=color.green, textcolor=color.white)
+```
+
+### Using Lines Instead of Plot
+```pinescript
+// ✅ For horizontal lines, use line.new()
+if array.size(levels) > 0
+    for i = 0 to array.size(levels) - 1
+        level = array.get(levels, i)
+        line.new(bar_index - 20, level, bar_index, level, 
+                color=color.green, width=2, style=line.style_dashed)
+```
+
+## Debug Pattern for Plot Issues
+
+### Step 1: Identify the Problem
+```pinescript
+// Check if plot is inside a loop or conditional
+for i = 0 to array.size(levels) - 1
+    plot(array.get(levels, i), "Level", color=color.green)  // PROBLEM!
+```
+
+### Step 2: Extract to Variables
+```pinescript
+// Create variables to hold the values
+var float plot_level1 = na
+var float plot_level2 = na
+var float plot_level3 = na
+
+// Update variables in logic
+if array.size(levels) > 0
+    if array.size(levels) >= 1
+        plot_level1 := array.get(levels, 0)
+    if array.size(levels) >= 2
+        plot_level2 := array.get(levels, 1)
+    if array.size(levels) >= 3
+        plot_level3 := array.get(levels, 2)
+```
+
+### Step 3: Plot at Top Level
+```pinescript
+// Plot the variables at top level
+plot(plot_level1, "Level 1", color=color.green)
+plot(plot_level2, "Level 2", color=color.red)
+plot(plot_level3, "Level 3", color=color.blue)
+```
+
+## Quick Fix Checklist
+
+When you get "Cannot use 'plot' in local scope":
+
+1. ✅ **Find the plot() function causing the error**
+2. ✅ **Identify what loop/conditional it's inside**
+3. ✅ **Create variables to hold the values**
+4. ✅ **Update variables in the logic section**
+5. ✅ **Move plot() functions to top level**
+6. ✅ **Test the script**
+
+## Remember
+- **ALL plot() functions must be at script top level**
+- **Use variables to store dynamic values**
+- **Use conditional plotting with na for optional elements**
+- **Consider alternatives like labels or lines for complex scenarios**
+globs: *.pine
+---
